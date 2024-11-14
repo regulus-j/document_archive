@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Arr;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
+use App\Mail\UserInvite;
+use Illuminate\Support\Facades\Mail;
 
 class UserController extends Controller
 {
@@ -39,21 +41,33 @@ class UserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        $temp_pass = uniqid();
+
         $request->validate([
             'first_name' => 'required|string|max:255',
             'middle_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|same:confirm-password',
+            // 'password' => 'required|same:password_confirmation|string|min:8',
             'roles' => 'required'
         ]);
-    
-        $input = $request->all();
-        $input['password'] = Hash::make($input['password']);
-    
-        $user = User::create($input);
+
+        $user = User::create([
+            'first_name'=> $request->first_name,
+            'middle_name' => $request->middle_name,
+            'last_name'=> $request->last_name,
+            'email'=> $request->email,
+            'password' => bcrypt($temp_pass),
+            ]);
+        
         $user->assignRole($request->input('roles'));
-    
+
+        Mail::to($user->email)->send(new userInvite($user->first_name, $user->email, $temp_pass, $user->roles, route('login')));
+        
+        // $input = $request->all();
+        // $input['password'] = Hash::make($input['password']);
+        // $user = User::create($input);
+
         return redirect()->route('users.index')
                         ->with('success', 'User created successfully');
     }

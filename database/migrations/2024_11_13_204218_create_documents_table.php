@@ -18,11 +18,21 @@ return new class extends Migration
             $table->dateTime('uploaded');
             $table->string('content');
             $table->string('path');
-            $table->unsignedBigInteger('master')->nullable();
             $table->timestamps();
 
             $table->foreign('uploader')->references('id')->on('users');
-            $table->foreign('master')->references('id')->on('documents');
+        });
+
+        Schema::create('document_versions', function (Blueprint $table)
+        {
+            $table->id();
+            $table->unsignedBigInteger('doc_id');
+            $table->unsignedBigInteger('prevdoc_id')->nullable();
+            $table->unsignedBigInteger('nextdoc_id')->nullable();
+
+            $table->foreign('doc_id')->references('id')->on('documents');
+            $table->foreign('prevdoc_id')->references('id')->on('documents');
+            $table->foreign('nextdoc_id')->references('id')->on('documents');
         });
     }
 
