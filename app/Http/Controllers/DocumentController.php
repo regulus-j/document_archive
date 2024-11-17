@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Storage;
 use Spatie\PdfToText\Pdf;
 use PhpOffice\PhpWord\IOFactory;
 use PhpOffice\PhpWord\PhpWord;
+use thiagoalessio\TesseractOCR\TesseractOCR;
 
 class DocumentController extends Controller
 {
@@ -55,36 +56,44 @@ class DocumentController extends Controller
             'title' => 'required',
             'upload' => 'required|file|mimes:jpeg,png,jpg,gif,pdf,docx|max:10240'
         ]);
-
+    
         try {
             // Store the file and get its path
             $file = $request->file('upload');
             $fileName = time() . '_' . $file->getClientOriginalName();
             $filePath = $file->storeAs('documents', $fileName, 'public');
-            $fullPath = Storage::path('public/' . $filePath);
+            $fullPath = storage_path('app/public/' . $filePath);
             
             // Initialize content variable
             $content = '';
-
+    
             if ($this->isImage($file)) {
-                // Process image with Tesseract OCR
+                // Create a temporary output file
                 $outputBase = storage_path('app/temp/ocr_' . time());
-                $command = sprintf(
-                    '"%s" "%s" "%s" -l eng', 
-                    'C:\\Program Files\\Tesseract-OCR\\tesseract',
-                    $fullPath,
-                    $outputBase
-                );
                 
-                shell_exec($command);
+                // Construct the command with explicit paths and double quotes
+                $command = '"C:\\Program Files\\Tesseract-OCR\\tesseract.exe" "' . str_replace('/', '\\', $fullPath) . '" "' . str_replace('/', '\\', $outputBase) . '" -l eng';
                 
-                // Read OCR result
+                // Execute command
+                $output = shell_exec($command);
+                
+                // Check if output file exists and read content
                 if (file_exists($outputBase . '.txt')) {
                     $content = file_get_contents($outputBase . '.txt');
-                    unlink($outputBase . '.txt'); // Clean up
+                    unlink($outputBase . '.txt'); // Clean up temp file
+                    
+                    if (empty($content)) {
+                        throw new Exception('OCR processing failed - no text extracted');
+                    }
+                } else {
+                    throw new Exception('OCR processing failed - output file not created');
                 }
+                
+                // Log the command and output for debugging
+                \Log::info('OCR Command: ' . $command);
+                \Log::info('OCR Output: ' . ($output ?? 'No output'));
+                
             } else {
-                // Process documents based on extension
                 $extension = strtolower($file->getClientOriginalExtension());
                 
                 switch ($extension) {
@@ -97,11 +106,7 @@ class DocumentController extends Controller
                         break;
                 }
             }
-
-            if(empty($content)){
-                $content = "No text in image!";
-            }
-
+    
             // Create document record
             Document::create([
                 'title' => $request->title,
@@ -109,17 +114,18 @@ class DocumentController extends Controller
                 'content' => $content,
                 'path' => $filePath
             ]);
-
+    
             return redirect()->route('documents.index')
-                           ->with('success', 'Document created successfully.');
-
-        } catch (\Exception $e) {
+                            ->with('success', 'Document created successfully.');
+    
+        } catch (Exception $e) {
+            \Log::error('Document processing error: ' . $e->getMessage());
             return redirect()->back()
-                           ->with('error', 'Error processing document: ' . $e->getMessage())
-                           ->withInput();
+                            ->with('error', 'Error processing document: ' . $e->getMessage())
+                            ->withInput();
         }
     }
-
+    
     private function isImage($file): bool
     {
         $mimeType = $file->getMimeType();
