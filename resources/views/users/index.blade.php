@@ -20,6 +20,16 @@
         @endif
 
         <div class="bg-white shadow sm:rounded-lg p-4 sm:p-8">
+            <form method="GET" action="{{ route('users.index') }}">
+                <input type="text" name="name" placeholder="Name" value="{{ request('name') }}">
+                <input type="text" name="email" placeholder="Email" value="{{ request('email') }}">
+                <select name="role">
+                    <option value="">Select Role</option>
+                    <option value="admin" {{ request('role') == 'admin' ? 'selected' : '' }}>Admin</option>
+                    <option value="user" {{ request('role') == 'user' ? 'selected' : '' }}>User</option>
+                </select>
+                <button type="submit">Filter</button>
+            </form>
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
