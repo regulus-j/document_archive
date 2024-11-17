@@ -15,7 +15,6 @@ return new class extends Migration
             $table->id();
             $table->string('title');
             $table->unsignedBigInteger('uploader');
-            $table->dateTime('uploaded');
             $table->string('content');
             $table->string('path');
             $table->timestamps();

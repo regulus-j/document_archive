@@ -38,6 +38,23 @@ class ProfileController extends Controller
     }
 
     /**
+     * Set password for the first time
+     */
+    public function set(ProfileUpdateRequest $request): RedirectResponse
+    {
+        $request->user()->fill($request->validated());
+
+        if ($request->user()->isDirty('email')) {
+            $request->user()->email_verified_at = null;
+        }
+
+        $request->user()->password_set = true;
+        $request->user()->save();
+
+        return Redirect::route('profile.set')->with('status', 'password-set');
+    }
+
+    /**
      * Delete the user's account.
      */
     public function destroy(Request $request): RedirectResponse

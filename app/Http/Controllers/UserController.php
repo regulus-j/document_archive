@@ -13,6 +13,7 @@ use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
 use App\Mail\UserInvite;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
@@ -41,7 +42,7 @@ class UserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        $temp_pass = uniqid();
+        $temp_pass = Str::random(12);
 
         $request->validate([
             'first_name' => 'required|string|max:255',
@@ -62,7 +63,15 @@ class UserController extends Controller
         
         $user->assignRole($request->input('roles'));
 
-        Mail::to($user->email)->send(new userInvite($user->first_name, $user->email, $temp_pass, $user->roles, route('login')));
+        $roleNames = $user->roles->pluck('name')->implode(', ');
+
+        Mail::to($user->email)->send(new UserInvite(
+            $user->first_name,
+            $user->email,
+            $temp_pass,
+            $roleNames,
+            route('login')
+        ));
         
         // $input = $request->all();
         // $input['password'] = Hash::make($input['password']);
