@@ -23,45 +23,25 @@
     </div>
 @endif
 
-<form action="{{ route('documents.store') }}" method="POST">
+<form action="{{ route('documents.store') }}" method="POST" enctype="multipart/form-data">
     @csrf
 
     <div class="row">
         <div class="col-xs-12 col-sm-12 col-md-12">
             <div class="form-group">
                 <strong>Title:</strong>
-                <input type="text" name="title" class="form-control" placeholder="Title">
+                <input type="text" name="title" class="form-control" placeholder="Title" required>
             </div>
         </div>
         <div class="col-xs-12 col-sm-12 col-md-12">
             <div class="form-group">
-                <strong>Uploader:</strong>
-                <input type="text" name="uploader" class="form-control" placeholder="Uploader">
-            </div>
-        </div>
-        <div class="col-xs-12 col-sm-12 col-md-12">
-            <div class="form-group">
-                <strong>Uploaded:</strong>
-                <input type="datetime-local" name="uploaded" class="form-control" placeholder="Uploaded">
-            </div>
-        </div>
-        <div class="col-xs-12 col-sm-12 col-md-12">
-            <div class="form-group">
-                <strong>Content:</strong>
-                <textarea class="form-control" style="height:150px" name="content" placeholder="Content"></textarea>
-            </div>
-        </div>
-        <div class="col-xs-12 col-sm-12 col-md-12">
-            <div class="form-group">
-                <strong>Path:</strong>
-                <input type="text" name="path" class="form-control" placeholder="Path">
+                <strong>Upload File:</strong>
+                <input type="file" name="upload" class="form-control" required>
             </div>
         </div>
         <div class="col-xs-12 col-sm-12 col-md-12 text-center">
-                <button type="submit" class="btn btn-primary btn-sm mb-3 mt-2"><i class="fa-solid fa-floppy-disk"></i> Submit</button>
+            <button type="submit" class="btn btn-primary">Submit</button>
         </div>
     </div>
 </form>
-
-<p class="text-center text-primary"><small>Tutorial by ItSolutionStuff.com</small></p>
 @endsection

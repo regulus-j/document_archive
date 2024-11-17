@@ -6,6 +6,11 @@ use App\Models\Document;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
+use App\Controller\Controller\User;
+use Illuminate\Support\Facades\Storage;
+use Spatie\PdfToText\Pdf;
+use PhpOffice\PhpWord\IOFactory;
+use PhpOffice\PhpWord\PhpWord;
 
 class DocumentController extends Controller
 {
@@ -36,6 +41,11 @@ class DocumentController extends Controller
         return view('documents.create');
     }
 
+    // private function isImage($file)  {
+    //     $imagen = getimagesize($file);
+    //     return $imagen !== false;
+    // }
+
     /**
      * Store a newly created document in storage.
      */
@@ -43,13 +53,102 @@ class DocumentController extends Controller
     {
         $request->validate([
             'title' => 'required',
-            'content' => 'required',
+            'upload' => 'required|file|mimes:jpeg,png,jpg,gif,pdf,docx|max:10240'
         ]);
 
-        Document::create($request->all());
+        try {
+            // Store the file and get its path
+            $file = $request->file('upload');
+            $fileName = time() . '_' . $file->getClientOriginalName();
+            $filePath = $file->storeAs('documents', $fileName, 'public');
+            $fullPath = Storage::path('public/' . $filePath);
+            
+            // Initialize content variable
+            $content = '';
 
-        return redirect()->route('documents.index')
-                        ->with('success','Document created successfully.');
+            if ($this->isImage($file)) {
+                // Process image with Tesseract OCR
+                $outputBase = storage_path('app/temp/ocr_' . time());
+                $command = sprintf(
+                    '"%s" "%s" "%s" -l eng', 
+                    'C:\\Program Files\\Tesseract-OCR\\tesseract',
+                    $fullPath,
+                    $outputBase
+                );
+                
+                shell_exec($command);
+                
+                // Read OCR result
+                if (file_exists($outputBase . '.txt')) {
+                    $content = file_get_contents($outputBase . '.txt');
+                    unlink($outputBase . '.txt'); // Clean up
+                }
+            } else {
+                // Process documents based on extension
+                $extension = strtolower($file->getClientOriginalExtension());
+                
+                switch ($extension) {
+                    case 'pdf':
+                        $content = $this->extractPdfContent($fullPath);
+                        break;
+                        
+                    case 'docx':
+                        $content = $this->extractDocxContent($fullPath);
+                        break;
+                }
+            }
+
+            if(empty($content)){
+                $content = "No text in image!";
+            }
+
+            // Create document record
+            Document::create([
+                'title' => $request->title,
+                'uploader' => auth()->user()->id,
+                'content' => $content,
+                'path' => $filePath
+            ]);
+
+            return redirect()->route('documents.index')
+                           ->with('success', 'Document created successfully.');
+
+        } catch (\Exception $e) {
+            return redirect()->back()
+                           ->with('error', 'Error processing document: ' . $e->getMessage())
+                           ->withInput();
+        }
+    }
+
+    private function isImage($file): bool
+    {
+        $mimeType = $file->getMimeType();
+        return strpos($mimeType, 'image/') === 0;
+    }
+
+    private function extractPdfContent(string $path): string
+    {
+        // Using Spatie's pdf-to-text package
+        return (new Pdf())
+            ->setPdf($path)
+            ->text();
+    }
+
+    private function extractDocxContent(string $path): string
+    {
+        // Using PHPWord to extract text from DOCX
+        $phpWord = IOFactory::load($path);
+        $content = '';
+        
+        foreach ($phpWord->getSections() as $section) {
+            foreach ($section->getElements() as $element) {
+                if (method_exists($element, 'getText')) {
+                    $content .= $element->getText() . "\n";
+                }
+            }
+        }
+        
+        return $content;
     }
 
     /**

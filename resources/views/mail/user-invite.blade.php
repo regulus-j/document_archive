@@ -12,7 +12,7 @@
     <ul>
         <li><strong>Email:</strong> {{ $email }}</li>
         <li><strong>Password:</strong> {{ $password }}</li>
-        <li><strong>Role:</strong> {{ $role }}</li>
+        {{-- <li><strong>Role:</strong> {{ $roleNames }}</li> --}}
     </ul>
     <p>You can log in using the following link:</p>
     <a href="{{ $loginLink }}">{{ $loginLink }}</a>

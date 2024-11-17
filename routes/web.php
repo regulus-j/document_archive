@@ -21,12 +21,11 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // Route::get('/profile/set-password', function () {
-    //     return view('profile.setPassword');
-    // });
+    Route::get('/profile/set-password', function () {
+        return view('profile.setPassword');
+    })->name('profile.set');
 
-    // Route::put('/profile/set-password', [ProfileController::class, 'set'])->name('profile.set');
-});
+    Route::put('/profile/set-password', [ProfileController::class, 'set'])->name('profile.set');});
 
 Route::group(['middleware' => ['auth']], function() {
     Route::resource('roles', RoleController::class);
