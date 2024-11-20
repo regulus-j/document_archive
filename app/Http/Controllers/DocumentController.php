@@ -12,6 +12,7 @@ use Spatie\PdfToText\Pdf;
 use PhpOffice\PhpWord\IOFactory;
 use PhpOffice\PhpWord\PhpWord;
 use thiagoalessio\TesseractOCR\TesseractOCR;
+use Exception;
 
 class DocumentController extends Controller
 {
@@ -28,7 +29,7 @@ class DocumentController extends Controller
      */
     public function index(): View
     {
-        $documents = Document::latest()->paginate(5);
+        $documents = Document::with('user')->latest()->paginate(5);
 
         return view('documents.index',compact('documents'))
             ->with('i', (request()->input('page', 1) - 1) * 5);
@@ -134,10 +135,42 @@ class DocumentController extends Controller
 
     private function extractPdfContent(string $path): string
     {
-        // Using Spatie's pdf-to-text package
-        return (new Pdf())
+        try {
+            // Use the path directly in the constructor of Pdf
+            $pdfContent = (new Pdf(
+                'C:\Users\user\Dependencies\poppler-24.08.0\Library\bin\pdftotext.exe'
+            ))
             ->setPdf($path)
             ->text();
+    
+            if (empty($pdfContent)) {
+                // If no content extracted, try using shell_exec as fallback
+                $outputFile = storage_path('app/temp/pdf_' . time() . '.txt');
+                $command = '"C:\Users\user\Dependencies\poppler-24.08.0\Library\bin\pdftotext.exe" "' . str_replace('/', '\\', $path) . '" "' . str_replace('/', '\\', $outputFile) . '"';
+                
+                // Log the command for debugging
+                \Log::info('PDF Command: ' . $command);
+                
+                $output = shell_exec($command);
+                \Log::info('Shell exec output: ' . ($output ?? 'No output'));
+                
+                if (file_exists($outputFile)) {
+                    $pdfContent = file_get_contents($outputFile);
+                    unlink($outputFile); // Clean up
+                }
+            }
+    
+            if (empty($pdfContent)) {
+                throw new Exception('PDF processing failed - no text extracted');
+            }
+    
+            return $pdfContent;
+    
+        } catch (Exception $e) {
+            \Log::error('PDF processing error: ' . $e->getMessage());
+            \Log::error('PDF path: ' . $path);
+            throw new Exception('PDF processing failed: ' . $e->getMessage());
+        }
     }
 
     private function extractDocxContent(string $path): string

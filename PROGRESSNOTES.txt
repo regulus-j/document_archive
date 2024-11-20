@@ -1,3 +1,6 @@
+Requirements:
+G-Mail STMP, Poppler, Laravel 11, Laravel/Spatie, Laravel/Breeze, Spatie/pdftotext, Poppler, MariaDB or MySQL ver 8.1 Above, XAMPP, Tesseract, Tesseract-for-PHP
+
 -- 1 STMP Setup
 
 --2 Set Password PARTIAL (want: set password page, got: redirect to edit profile view)

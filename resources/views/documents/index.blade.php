@@ -34,7 +34,7 @@
     <tr>
         <td>{{ ++$i }}</td>
         <td>{{ $document->title }}</td>
-        <td>{{ $document->uploader }}</td>
+        <td>{{ $document->user->first_name }}</td>
         <td>{{ $document->uploaded }}</td>
         <td>{{ $document->content }}</td>
         <td>{{ $document->path }}</td>

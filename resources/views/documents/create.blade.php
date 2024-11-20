@@ -44,4 +44,11 @@
         </div>
     </div>
 </form>
+
+@if(session('error'))
+    <script>
+        alert("{{ session('error') }}");
+    </script>
+@endif
+
 @endsection

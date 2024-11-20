@@ -49,7 +49,7 @@ class UserController extends Controller
             'middle_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            // 'password' => 'required|same:password_confirmation|string|min:8',
+            //'password' => 'required|same:password_confirmation|string|min:8',
             'roles' => 'required'
         ]);
 
@@ -72,10 +72,8 @@ class UserController extends Controller
             $roleNames,
             route('login')
         ));
-        
-        // $input = $request->all();
-        // $input['password'] = Hash::make($input['password']);
-        // $user = User::create($input);
+
+        $temp_pass = null;
 
         return redirect()->route('users.index')
                         ->with('success', 'User created successfully');

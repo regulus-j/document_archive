@@ -17,7 +17,7 @@ class Document extends Model
         'master',
     ];
 
-    public function uploader()
+    public function user()
     {
         return $this->belongsTo(User::class, 'uploader');
     }
