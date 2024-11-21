@@ -13,6 +13,8 @@ use PhpOffice\PhpWord\IOFactory;
 use PhpOffice\PhpWord\PhpWord;
 use thiagoalessio\TesseractOCR\TesseractOCR;
 use Exception;
+use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Str;
 
 class DocumentController extends Controller
 {
@@ -33,6 +35,75 @@ class DocumentController extends Controller
 
         return view('documents.index',compact('documents'))
             ->with('i', (request()->input('page', 1) - 1) * 5);
+    }
+
+    /**
+     * Search for documents using text input or image upload.
+     */
+    public function search(Request $request)
+    {
+        $request->validate([
+            'text' => 'nullable|string',
+            'image' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:10240'
+        ]);
+    
+        try {
+            $searchText = $request->input('text', '');
+            $content = '';
+    
+            // Check if the file is uploaded
+            if ($request->hasFile('image')) {
+                // Store the file and get its path
+                $file = $request->file('image');
+                $fileName = time() . '_' . $file->getClientOriginalName();
+                $filePath = $file->storeAs('documents', $fileName, 'public');
+                $fullPath = storage_path('app/public/' . $filePath);
+    
+                if ($this->isImage($file)) {
+                    // Create a temporary output file
+                    $outputBase = storage_path('app/temp/ocr_' . time());
+    
+                    // Construct the command with explicit paths and double quotes
+                    $command = '"C:\\Program Files\\Tesseract-OCR\\tesseract.exe" "' . str_replace('/', '\\', $fullPath) . '" "' . str_replace('/', '\\', $outputBase) . '" -l eng';
+    
+                    // Execute command
+                    $output = shell_exec($command);
+    
+                    // Check if output file exists and read content
+                    if (file_exists($outputBase . '.txt')) {
+                        $content = file_get_contents($outputBase . '.txt');
+                        unlink($outputBase . '.txt'); // Clean up temp file
+    
+                        if (empty($content)) {
+                            throw new Exception('OCR processing failed - no text extracted');
+                        }
+                    } else {
+                        throw new Exception('OCR processing failed - output file not created');
+                    }
+    
+                    // Log the command and output for debugging
+                    \Log::info('OCR Command: ' . $command);
+                    \Log::info('OCR Output: ' . ($output ?? 'No output'));
+    
+                    // Combine text input and OCR content for search
+                    $searchText .= ' ' . $content;
+    
+                    // Perform search using MySQL MATCH() in NATURAL LANGUAGE mode
+                    $documents = Document::whereRaw('MATCH(content) AGAINST(? IN NATURAL LANGUAGE MODE)', [$searchText])->get();
+                }
+            } else {
+                // Perform search using only text input in BOOLEAN mode
+                $documents = Document::whereRaw('MATCH(content) AGAINST(? IN NATURAL LANGUAGE MODE)', [$searchText])->get();
+            }
+    
+            return view('documents.search_results', compact('documents'));
+    
+        } catch (Exception $e) {
+            \Log::error('Search processing error: ' . $e->getMessage());
+            return redirect()->back()
+                            ->with('error', 'Error processing search: ' . $e->getMessage())
+                            ->withInput();
+        }
     }
 
     /**
@@ -112,6 +183,7 @@ class DocumentController extends Controller
             Document::create([
                 'title' => $request->title,
                 'uploader' => auth()->user()->id,
+                'description' => Str::uuid(),
                 'content' => $content,
                 'path' => $filePath
             ]);
@@ -138,7 +210,7 @@ class DocumentController extends Controller
         try {
             // Use the path directly in the constructor of Pdf
             $pdfContent = (new Pdf(
-                'C:\Users\user\Dependencies\poppler-24.08.0\Library\bin\pdftotext.exe'
+                env('POPPLER_PATH')
             ))
             ->setPdf($path)
             ->text();
@@ -146,7 +218,7 @@ class DocumentController extends Controller
             if (empty($pdfContent)) {
                 // If no content extracted, try using shell_exec as fallback
                 $outputFile = storage_path('app/temp/pdf_' . time() . '.txt');
-                $command = '"C:\Users\user\Dependencies\poppler-24.08.0\Library\bin\pdftotext.exe" "' . str_replace('/', '\\', $path) . '" "' . str_replace('/', '\\', $outputFile) . '"';
+                $command = env('POPPLER_PATH') . ' ' . str_replace('/', '\\', $path) . ' ' . str_replace('/', '\\', $outputFile);
                 
                 // Log the command for debugging
                 \Log::info('PDF Command: ' . $command);
@@ -227,9 +299,40 @@ class DocumentController extends Controller
      */
     public function destroy(Document $document): RedirectResponse
     {
+        Storage::disk('public')->delete($document->path);
         $document->delete();
 
         return redirect()->route('documents.index')
                         ->with('success','Document deleted successfully');
     }
+
+    public function uploadImage(Request $request)
+    {
+        $data = $request->input('image');
+
+        // Decode the base64 image
+        list($type, $data) = explode(';', $data);
+        list(, $data) = explode(',', $data);
+        $data = base64_decode($data);
+
+        // Generate a unique filename
+        $filename = 'uploads/' . uniqid() . '.png';
+
+        // Store the image
+        Storage::put($filename, $data);
+
+        return Response::json(['success' => 'Image uploaded successfully', 'filename' => $filename, 'path' => asset('storage/' . $filename)]);
+    }
+
+public function downloadFile($id)
+{
+    $document = Document::findOrFail($id);
+    $filePath = storage_path('app/public/' . $document->path);
+
+    if (!file_exists($filePath)) {
+        return redirect()->back()->with('error', 'File not found.');
+    }
+
+    return response()->download($filePath);
+}
 }

@@ -5,8 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\DocumentController;
-use App\Mail\TestMail;
-use Illuminate\Support\Facades\Mail;
+use App\Http\Controllers\ReportController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -21,17 +20,22 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    Route::get('/profile/set-password', function () {
-        return view('profile.setPassword');
-    })->name('profile.set');
+    // Route::get('/profile/set-password', function () {
+    //     return view('profile.setPassword');
+    // })->name('profile.set');
 
-    Route::put('/profile/set-password', [ProfileController::class, 'set'])->name('profile.set');});
+    // Route::put('/profile/set-password', [ProfileController::class, 'set'])->name('profile.set');
+});
 
 Route::group(['middleware' => ['auth']], function() {
     Route::resource('roles', RoleController::class);
     Route::resource('users', UserController::class);
     Route::resource('documents', DocumentController::class);
+    Route::resource('reports', ReportController::class);
 });
+
+Route::post('/documents/search', [DocumentController::class, 'search'])->name('documents.search');
+Route::get('documents/download/{id}', [DocumentController::class, 'downloadFile'])->name('documents.downloadFile');
 
 // Route::get('/testroute', function() {
 //     $name = "Funny Coder";

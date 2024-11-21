@@ -12,6 +12,7 @@ class Document extends Model
     protected $fillable = [
         'title',
         'uploader',
+        'description',
         'content',
         'path',
         'master',
