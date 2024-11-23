@@ -126,7 +126,7 @@
         context.drawImage(document.querySelector('#camfeed'), 0, 0, 300, 300);
         canvas.toBlob(function(blob) {
             var file = new File([blob], "snapshot.png", { type: "image/png" });
-            var dataTransfer = new DataTransfer();
+            var dataTransfer = new DataTransfer();ss
             dataTransfer.items.add(file);
             document.querySelector('#file-input').files = dataTransfer.files;
             alert('Image captured and added to the form.');
