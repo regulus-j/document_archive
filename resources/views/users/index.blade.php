@@ -2,69 +2,72 @@
 
 @section('content')
 
-<div class="py-12">
-    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ __('User Management') }}
-            </h2>
-            <a class="btn btn-success mb-2" href="{{ route('users.create') }}">
-                <i class="fa fa-plus"></i> Create New User
+<div class="container mx-auto px-4 py-6">
+    <div class="mb-6">
+        <div class="flex justify-between items-center">
+            <h2 class="text-2xl font-semibold text-gray-800">{{ __('User Management') }}</h2>
+            <a class="inline-flex items-center bg-green-500 hover:bg-green-600 text-white text-sm py-2 px-4 rounded transition-colors" href="{{ route('users.create') }}">
+                <i class="fa fa-plus mr-2"></i> Create New User
             </a>
         </div>
+    </div>
 
-        @if (session('success'))
-            <div class="alert alert-success" role="alert">
-                {{ session('success') }}
-            </div>
-        @endif
+    @if (session('success'))
+        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6" role="alert">
+            {{ session('success') }}
+        </div>
+    @endif
 
-        <div class="bg-white shadow sm:rounded-lg p-4 sm:p-8">
-            <form method="GET" action="{{ route('users.index') }}">
-                <input type="text" name="name" placeholder="Name" value="{{ request('name') }}">
-                <input type="text" name="email" placeholder="Email" value="{{ request('email') }}">
-                <select name="role">
-                    <option value="">Select Role</option>
-                    <option value="admin" {{ request('role') == 'admin' ? 'selected' : '' }}>Admin</option>
-                    <option value="user" {{ request('role') == 'user' ? 'selected' : '' }}>User</option>
-                </select>
-                <button type="submit">Filter</button>
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="p-6 border-b border-gray-200">
+            <form method="GET" action="{{ route('users.index') }}" class="space-y-4">
+                <div class="flex space-x-4">
+                    <input type="text" name="name" placeholder="Name" value="{{ request('name') }}" class="form-input w-full">
+                    <input type="text" name="email" placeholder="Email" value="{{ request('email') }}" class="form-input w-full">
+                    <select name="role" class="form-select w-full">
+                        <option value="">Select Role</option>
+                        <option value="admin" {{ request('role') == 'admin' ? 'selected' : '' }}>Admin</option>
+                        <option value="user" {{ request('role') == 'user' ? 'selected' : '' }}>User</option>
+                    </select>
+                </div>
+                <button type="submit" class="inline-flex items-center bg-blue-500 hover:bg-blue-600 text-white text-sm py-2 px-4 rounded transition-colors">Filter</button>
             </form>
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left text-gray-500">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Roles</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" width="280px">Action</th>
+                        <th scope="col" class="px-6 py-3 whitespace-nowrap">No</th>
+                        <th scope="col" class="px-6 py-3">Name</th>
+                        <th scope="col" class="px-6 py-3">Email</th>
+                        <th scope="col" class="px-6 py-3">Roles</th>
+                        <th scope="col" class="px-6 py-3 text-right" width="280px">Action</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody>
                     @foreach ($users as $user)
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap">{{ ++$i }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">{{ $user->first_name }} {{ $user->last_name }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">{{ $user->email }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">
+                        <tr class="bg-white border-b hover:bg-gray-50">
+                            <td class="px-6 py-4 font-medium text-gray-900">{{ ++$i }}</td>
+                            <td class="px-6 py-4">{{ $user->first_name }} {{ $user->last_name }}</td>
+                            <td class="px-6 py-4">{{ $user->email }}</td>
+                            <td class="px-6 py-4">
                                 @foreach ($user->roles as $role)
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">{{ $role->name }}</span>
                                 @endforeach
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <form action="{{ route('users.destroy', $user->id) }}" method="POST" class="inline">
-                                    <a class="btn btn-info btn-sm" href="{{ route('users.show', $user->id) }}">
-                                        <i class="fa-solid fa-list"></i> Show
-                                    </a>
-                                    <a class="btn btn-primary btn-sm" href="{{ route('users.edit', $user->id) }}">
-                                        <i class="fa-solid fa-pen-to-square"></i> Edit
-                                    </a>
-
+                            <td class="px-6 py-4 text-right space-x-2">
+                                <a class="inline-flex items-center text-blue-600 hover:text-blue-800" href="{{ route('users.show', $user->id) }}">
+                                    <i class="fa-solid fa-list mr-1"></i> Show
+                                </a>
+                                <a class="inline-flex items-center text-blue-600 hover:text-blue-800" href="{{ route('users.edit', $user->id) }}">
+                                    <i class="fa-solid fa-pen-to-square mr-1"></i> Edit
+                                </a>
+                                <form action="{{ route('users.destroy', $user->id) }}" method="POST" class="inline-block">
                                     @csrf
                                     @method('DELETE')
-
-                                    <button type="submit" class="btn btn-danger btn-sm">
-                                        <i class="fa-solid fa-trash"></i> Delete
+                                    <button type="submit" class="inline-flex items-center text-red-600 hover:text-red-800" onclick="return confirm('Are you sure you want to delete this user?')">
+                                        <i class="fa-solid fa-trash mr-1"></i> Delete
                                     </button>
                                 </form>
                             </td>
@@ -73,10 +76,10 @@
                 </tbody>
             </table>
         </div>
+    </div>
 
-        <div class="mt-4">
-            {!! $users->links() !!}
-        </div>
+    <div class="mt-6">
+        {!! $users->links() !!}
     </div>
 </div>
 

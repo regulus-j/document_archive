@@ -13,8 +13,10 @@ Storage management
 --2 Set Password PARTIAL (want: set password page, got: redirect to edit profile view)
 
 --3 OCR-Tesseract Implementation NOT COMPLETED
+    --COMPLETED! 11/21
 
 --4 docx, pdf metadata collection
+    --INCOMPLETE (pdf)
 
 --5 nlp summarizer (want)
 
@@ -30,3 +32,7 @@ Storage management
     COMPLETED 
     -> EMAIL Invites
     -> CRUD Users
+
+--NATURAL LANGUAGE SEARCH + UPLOAD IMAGE + CAMERA
+    ->COMPLETED 11/21
+

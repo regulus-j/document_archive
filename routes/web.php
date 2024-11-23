@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\BackupController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\RoleController;
@@ -32,6 +33,7 @@ Route::group(['middleware' => ['auth']], function() {
     Route::resource('users', UserController::class);
     Route::resource('documents', DocumentController::class);
     Route::resource('reports', ReportController::class);
+    Route::resource('backup', BackupController::class);
 });
 
 Route::post('/documents/search', [DocumentController::class, 'search'])->name('documents.search');

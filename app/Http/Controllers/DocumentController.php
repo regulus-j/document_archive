@@ -18,7 +18,7 @@ use Illuminate\Support\Str;
 
 class DocumentController extends Controller
 {
-    function __construct()
+    public function __construct()
     {
         $this->middleware('permission:document-list|document-create|document-edit|document-delete', ['only' => ['index','show']]);
         $this->middleware('permission:document-create', ['only' => ['create','store']]);
@@ -43,7 +43,7 @@ class DocumentController extends Controller
     public function search(Request $request)
     {
         $request->validate([
-            'text' => 'nullable|string',
+            'text' => 'nullable|string|max:255',
             'image' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:10240'
         ]);
     
@@ -96,7 +96,8 @@ class DocumentController extends Controller
                 $documents = Document::whereRaw('MATCH(content) AGAINST(? IN NATURAL LANGUAGE MODE)', [$searchText])->get();
             }
     
-            return view('documents.search_results', compact('documents'));
+            return view('documents.index',compact('documents'))
+            ->with('i', (request()->input('page', 1) - 1) * 5);
     
         } catch (Exception $e) {
             \Log::error('Search processing error: ' . $e->getMessage());

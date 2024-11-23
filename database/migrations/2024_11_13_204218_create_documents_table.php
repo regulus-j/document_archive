@@ -34,6 +34,26 @@ return new class extends Migration
             $table->foreign('prevdoc_id')->references('id')->on('documents');
             $table->foreign('nextdoc_id')->references('id')->on('documents');
         });
+
+        Schema::create('folders', function (Blueprint $table)
+        {
+            $table->id();
+            $table->string('name');
+            $table->unsignedBigInteger('parent_id')->nullable();
+            $table->timestamps();
+
+            $table->foreign('parent_id')->references('id')->on('folders');
+        });
+
+        Schema::create('document_folder', function (Blueprint $table)
+        {
+            $table->id();
+            $table->unsignedBigInteger('doc_id');
+            $table->unsignedBigInteger('folder_id');
+
+            $table->foreign('doc_id')->references('id')->on('documents');
+            $table->foreign('folder_id')->references('id')->on('folders');
+        });
     }
 
     /**
