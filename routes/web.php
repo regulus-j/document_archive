@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\BackupController;
+use App\Http\Controllers\FolderController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\TeamController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
@@ -29,12 +31,31 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::group(['middleware' => ['auth']], function() {
+
     Route::resource('roles', RoleController::class);
+
     Route::resource('users', UserController::class);
+
     Route::resource('documents', DocumentController::class);
+
+    Route::resource('folders', FolderController::class);
+
+    Route::resource('teams', TeamController::class);
+
     Route::resource('reports', ReportController::class);
+
     Route::resource('backup', BackupController::class);
+
+    Route::post('/reports/generate', [ReportController::class, 'generate'])->name('reports.generate');
+
+    Route::post('/teams/search', [TeamController::class, 'ajaxSearch'])->name('teams.search');
+    
+    Route::get('/teams', [TeamController::class, 'index'])->name('teams.index');
+
+    Route::post('/users', [UserController::class, 'search'])->name('users.search');
+
 });
+
 
 Route::post('/documents/search', [DocumentController::class, 'search'])->name('documents.search');
 Route::get('documents/download/{id}', [DocumentController::class, 'downloadFile'])->name('documents.downloadFile');

@@ -4,11 +4,6 @@
     <div class="mb-6">
         <div class="flex justify-between items-center">
             <h2 class="text-2xl font-semibold text-gray-800">Documents</h2>
-            @can('document-create')
-                <a href="{{ route('documents.create') }}" class="inline-flex items-center bg-green-500 hover:bg-green-600 text-white text-sm py-2 px-4 rounded transition-colors">
-                    <i class="fa fa-plus mr-2"></i> Create New Document
-                </a>
-            @endcan
         </div>
     </div>
 
@@ -26,8 +21,8 @@
             <form id="search-form" action="/documents/search" method="POST" enctype="multipart/form-data" class="space-y-6">
                 <input type="hidden" name="_token" value="{{ csrf_token() }}">
                 
-                <div class="space-y-4">
-                    <div class="relative">
+                <div class="flex items-center space-x-4">
+                    <div class="relative flex-grow">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
@@ -38,6 +33,19 @@
                                class="block w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
                                placeholder="Search by text...">
                     </div>
+
+                    <button type="submit" 
+                            id="submit-button"
+                            class="flex items-center px-6 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50">
+                        <span id="spinner" class="hidden mr-2">
+                            <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </span>
+                        <span id="button-text">Search</span>
+                    </button>
+                </div>
     
                     <div class="space-y-4">
                         <div class="flex flex-wrap gap-4">
@@ -91,18 +99,17 @@
                     </div>
                 </div>
     
-                <div class="flex justify-end">
-                    <button type="submit" 
-                            id="submit-button"
-                            class="flex items-center px-6 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50">
-                        <span id="spinner" class="hidden mr-2">
-                            <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                        </span>
-                        <span id="button-text">Search</span>
-                    </button>
+                <div class="flex justify-end mb-2 mx-4">
+
+                    @can('document-create')
+                    <a href="{{ route('documents.create') }}" class="inline-flex items-center bg-green-500 hover:bg-green-600 text-white text-sm mb-2 mr-2 py-2 px-4 rounded transition-colors">
+                        <i class="fa fa-plus mr-2"></i> Create New Document
+                    </a>
+                    @endcan
+    
+                    <!-- Modal Trigger -->
+                    <button id="open-modal" class="bg-blue-500 hover:bg-blue-600 text-white text-sm mr-2 mb-2 py-2 px-4 rounded transition-colors">Create Folder</button>
+    
                 </div>
             </form>
         </div>
@@ -119,9 +126,10 @@
         </div>
     @endif
 
-    <div class="bg-white rounded-lg shadow-md overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="w-full text-sm text-left text-gray-500">
+    <div class="container mx-auto px-4 py-6 max-w-7xl">
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left text-gray-500">
                 <thead class="text-xs text-gray-700 uppercase bg-gray-50">
                     <tr>
                         <th scope="col" class="px-6 py-3">No</th>
@@ -136,7 +144,7 @@
                 <tbody>
                     @foreach ($documents as $document)
                     <tr class="bg-white border-b hover:bg-gray-50">
-                        <td class="px-6 py-4 font-medium text-gray-900">{{ ++$i }}</td>
+                        <td class="px-6 py-4 font-medium text-gray-900">{{ $loop->iteration }}</td>
                         <td class="px-6 py-4">{{ $document->title }}</td>
                         <td class="px-6 py-4">{{ $document->user->first_name . ' ' . $document->user->last_name }}</td>
                         <td class="px-6 py-4">{{ $document->created_at }}</td>
@@ -289,67 +297,6 @@
     });
 </script>
 
-{{-- <!-- Camera Modal -->
-<div id="cameraModal" class="fixed z-10 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
-        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                <div class="sm:flex sm:items-start">
-                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">Capture Image</h3>
-                        <div class="mt-2">
-                            <video id="camfeed" autoplay class="w-full rounded-md"></video>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                <button id="snap" type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
-                    Snap
-                </button>
-                <button id="closeModal" type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto sm:text-sm">
-                    Cancel
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
+@include('documents.partials.folder_create')
 
-<script>
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        navigator.mediaDevices.getUserMedia({ video: true }).then(function(stream) {
-            var video = document.querySelector('#camfeed');
-            video.srcObject = stream;
-            video.play();
-        });
-    } else {
-        alert('Camera not found');
-    }
-
-    document.querySelector('#btn-opencam').addEventListener('click', function() {
-        document.getElementById('cameraModal').classList.remove('hidden');
-    });
-
-    document.querySelector('#closeModal').addEventListener('click', function() {
-        document.getElementById('cameraModal').classList.add('hidden');
-    });
-
-    document.querySelector('#snap').addEventListener('click', function() {
-        var canvas = document.createElement('canvas');
-        canvas.width = 300;
-        canvas.height = 300;
-        var context = canvas.getContext('2d');
-        context.drawImage(document.querySelector('#camfeed'), 0, 0, 300, 300);
-        canvas.toBlob(function(blob) {
-            var file = new File([blob], "snapshot.png", { type: "image/png" });
-            var dataTransfer = new DataTransfer();
-            dataTransfer.items.add(file);
-            document.querySelector('#image-input').files = dataTransfer.files;
-            alert('Image captured and added to the form.');
-            document.getElementById('cameraModal').classList.add('hidden');
-        }, 'image/png');
-    });
-</script> --}}
 @endsection

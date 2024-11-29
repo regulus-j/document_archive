@@ -32,4 +32,9 @@ class Document extends Model
     {
         return $this->hasMany(Document::class, 'master');
     }
+
+    public function folders()
+    {
+        return $this->belongsToMany(Folder::class);
+    }
 }

@@ -10,9 +10,23 @@ class TeamController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index($search = null)
     {
-        //
+        if ($search) {
+            $teams = Team::where('name', 'like', '%' . $search . '%')->get();
+        } else {
+            $teams = Team::all();
+        }
+        return response()->json($teams);
+    }
+
+    public function ajaxSearch(Request $request)
+    {
+        $search = $request->input('search');
+
+        $teams = Team::where('name', 'like', '%' . $search . '%')->get();
+
+        return response()->json(['teams' => $teams]);
     }
 
     /**

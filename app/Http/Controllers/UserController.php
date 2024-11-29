@@ -29,6 +29,33 @@ class UserController extends Controller
     }
 
     /**
+     * Search for users based on name, email, and role.
+     */
+    public function search(Request $request): View
+    {
+        $query = User::query();
+
+        if ($request->filled('name')) {
+            $query->where('first_name', 'like', '%' . $request->name . '%');
+        }
+
+        if ($request->filled('email')) {
+            $query->where('email', 'like', '%' . $request->email . '%');
+        }
+
+        if ($request->filled('role')) {
+            $query->whereHas('roles', function ($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->role . '%');
+            });
+        }
+
+        $users = $query->paginate(5);
+
+        return view('users.index', compact('users'))
+            ->with('i', ($request->input('page', 1) - 1) * 5);
+    }
+
+    /**
      * Show the form for creating a new user.
      */
     public function create(): View

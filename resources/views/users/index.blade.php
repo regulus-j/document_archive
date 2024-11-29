@@ -20,7 +20,8 @@
 
     <div class="bg-white rounded-lg shadow-md overflow-hidden">
         <div class="p-6 border-b border-gray-200">
-            <form method="GET" action="{{ route('users.index') }}" class="space-y-4">
+            <form method="POST" action="{{ route('users.search') }}" class="space-y-4">
+                @csrf
                 <div class="flex space-x-4">
                     <input type="text" name="name" placeholder="Name" value="{{ request('name') }}" class="form-input w-full">
                     <input type="text" name="email" placeholder="Email" value="{{ request('email') }}" class="form-input w-full">

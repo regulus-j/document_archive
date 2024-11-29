@@ -64,4 +64,10 @@ class ReportController extends Controller
     {
         //
     }
+
+    public function generate(Report $report)
+    {
+        //
+        return view('reports.index');
+    }
 }

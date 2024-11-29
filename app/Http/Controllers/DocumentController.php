@@ -15,6 +15,7 @@ use thiagoalessio\TesseractOCR\TesseractOCR;
 use Exception;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Str;
+use App\Models\Team;
 
 class DocumentController extends Controller
 {
@@ -34,7 +35,8 @@ class DocumentController extends Controller
         $documents = Document::with('user')->latest()->paginate(5);
 
         return view('documents.index',compact('documents'))
-            ->with('i', (request()->input('page', 1) - 1) * 5);
+            ->with(['i', (request()->input('page', 1) - 1) * 5,
+                        'teams' => Team::all()]);
     }
 
     /**

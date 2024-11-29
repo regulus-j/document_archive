@@ -44,8 +44,8 @@
                     <!-- Icon -->
                 </div>
                 <div>
-                    <h5 class="text-gray-500">Revenue Trends</h5>
-                    <h3 class="text-2xl font-semibold text-gray-900">$12,345</h3>
+                    <h5 class="text-gray-500">Uploaded Document</h5>
+                    <h3 class="text-2xl font-semibold text-gray-900">12,345</h3>
                 </div>
             </div>
         </div>
