@@ -100,17 +100,16 @@
                 </div>
     
                 <div class="flex justify-end mb-2 mx-4">
-
                     @can('document-create')
                     <a href="{{ route('documents.create') }}" class="inline-flex items-center bg-green-500 hover:bg-green-600 text-white text-sm mb-2 mr-2 py-2 px-4 rounded transition-colors">
                         <i class="fa fa-plus mr-2"></i> Create New Document
                     </a>
                     @endcan
-    
+                
                     <!-- Modal Trigger -->
-                    <button id="open-modal" class="bg-blue-500 hover:bg-blue-600 text-white text-sm mr-2 mb-2 py-2 px-4 rounded transition-colors">Create Folder</button>
-    
+                    <button id="open-modal" type="button" class="bg-blue-500 hover:bg-blue-600 text-white text-sm mr-2 mb-2 py-2 px-4 rounded transition-colors">Create Folder</button>
                 </div>
+                
                 @if(session('success'))
                 <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6" role="alert">
                     {{ session('success') }}

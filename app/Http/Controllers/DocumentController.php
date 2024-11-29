@@ -91,11 +91,11 @@ class DocumentController extends Controller
                     $searchText .= ' ' . $content;
     
                     // Perform search using MySQL MATCH() in NATURAL LANGUAGE mode
-                    $documents = Document::whereRaw('MATCH(content) AGAINST(? IN NATURAL LANGUAGE MODE)', [$searchText])->get();
+                    $documents = Document::whereRaw('MATCH(content) AGAINST(? IN NATURAL LANGUAGE MODE)', [$searchText])->paginate(5);
                 }
             } else {
                 // Perform search using only text input in BOOLEAN mode
-                $documents = Document::whereRaw('MATCH(content) AGAINST(? IN NATURAL LANGUAGE MODE)', [$searchText])->get();
+                $documents = Document::whereRaw('MATCH(content) AGAINST(? IN NATURAL LANGUAGE MODE)', [$searchText])->paginate(5);;
             }
     
             return view('documents.index',compact('documents'))

@@ -48,9 +48,9 @@ Route::group(['middleware' => ['auth']], function() {
 
     Route::post('/reports/generate', [ReportController::class, 'generate'])->name('reports.generate');
 
-    Route::post('/teams/search', [TeamController::class, 'ajaxSearch'])->name('teams.search');
+    Route::post('/documents', [TeamController::class, 'ajaxSearch'])->name('teams.search');
     
-    Route::get('/teams', [TeamController::class, 'index'])->name('teams.index');
+    Route::post('/teams/search', [TeamController::class, 'ajaxSearch'])->name('teams.search');
 
     Route::post('/users', [UserController::class, 'search'])->name('users.search');
 
