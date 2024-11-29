@@ -27,8 +27,11 @@
                     <input type="text" name="email" placeholder="Email" value="{{ request('email') }}" class="form-input w-full">
                     <select name="role" class="form-select w-full">
                         <option value="">Select Role</option>
-                        <option value="admin" {{ request('role') == 'admin' ? 'selected' : '' }}>Admin</option>
-                        <option value="user" {{ request('role') == 'user' ? 'selected' : '' }}>User</option>
+                        @foreach ($roles as $role)
+                        <option value="{{ $role->name }}" {{ request('role') == $role->name ? 'selected' : '' }}>
+                            {{ $role->name }}
+                        </option>
+                        @endforeach
                     </select>
                 </div>
                 <button type="submit" class="inline-flex items-center bg-blue-500 hover:bg-blue-600 text-white text-sm py-2 px-4 rounded transition-colors">Filter</button>

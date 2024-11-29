@@ -23,8 +23,9 @@ class UserController extends Controller
     public function index(Request $request): View
     {
         $users = User::latest()->paginate(5);
+        $roles = Role::all();
 
-        return view('users.index', compact('users'))
+        return view('users.index', compact('users', 'roles'))
             ->with('i', ($request->input('page', 1) - 1) * 5);
     }
 
@@ -34,6 +35,7 @@ class UserController extends Controller
     public function search(Request $request): View
     {
         $query = User::query();
+        $roles = Role::all();
 
         if ($request->filled('name')) {
             $query->where('first_name', 'like', '%' . $request->name . '%');
@@ -51,7 +53,7 @@ class UserController extends Controller
 
         $users = $query->paginate(5);
 
-        return view('users.index', compact('users'))
+        return view('users.index', compact('users', 'roles'))
             ->with('i', ($request->input('page', 1) - 1) * 5);
     }
 

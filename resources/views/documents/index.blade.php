@@ -111,20 +111,19 @@
                     <button id="open-modal" class="bg-blue-500 hover:bg-blue-600 text-white text-sm mr-2 mb-2 py-2 px-4 rounded transition-colors">Create Folder</button>
     
                 </div>
+                @if(session('success'))
+                <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6" role="alert">
+                    {{ session('success') }}
+                </div>
+                @elseif(session('error'))
+                    <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6" role="alert">
+                        {{ session('error') }}
+                    </div>
+                @endif
             </form>
         </div>
     </div>
-    
 
-    @if(session('success'))
-        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6" role="alert">
-            {{ session('success') }}
-        </div>
-    @elseif(session('error'))
-        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6" role="alert">
-            {{ session('error') }}
-        </div>
-    @endif
 
     <div class="container mx-auto px-4 py-6 max-w-7xl">
         <div class="bg-white rounded-lg shadow-md overflow-hidden">

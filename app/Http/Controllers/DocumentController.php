@@ -186,7 +186,7 @@ class DocumentController extends Controller
             Document::create([
                 'title' => $request->title,
                 'uploader' => auth()->user()->id,
-                'description' => Str::uuid(),
+                'description' => $request->description,
                 'content' => $content,
                 'path' => $filePath
             ]);

@@ -54,10 +54,10 @@ Route::group(['middleware' => ['auth']], function() {
 
     Route::post('/users', [UserController::class, 'search'])->name('users.search');
 
+    Route::post('/documents/search', [DocumentController::class, 'search'])->name('documents.search');
+
 });
 
-
-Route::post('/documents/search', [DocumentController::class, 'search'])->name('documents.search');
 Route::get('documents/download/{id}', [DocumentController::class, 'downloadFile'])->name('documents.downloadFile');
 
 // Route::get('/testroute', function() {

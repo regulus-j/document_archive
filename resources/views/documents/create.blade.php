@@ -31,6 +31,7 @@
             <div class="form-group">
                 <strong>Title:</strong>
                 <input type="text" name="title" class="form-control" placeholder="Title" required>
+                <input type="text" name="description" class="form-control" placeholder="Description" required>
             </div>
         </div>
         <div class="col-xs-12 col-sm-12 col-md-12">
