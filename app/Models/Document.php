@@ -12,13 +12,13 @@ class Document extends Model
     protected $fillable = [
         'title',
         'uploader',
-        'uploaded',
+        'description',
         'content',
         'path',
         'master',
     ];
 
-    public function uploader()
+    public function user()
     {
         return $this->belongsTo(User::class, 'uploader');
     }
@@ -31,5 +31,10 @@ class Document extends Model
     public function childDocuments()
     {
         return $this->hasMany(Document::class, 'master');
+    }
+
+    public function folders()
+    {
+        return $this->belongsToMany(Folder::class);
     }
 }

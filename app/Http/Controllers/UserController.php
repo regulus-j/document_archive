@@ -11,6 +11,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Arr;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
+use App\Mail\UserInvite;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
@@ -20,8 +23,37 @@ class UserController extends Controller
     public function index(Request $request): View
     {
         $users = User::latest()->paginate(5);
+        $roles = Role::all();
 
-        return view('users.index', compact('users'))
+        return view('users.index', compact('users', 'roles'))
+            ->with('i', ($request->input('page', 1) - 1) * 5);
+    }
+
+    /**
+     * Search for users based on name, email, and role.
+     */
+    public function search(Request $request): View
+    {
+        $query = User::query();
+        $roles = Role::all();
+
+        if ($request->filled('name')) {
+            $query->where('first_name', 'like', '%' . $request->name . '%');
+        }
+
+        if ($request->filled('email')) {
+            $query->where('email', 'like', '%' . $request->email . '%');
+        }
+
+        if ($request->filled('role')) {
+            $query->whereHas('roles', function ($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->role . '%');
+            });
+        }
+
+        $users = $query->paginate(5);
+
+        return view('users.index', compact('users', 'roles'))
             ->with('i', ($request->input('page', 1) - 1) * 5);
     }
 
@@ -39,21 +71,39 @@ class UserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        $temp_pass = Str::random(12);
+
         $request->validate([
             'first_name' => 'required|string|max:255',
             'middle_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|same:confirm-password',
+            //'password' => 'required|same:password_confirmation|string|min:8',
             'roles' => 'required'
         ]);
-    
-        $input = $request->all();
-        $input['password'] = Hash::make($input['password']);
-    
-        $user = User::create($input);
+
+        $user = User::create([
+            'first_name'=> $request->first_name,
+            'middle_name' => $request->middle_name,
+            'last_name'=> $request->last_name,
+            'email'=> $request->email,
+            'password' => bcrypt($temp_pass),
+            ]);
+        
         $user->assignRole($request->input('roles'));
-    
+
+        $roleNames = $user->roles->pluck('name')->implode(', ');
+
+        Mail::to($user->email)->send(new UserInvite(
+            $user->first_name,
+            $user->email,
+            $temp_pass,
+            $roleNames,
+            route('login')
+        ));
+
+        $temp_pass = null;
+
         return redirect()->route('users.index')
                         ->with('success', 'User created successfully');
     }

@@ -19,19 +19,43 @@
 
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                     <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.index')">
-                        {{ __('Manage Users') }}
+                        {{ __('Users') }}
                     </x-nav-link>
                 </div>
 
+                {{-- @can('team-list') --}}
+                <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
+                    <x-nav-link :href="route('teams.index')" :active="request()->routeIs('teams.index')">
+                        {{ __('Teams') }}
+                    </x-nav-link>
+                </div>
+                {{-- @endcan --}}
+
+                @can('role-list')
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                     <x-nav-link :href="route('roles.index')" :active="request()->routeIs('roles.index')">
-                        {{ __('Manage Role') }}
+                        {{ __('Roles and Permissions') }}
                     </x-nav-link>
                 </div>
+                @endcan
 
+                @can('document-list')
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                     <x-nav-link :href="route('documents.index')" :active="request()->routeIs('documents.index')">
-                        {{ __('Manage Documents') }}
+                        {{ __('Documents') }}
+                    </x-nav-link>
+                </div>
+                @endcan
+
+                <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
+                    <x-nav-link :href="route('reports.index')" :active="request()->routeIs('reports.index')">
+                        {{ __('Reports') }}
+                    </x-nav-link>
+                </div>
+                
+                <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
+                    <x-nav-link :href="route('backup.index')" :active="request()->routeIs('backup.index')">
+                        {{ __('Backup') }}
                     </x-nav-link>
                 </div>
             </div>
@@ -87,6 +111,34 @@
         <div class="pt-2 pb-3 space-y-1">
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
+            </x-responsive-nav-link>
+
+            <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.index')">
+                {{ __('Users') }}
+            </x-responsive-nav-link>
+
+            <x-responsive-nav-link :href="route('teams.index')" :active="request()->routeIs('teams.index')">
+                {{ __('Teams') }}
+            </x-responsive-nav-link>
+
+            @can('role-list')
+            <x-responsive-nav-link :href="route('roles.index')" :active="request()->routeIs('roles.index')">
+                {{ __('Roles and Permissions') }}
+            </x-responsive-nav-link>
+            @endcan
+
+            @can('document-list')
+            <x-responsive-nav-link :href="route('documents.index')" :active="request()->routeIs('documents.index')">
+                {{ __('Documents') }}
+            </x-responsive-nav-link>
+            @endcan
+
+            <x-responsive-nav-link :href="route('reports.index')" :active="request()->routeIs('reports.index')">
+                {{ __('Reports') }}
+            </x-responsive-nav-link>
+
+            <x-responsive-nav-link :href="route('backup.index')" :active="request()->routeIs('backup.index')">
+                {{ __('Backup') }}
             </x-responsive-nav-link>
         </div>
 
