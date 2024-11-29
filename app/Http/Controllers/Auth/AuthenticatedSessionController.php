@@ -25,9 +25,14 @@ class AuthenticatedSessionController extends Controller
     public function store(LoginRequest $request): RedirectResponse
     {
         $request->authenticate();
-
+    
         $request->session()->regenerate();
-
+    
+        // Check if the user's password_set column is false
+        if (auth()->user()->password_set == 0) {
+            return redirect()->route('profile.edit')->with('message', 'Please change your password before proceeding.');
+        }
+    
         return redirect()->intended(route('dashboard', absolute: false));
     }
 

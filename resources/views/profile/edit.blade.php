@@ -26,4 +26,10 @@
             </div>
         </div>
     </div>
+
+    @if (session('message'))
+    <script>
+        alert("{{ session('message') }}");
+    </script>
+    @endif
 </x-app-layout>
