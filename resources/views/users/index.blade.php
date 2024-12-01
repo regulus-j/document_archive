@@ -46,6 +46,7 @@
                         <th scope="col" class="px-6 py-3">Name</th>
                         <th scope="col" class="px-6 py-3">Email</th>
                         <th scope="col" class="px-6 py-3">Roles</th>
+                        <th scope="col" class="px-6 py-3">Office</th>
                         <th scope="col" class="px-6 py-3 text-right" width="280px">Action</th>
                     </tr>
                 </thead>
@@ -60,6 +61,10 @@
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">{{ $role->name }}</span>
                                 @endforeach
                             </td>
+                            <td class="px-6 py-4">
+                                @foreach ($user->offices as $office)
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">{{ $office->name }}</span>
+                                @endforeach
                             <td class="px-6 py-4 text-right space-x-2">
                                 <a class="inline-flex items-center text-blue-600 hover:text-blue-800" href="{{ route('users.show', $user->id) }}">
                                     <i class="fa-solid fa-list mr-1"></i> Show

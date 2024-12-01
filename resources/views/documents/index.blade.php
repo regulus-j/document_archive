@@ -189,6 +189,48 @@
     </div>
 </div>
 
+<div class="container mx-auto px-4 py-6">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-semibold text-gray-800">Document Audit Logs</h2>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left text-gray-500">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3">Date/Time</th>
+                        <th class="px-6 py-3">Document</th>
+                        <th class="px-6 py-3">User</th>
+                        <th class="px-6 py-3">Action</th>
+                        <th class="px-6 py-3">Status</th>
+                        <th class="px-6 py-3">Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($auditLogs as $log)
+                        <tr class="bg-white border-b hover:bg-gray-50">
+                            <td class="px-6 py-4">{{ $log->created_at }}</td>
+                            <td class="px-6 py-4">{{ $log->document->title }}</td>
+                            <td class="px-6 py-4">{{ $log->user->first_name }} {{ $log->user->last_name }}</td>
+                            <td class="px-6 py-4">{{ $log->action }}</td>
+                            <td class="px-6 py-4">{{ $log->status }}</td>
+                            <td class="px-6 py-4">{{ $log->details }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="6" class="px-6 py-4 text-center">No audit logs found</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+        <div class="px-6 py-4">
+            {{ $auditLogs->links() }}
+        </div>
+    </div>
+</div>
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const form = document.getElementById('search-form');
@@ -294,7 +336,5 @@
         window.addEventListener('beforeunload', stopCamera);
     });
 </script>
-
-@include('documents.partials.folder_create')
 
 @endsection

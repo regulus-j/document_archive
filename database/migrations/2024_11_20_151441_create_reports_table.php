@@ -22,6 +22,14 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        Schema::create('logs', function (Blueprint $table) {
+            $table->id();
+            $table->string('action');
+            $table->string('description');
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->timestamps();
+        });
+
     }
 
     /**
