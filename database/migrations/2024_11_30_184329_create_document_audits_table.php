@@ -23,6 +23,19 @@ return new class extends Migration
             $table->foreign('document_id')->references('id')->on('documents');
             $table->foreign('user_id')->references('id')->on('users');
         });
+
+        Schema::create('document_transaction', function($table)
+        {
+            $table->id();
+            $table->unsignedBigInteger('doc_id');
+            $table->unsignedBigInteger('from_office');
+            $table->unsignedBigInteger('to_office');
+            $table->timestamps();
+
+            $table->foreign('doc_id')->references('id')->on('documents');
+            $table->foreign('from_office')->references('id')->on('offices');
+            $table->foreign('to_office')->references('id')->on('offices');
+        });
     }
 
     /**

@@ -14,10 +14,10 @@ return new class extends Migration
         Schema::create('documents', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('uploader');
-            $table->unsignedBigInteger('originating_office');
             $table->string('title');
             $table->longText('description');
-            $table->text('content');
+            $table->text('remarks')->nullable();
+            $table->text('content')->nullable();
             $table->string('path');
             $table->timestamps();
 

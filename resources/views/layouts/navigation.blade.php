@@ -60,7 +60,7 @@
                             <x-dropdown-link :href="route('documents.create')">
                                 {{ __('Upload') }}
                             </x-dropdown-link>
-                            <x-dropdown-link :href="route('documents.create')">
+                            <x-dropdown-link :href="route('documents.pending')">
                                 {{ __('Receive/Release') }}
                             </x-dropdown-link>
                             <x-dropdown-link :href="route('documents.create')">

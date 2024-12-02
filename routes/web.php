@@ -48,22 +48,23 @@ Route::middleware('auth')->group(function() {
         Route::get('/', [DocumentController::class, 'index'])->name('documents.index');
         Route::get('/create', [DocumentController::class, 'create'])->name('documents.create');
         Route::post('/', [DocumentController::class, 'store'])->name('documents.store');
+    
+        // Move the 'pending' route here
+        Route::get('/pending', [DocumentController::class, 'showPending'])->name('documents.pending');
+    
+        // Parameterized routes should come after static routes
         Route::get('/{document}', [DocumentController::class, 'show'])->name('documents.show');
         Route::get('/{document}/edit', [DocumentController::class, 'edit'])->name('documents.edit');
         Route::put('/{document}', [DocumentController::class, 'update'])->name('documents.update');
         Route::delete('/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');
-        Route::post('/search', [DocumentController::class, 'search'])->name('documents.search');
-        // Route::get('/audit', [DocumentController::class, 'audit'])->name('documents.audit');
-    });
 
-    Route::prefix('folders')->group(function() {
-        Route::get('/', [FolderController::class, 'index'])->name('folders.index');
-        Route::get('/create', [FolderController::class, 'create'])->name('folders.create');
-        Route::post('/', [FolderController::class, 'store'])->name('folders.store');
-        Route::get('/{folder}', [FolderController::class, 'show'])->name('folders.show');
-        Route::get('/{folder}/edit', [FolderController::class, 'edit'])->name('folders.edit');
-        Route::put('/{folder}', [FolderController::class, 'update'])->name('folders.update');
-        Route::delete('/{folder}', [FolderController::class, 'destroy'])->name('folders.destroy');
+        //receive and release
+        Route::get('/receive/{document}', [DocumentController::class, 'setReceived'])->name('documents.receive');
+        Route::get('/release/{document}', [DocumentController::class, 'confirmReleased'])->name('documents.confirmrelease');
+        Route::put('/release/{document}', [DocumentController::class, 'setReleased'])->name('documents.release');
+
+        Route::post('/search', [DocumentController::class, 'search'])->name('documents.search');
+        Route::get('/search', [DocumentController::class, 'download'])->name('documents.download');
     });
 
     Route::prefix('office')->group(function() {

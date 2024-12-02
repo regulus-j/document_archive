@@ -23,6 +23,8 @@
 
     <form action="{{ route('documents.store') }}" method="POST" enctype="multipart/form-data" class="bg-white shadow-lg rounded-lg p-8 max-w-2xl mx-auto">
         @csrf
+        @method('POST')
+
         <div class="grid grid-cols-1 gap-6">
             {{-- Tracking Number --}}
             <div>
@@ -66,10 +68,9 @@
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" 
                         required>
                     <option value="">Select Document Classification</option>
-                    <option value="Unclassified">Unclassified</option>
-                    <option value="Confidential">Confidential</option>
-                    <option value="Secret">Secret</option>
-                    <option value="Top Secret">Top Secret</option>
+                    @foreach($categories as $id => $classification)
+                        <option value="{{ $id }}">{{ $classification }}</option>
+                    @endforeach
                 </select>
             </div>
 
@@ -103,25 +104,25 @@
             </div>
 
             <div>
-                <label for="originating_office" class="block text-sm font-medium text-gray-700">
+                <label for="from_office" class="block text-sm font-medium text-gray-700">
                     Originating Office
                 </label>
-                <select name="originating_office" id="originating_office" 
+                <select name="from_office" id="from_office" 
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
                         required>
                     <option value="">Select Originating Office</option>
                     @foreach(Auth::user()->offices as $office)
-                        <option value="{{ $office->id }}">{{ $office->name }}</option>
+                    <option value="{{ $office->id }}">{{ $office->name }}</option>
                     @endforeach
                 </select>
             </div>
 
             {{-- Recipient Office --}}
             <div>
-                <label for="recipient_office" class="block text-sm font-medium text-gray-700">
+                <label for="to_office" class="block text-sm font-medium text-gray-700">
                     Recipient Office
                 </label>
-                <select name="recipient_office" id="recipient_office" 
+                <select name="to_office" id="to_office" 
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" 
                         required>
                     <option value="">Select Recipient Office</option>
@@ -150,20 +151,28 @@
                 </label>
                 <div class="mt-1 flex items-center space-x-4">
                     <input type="file" 
+
                            name="upload" 
+
                            id="upload" 
+
+                           accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+
                            class="block w-full text-sm text-gray-500 
+
                                   file:mr-4 file:py-2 file:px-4
+
                                   file:rounded-full file:border-0
+
                                   file:text-sm file:font-semibold
+
                                   file:bg-indigo-50 file:text-indigo-700
+
                                   hover:file:bg-indigo-100" 
+
                            required>
-                    <button type="button" 
-                            id="btn-opencam"
-                            class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-700 focus:outline-none focus:border-indigo-700 focus:ring focus:ring-indigo-200 disabled:opacity-25 transition">
-                        <i class="fas fa-camera mr-2"></i>Open Camera
-                    </button>
+
+                    <p class="mt-2 text-xs text-gray-500">Accepted formats: PDF, DOC, DOCX, JPG, JPEG, PNG (max 10MB)</p>
                 </div>
             </div>
         </div>
@@ -178,5 +187,4 @@
     </form>
 </div>
 
-@include('documents.partials.webcam')
 @endsection

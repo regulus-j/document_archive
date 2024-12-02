@@ -8,6 +8,7 @@ class Office extends Model
 {
     protected $fillable = [
         'name',
+        'parent_office_id'
     ];
 
     public function childOffices()

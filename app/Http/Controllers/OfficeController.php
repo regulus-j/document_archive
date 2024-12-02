@@ -22,37 +22,24 @@ class OfficeController extends Controller
      */
     public function create()
     {
-        //
-        $offices = Office::pluck('name', 'id')->all();
-        return view('offices.index', compact('offices'));
+        $offices = Office::all()->pluck('name', 'id');
+        return view('offices.create', compact('offices'));
     }
-
-    /**
-     * Store a newly created resource in storage.
-     */
+    
     public function store(Request $request)
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'office_id' => 'exists:offices,id',
+            'parent_office_id' => 'nullable|exists:offices,id'
         ]);
-
-        try {
-            if ($request->office_id) {
-                Office::create([
-                    'name' => $request->name,
-                    'office_id' => $request->office_id,
-                ]);
-            } else {
-                Office::create([
-                    'name' => $request->name,
-                ]);
-            }
-
-            return back()->with('success', 'Office created successfully.');
-        } catch (\Exception $e) {
-            return back()->with('error', 'Error creating office');
-        }
+    
+        Office::create([
+            'name' => $request->name,
+            'parent_office_id' => $request->parent_office_id
+        ]);
+    
+        return redirect()->route('office.index')
+            ->with('success', 'Office created successfully.');
     }
 
     /**
@@ -61,6 +48,8 @@ class OfficeController extends Controller
     public function show(Office $office)
     {
         //
+        $office = Office::with('parentOffice')->find($office->id);
+        return view('offices.show', compact('office'));
     }
 
     /**
@@ -68,15 +57,32 @@ class OfficeController extends Controller
      */
     public function edit(Office $office)
     {
-        //
+        $office = Office::with('parentOffice')->find($office->id);
+        $offices = Office::where('id', '!=', $office->id)->get();  // Exclude current office
+        
+        return view('offices.edit', compact('office', 'offices'));
     }
-
     /**
      * Update the specified resource in storage.
      */
     public function update(Request $request, Office $office)
     {
         //
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'parent_office_id' => 'nullable|exists:offices,id',
+        ]);
+
+        try {
+            $office->update([
+                'name' => $request->name,
+                'parent_office_id' => $request->parent_office_id,
+            ]);
+
+            return redirect()->route('office.index')->with('success', 'Office updated successfully.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error updating office');
+        }
     }
 
     /**
@@ -85,5 +91,11 @@ class OfficeController extends Controller
     public function destroy(Office $office)
     {
         //
+        try {
+            $office->delete();
+            return redirect()->route('office.index')->with('success', 'Office deleted successfully.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error deleting office');
+        }
     }
 }

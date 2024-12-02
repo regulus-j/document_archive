@@ -17,6 +17,53 @@
             <div id="error-container" class="hidden mb-4 bg-red-50 text-red-700 p-4 rounded-md">
                 <ul class="list-disc list-inside"></ul>
             </div>
+
+            <div class="mb-6 flex items-center space-x-4">
+                <select id="filter-field" class="rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="title">Title</option>
+                    <option value="uploader">Uploader</option>
+                    <option value="status">Status</option>
+                    <option value="originating">Originating</option>
+                    <option value="recipient">Recipient</option>
+                    <option value="description">Description</option>
+                </select>
+                <div class="relative flex-grow">
+                    <input type="text" 
+                           id="quick-search" 
+                           class="block w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                           placeholder="Quick search...">
+                </div>
+            </div>
+
+            <script>
+            document.getElementById('quick-search').addEventListener('keyup', function() {
+                const searchField = document.getElementById('filter-field').value;
+                const searchText = this.value.toLowerCase();
+                const tableRows = document.querySelectorAll('tbody tr');
+
+                tableRows.forEach(row => {
+                    let cellIndex;
+                    switch(searchField) {
+                        case 'title': cellIndex = 1; break;
+                        case 'uploader': cellIndex = 2; break;
+                        case 'status': cellIndex = 3; break;
+                        case 'originating': cellIndex = 4; break;
+                        case 'recipient': cellIndex = 5; break;
+                        case 'description': cellIndex = 7; break;
+                        default: cellIndex = 1;
+                    }
+                    
+                    const cell = row.cells[cellIndex];
+                    const text = cell.textContent.toLowerCase();
+                    
+                    if (text.includes(searchText)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
+            </script>
     
             <form id="search-form" action="/documents/search" method="POST" enctype="multipart/form-data" class="space-y-6">
                 <input type="hidden" name="_token" value="{{ csrf_token() }}">
@@ -125,65 +172,77 @@
 
 
     <div class="container mx-auto px-4 py-6 max-w-7xl">
-        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
             <div class="overflow-x-auto">
-                <table class="w-full text-sm text-left text-gray-500">
-                <thead class="text-xs text-gray-700 uppercase bg-gray-50">
-                    <tr>
-                        <th scope="col" class="px-6 py-3">No</th>
-                        <th scope="col" class="px-6 py-3">Title</th>
-                        <th scope="col" class="px-6 py-3">Uploader</th>
-                        <th scope="col" class="px-6 py-3">Uploaded</th>
-                        <th scope="col" class="px-6 py-3">Description</th>
-                        <th scope="col" class="px-6 py-3">Path</th>
-                        <th scope="col" class="px-6 py-3 text-right">Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($documents as $document)
-                    <tr class="bg-white border-b hover:bg-gray-50">
-                        <td class="px-6 py-4 font-medium text-gray-900">{{ $loop->iteration }}</td>
-                        <td class="px-6 py-4">{{ $document->title }}</td>
-                        <td class="px-6 py-4">{{ $document->user->first_name . ' ' . $document->user->last_name }}</td>
-                        <td class="px-6 py-4">{{ $document->created_at }}</td>
-                        <td class="px-6 py-4">{{ $document->description }}</td>
-                        <td class="px-6 py-4">{{ $document->path }}</td>
-                        <td class="px-6 py-4 text-right space-x-2">
-                            <a href="{{ route('documents.show', $document->id) }}" 
-                               class="inline-flex items-center text-blue-600 hover:text-blue-800">
-                                <i class="fa-solid fa-list mr-1"></i> Show
-                            </a>
-                            @can('document-edit')
-                            <a href="{{ route('documents.edit', $document->id) }}"
-                               class="inline-flex items-center text-blue-600 hover:text-blue-800">
-                                <i class="fa-solid fa-pen-to-square mr-1"></i> Edit
-                            </a>
-                            @endcan
-                            @can('document-delete')
-                            <form action="{{ route('documents.destroy', $document->id, $document->path) }}" method="POST" class="inline-block">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" 
-                                        class="inline-flex items-center text-red-600 hover:text-red-800"
-                                        onclick="return confirm('Are you sure you want to delete this document?')">
-                                    <i class="fa-solid fa-trash mr-1"></i> Delete
-                                </button>
-                            </form>
-                            @endcan
-                            <form action="{{ route('documents.downloadFile', $document->id) }}" method="get" class="inline-block">
-                                @csrf
-                                @method('GET')
-                                <button type="submit" class="inline-flex items-center text-green-600 hover:text-green-800">
-                                    <i class="fa-solid fa-download mr-1"></i> Download
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
+                <table class="w-full text-sm">
+                    <thead class="bg-blue-50 text-blue-800">
+                        <tr>
+                            <th scope="col" class="px-4 py-3 text-left">No</th>
+                            <th scope="col" class="px-4 py-3 text-left">Title</th>
+                            <th scope="col" class="px-4 py-3 text-left">Uploader</th>
+                            <th scope="col" class="px-4 py-3 text-left">Status</th>
+                            <th scope="col" class="px-4 py-3 text-left">Originating</th>
+                            <th scope="col" class="px-4 py-3 text-left">Recipient</th>
+                            <th scope="col" class="px-4 py-3 text-left">Uploaded</th>
+                            <th scope="col" class="px-4 py-3 text-left">Description</th>
+                            <th scope="col" class="px-4 py-3 text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($documents as $document)
+                        <tr class="border-b border-gray-200 hover:bg-blue-50 transition-colors">
+                            <td class="px-4 py-3 font-medium text-gray-900">{{ $loop->iteration }}</td>
+                            <td class="px-4 py-3 text-gray-700">{{ $document->title }}</td>
+                            <td class="px-4 py-3 text-gray-700">{{ $document->user->first_name . ' ' . $document->user->last_name }}</td>
+                            <td class="px-4 py-3">
+                                <span class="px-2 py-1 rounded-full text-xs font-medium 
+                                    {{ $document->status?->status == 'Approved' ? 'bg-green-100 text-green-800' : 
+                                       ($document->status?->status == 'Pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800') }}">
+                                    {{ $document->status?->status ?? 'N/A' }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-gray-700">{{ $document->transaction?->fromOffice?->name ?? 'N/A' }}</td>
+                            <td class="px-4 py-3 text-gray-700">{{ $document->transaction?->toOffice?->name ?? 'N/A' }}</td>
+                            <td class="px-4 py-3 text-gray-700">{{ $document->created_at }}</td>
+                            <td class="px-4 py-3 text-gray-700">{{ $document->description }}</td>
+                            <td class="px-4 py-3 text-right space-x-2">
+                                <div class="flex justify-end space-x-2">
+                                    <a href="{{ route('documents.show', $document->id) }}" 
+                                       class="text-blue-600 hover:text-blue-800 transition-colors">
+                                        <i class="fa-solid fa-list mr-1"></i> Show
+                                    </a>
+                                    @can('document-edit')
+                                    <a href="{{ route('documents.edit', $document->id) }}"
+                                       class="text-green-600 hover:text-green-800 transition-colors">
+                                        <i class="fa-solid fa-pen-to-square mr-1"></i> Edit
+                                    </a>
+                                    @endcan
+                                    @can('document-delete')
+                                    <form action="{{ route('documents.destroy', $document->id) }}" method="POST" class="inline-block">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" 
+                                                class="text-red-600 hover:text-red-800 transition-colors"
+                                                onclick="return confirm('Are you sure you want to delete this document?')">
+                                            <i class="fa-solid fa-trash mr-1"></i> Delete
+                                        </button>
+                                    </form>
+                                    @endcan
+                                    <form action="{{ route('documents.downloadFile', $document->id) }}" method="get" class="inline-block">
+                                        @csrf
+                                        @method('GET')
+                                        <button type="submit" class="text-green-600 hover:text-green-800 transition-colors">
+                                            <i class="fa-solid fa-download mr-1"></i> Download
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
         </div>
-    </div>
     <div class="mt-6">
         {!! $documents->links() !!}
     </div>

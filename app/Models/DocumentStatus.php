@@ -4,16 +4,17 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class DocumentTrackingNumber extends Model
+class DocumentStatus extends Model
 {
-    protected $table = 'document_trackingnumbers';
+    //
+    protected $table = "document_status";
 
     protected $fillable = [
+        'status',
         'doc_id',
-        'tracking_number'
     ];
 
-    public function document()
+    public function documents()
     {
         return $this->belongsTo(Document::class, 'doc_id');
     }
