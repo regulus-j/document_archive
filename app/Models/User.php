@@ -53,4 +53,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Document::class, 'uploader');
     }
+
+    public function offices()
+    {
+        return $this->belongsToMany(Office::class);
+    }
 }
