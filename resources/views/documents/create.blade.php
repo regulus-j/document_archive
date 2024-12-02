@@ -1,138 +1,190 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="row">
-    <div class="col-lg-12 margin-tb">
-        <div class="pull-left">
-            <h2>Add New Document</h2>
-        </div>
-        <div class="pull-right">
-            <a class="btn btn-primary btn-sm" href="{{ route('documents.index') }}"><i class="fa fa-arrow-left"></i> Back</a>
-        </div>
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-800">Add New Document</h1>
+        <a href="{{ route('documents.index') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left mr-2"></i>Back to List
+        </a>
     </div>
-</div>
 
-@if ($errors->any())
-    <div class="alert alert-danger">
-        <strong>Whoops!</strong> There were some problems with your input.<br><br>
-        <ul>
-            @foreach ($errors->all() as $error)
-                <li>{{ $error }}</li>
-            @endforeach
-        </ul>
-    </div>
-@endif
-
-<form action="{{ route('documents.store') }}" method="POST" enctype="multipart/form-data">
-    @csrf
-
-    <div class="row">
-        <div class="col-xs-12 col-sm-12 col-md-12">
-            <div class="form-group">
-                <strong>Title:</strong>
-                <input type="text" name="title" class="form-control" placeholder="Title" required>
-                <input type="text" name="description" class="form-control" placeholder="Description" required>
-            </div>
+    @if ($errors->any())
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+            <strong class="font-bold">Whoops!</strong>
+            <span class="block sm:inline">There were some problems with your input.</span>
+            <ul class="mt-2 list-disc list-inside">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
         </div>
-        <div class="col-xs-12 col-sm-12 col-md-12">
-            <div class="form-group">
-                <strong>Upload File:</strong>
-                <input type="file" id="file-input" name="upload" class="form-control" required>
-                <a class="btn btn-primary btn-sm mb-2" id="btn-opencam"><i class="fa fa-camera"></i> Open Camera</a>
-            </div>
-        </div>
-        <div class="col-xs-12 col-sm-12 col-md-12 text-center">
-            <button type="submit" class="btn btn-primary">Submit</button>
-        </div>
-    </div>
-</form>
+    @endif
 
-<!-- Modal -->
-<div id="cameraModal" class="fixed z-10 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
-        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                <div class="sm:flex sm:items-start">
-                    {{-- <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
-                        <svg class="h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-4.553a1 1 0 00-1.414-1.414L13.586 8.586a1 1 0 01-1.414 0L9.414 5.414a1 1 0 00-1.414 1.414L12 10m0 0l-4.553 4.553a1 1 0 001.414 1.414L10.414 13.414a1 1 0 011.414 0l2.172 2.172a1 1 0 001.414-1.414L12 10z" />
-                        </svg>
-                    </div> --}}
-                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">Capture Image</h3>
-                        <div class="mt-2">
-                            <video id="camfeed" autoplay class="w-full rounded-md"></video>
-                        </div>
-                    </div>
+    <form action="{{ route('documents.store') }}" method="POST" enctype="multipart/form-data" class="bg-white shadow-lg rounded-lg p-8 max-w-2xl mx-auto">
+        @csrf
+        @method('POST')
+
+        <div class="grid grid-cols-1 gap-6">
+            {{-- Tracking Number --}}
+            <div>
+                <label for="tracking_number" class="block text-sm font-medium text-gray-700">
+                    Tracking Number
+                </label>
+                <div class="mt-1">
+                    <input type="text" name="tracking_number" id="tracking_number" 
+                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" 
+                           placeholder="2021-1020-2890-0049" 
+                           required
+                           readonly
+                           value="{{ $tracking }}">
+                    <p class="mt-2 text-sm text-gray-500">Ensure the tracking number matches the physical document.</p>
                 </div>
             </div>
-            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                <button id="snap" type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">Snap</button>
-                <button id="closeModal" type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto sm:text-sm">Cancel</button>
+
+            {{-- Title and Description --}}
+            <div>
+                <label for="title" class="block text-sm font-medium text-gray-700">
+                    Title and Description
+                </label>
+                <div class="mt-1 space-y-2">
+                    <input type="text" name="title" id="title" 
+                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" 
+                           placeholder="Document Title" 
+                           required>
+                    <input type="text" name="description" id="description" 
+                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" 
+                           placeholder="Document Description" 
+                           required>
+                </div>
+            </div>
+
+            {{-- Document Type --}}
+            <div>
+                <label for="classification" class="block text-sm font-medium text-gray-700">
+                    Classification
+                </label>
+                <select name="classification" id="type" 
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" 
+                        required>
+                    <option value="">Select Document Classification</option>
+                    @foreach($categories as $id => $classification)
+                        <option value="{{ $id }}">{{ $classification }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            {{-- Purpose Checkboxes --}}
+            <div>
+                <label class="block text-sm font-medium text-gray-700">
+                    Purpose of Document
+                </label>
+                <div class="mt-2 space-y-2">
+                    @php
+                        $purposes = [
+                            'Appropriate action', 
+                            'Information', 
+                            'Recommendation', 
+                            'Approval', 
+                            'Signature'
+                        ];
+                    @endphp
+                    @foreach($purposes as $purpose)
+                        <div class="flex items-center">
+                            <input type="checkbox" 
+                                   name="for[]" 
+                                   value="{{ $purpose }}" 
+                                   class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                            <label class="ml-2 block text-sm text-gray-900">
+                                {{ $purpose }}
+                            </label>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+
+            <div>
+                <label for="from_office" class="block text-sm font-medium text-gray-700">
+                    Originating Office
+                </label>
+                <select name="from_office" id="from_office" 
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                        required>
+                    <option value="">Select Originating Office</option>
+                    @foreach(Auth::user()->offices as $office)
+                    <option value="{{ $office->id }}">{{ $office->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            {{-- Recipient Office --}}
+            <div>
+                <label for="to_office" class="block text-sm font-medium text-gray-700">
+                    Recipient Office
+                </label>
+                <select name="to_office" id="to_office" 
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" 
+                        required>
+                    <option value="">Select Recipient Office</option>
+                    @foreach($offices as $office)
+                        <option value="{{ $office->id }}">{{ $office->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            {{-- Remarks --}}
+            <div>
+                <label for="remarks" class="block text-sm font-medium text-gray-700">
+                    Remarks
+                </label>
+                <textarea name="remarks" id="remarks" 
+                          rows="3"
+                          maxlength="250"
+                          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" 
+                          placeholder="Enter additional remarks (max 250 characters)"></textarea>
+            </div>
+
+            {{-- File Upload --}}
+            <div>
+                <label for="upload" class="block text-sm font-medium text-gray-700">
+                    Upload Document
+                </label>
+                <div class="mt-1 flex items-center space-x-4">
+                    <input type="file" 
+
+                           name="upload" 
+
+                           id="upload" 
+
+                           accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+
+                           class="block w-full text-sm text-gray-500 
+
+                                  file:mr-4 file:py-2 file:px-4
+
+                                  file:rounded-full file:border-0
+
+                                  file:text-sm file:font-semibold
+
+                                  file:bg-indigo-50 file:text-indigo-700
+
+                                  hover:file:bg-indigo-100" 
+
+                           required>
+
+                    <p class="mt-2 text-xs text-gray-500">Accepted formats: PDF, DOC, DOCX, JPG, JPEG, PNG (max 10MB)</p>
+                </div>
             </div>
         </div>
-    </div>
+
+        {{-- Submit Button --}}
+        <div class="mt-6">
+            <button type="submit" 
+                    class="w-full inline-flex justify-center py-3 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                Submit Document
+            </button>
+        </div>
+    </form>
 </div>
-
-@if(session('error'))
-    <script>
-        alert("{{ session('error') }}");
-    </script>
-@endif
-
-<script>
-    document.querySelector('#snap').addEventListener('click', function() {
-        var canvas = document.createElement('canvas');
-        canvas.width = 300;
-        canvas.height = 300;
-        var context = canvas.getContext('2d');
-        context.drawImage(document.querySelector('#camfeed'), 0, 0, 300, 300);
-        canvas.toBlob(function(blob) {
-            var file = new File([blob], "snapshot.png", { type: "image/png" });
-            var dataTransfer = new DataTransfer();
-            dataTransfer.items.add(file);
-            document.querySelector('#file-input').files = dataTransfer.files;
-            alert('Image captured and added to the form.');
-            document.getElementById('cameraModal').classList.add('hidden');
-        }, 'image/png');
-    });
-
-    document.querySelector('#closeModal').addEventListener('click', function() {
-        document.getElementById('cameraModal').classList.add('hidden');
-    });
-
-    document.querySelector('#btn-opencam').addEventListener('click', function() {
-        document.getElementById('cameraModal').classList.remove('hidden');
-    });
-</script>
-
-<script>
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        navigator.mediaDevices.getUserMedia({ video: true }).then(function(stream) {
-            var video = document.querySelector('#camfeed');
-            video.srcObject = stream;
-            video.play();
-        });
-    } else {
-        alert('Camera not found');
-    }
-
-    document.querySelector('#snap').addEventListener('click', function() {
-        var canvas = document.createElement('canvas');
-        canvas.width = 300;
-        canvas.height = 300;
-        var context = canvas.getContext('2d');
-        context.drawImage(document.querySelector('#camfeed'), 0, 0, 300, 300);
-        canvas.toBlob(function(blob) {
-            var file = new File([blob], "snapshot.png", { type: "image/png" });
-            var dataTransfer = new DataTransfer();ss
-            dataTransfer.items.add(file);
-            document.querySelector('#file-input').files = dataTransfer.files;
-            alert('Image captured and added to the form.');
-        }, 'image/png');
-    });
-</script>
 
 @endsection

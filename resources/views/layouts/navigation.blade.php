@@ -25,8 +25,8 @@
 
                 {{-- @can('team-list') --}}
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                    <x-nav-link :href="route('teams.index')" :active="request()->routeIs('teams.index')">
-                        {{ __('Teams') }}
+                    <x-nav-link :href="route('office.index')" :active="request()->routeIs('office.index')">
+                        {{ __('Offices') }}
                     </x-nav-link>
                 </div>
                 {{-- @endcan --}}
@@ -41,9 +41,36 @@
 
                 @can('document-list')
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                    <x-nav-link :href="route('documents.index')" :active="request()->routeIs('documents.index')">
-                        {{ __('Documents') }}
-                    </x-nav-link>
+                    <x-dropdown align="left" width="48">
+                        <x-slot name="trigger">
+                            <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
+                                <div>{{ __('Documents') }}</div>
+                                <div class="ms-1">
+                                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                            </button>
+                        </x-slot>
+
+                        <x-slot name="content">
+                            <x-dropdown-link :href="route('documents.index')">
+                                {{ __('View') }}
+                            </x-dropdown-link>
+                            <x-dropdown-link :href="route('documents.create')">
+                                {{ __('Upload') }}
+                            </x-dropdown-link>
+                            <x-dropdown-link :href="route('documents.pending')">
+                                {{ __('Receive/Release') }}
+                            </x-dropdown-link>
+                            <x-dropdown-link :href="route('documents.create')">
+                                {{ __('Tag as Terminal') }}
+                            </x-dropdown-link>
+                            {{-- <x-dropdown-link :href="route('documents.audit')">
+                                {{ __('Logs') }}
+                            </x-dropdown-link> --}}
+                        </x-slot>
+                    </x-dropdown>
                 </div>
                 @endcan
 
@@ -117,7 +144,7 @@
                 {{ __('Users') }}
             </x-responsive-nav-link>
 
-            <x-responsive-nav-link :href="route('teams.index')" :active="request()->routeIs('teams.index')">
+            <x-responsive-nav-link :href="route('office.index')" :active="request()->routeIs('office.index')">
                 {{ __('Teams') }}
             </x-responsive-nav-link>
 
