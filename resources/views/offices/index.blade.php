@@ -22,6 +22,19 @@
         >
     </div>
 
+    @if(session('error') || $errors->any())
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+            <strong class="font-bold">{{ session('error') ?? 'There was an error!' }}</strong>
+            @if($errors->any())
+                <ul class="mt-2 list-disc list-inside">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            @endif
+        </div>
+    @endif
+
     <div id="defaultView" class="bg-white rounded-2xl shadow-lg overflow-hidden">
         <table id="officesTable" class="w-full text-sm">
             <thead class="bg-blue-50 text-blue-800">
@@ -51,6 +64,7 @@
                                 @method('DELETE')
                                 <button type="submit" 
                                         class="text-red-600 hover:text-red-800 transition-colors"
+                                        href="{{ route('office.destroy', $office->id) }}"
                                         onclick="return confirm('Are you sure you want to delete this office?')">
                                     <i class="fa-solid fa-trash mr-1"></i> Delete
                                 </button>

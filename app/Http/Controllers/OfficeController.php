@@ -90,12 +90,21 @@ class OfficeController extends Controller
      */
     public function destroy(Office $office)
     {
-        //
         try {
+            if ($office->childOffices()->count() > 0) {
+                return back()->with('error', 'Cannot delete office with child offices.');
+            }
+            if ($office->users()->count() > 0) {
+                return back()->with('error', 'Cannot delete office with associated users.');
+            }
+            if ($office->sentTransactions()->count() > 0 || $office->receivedTransactions()->count() > 0) {
+                return back()->with('error', 'Cannot delete office associated with documents.');
+            }
+            
             $office->delete();
-            return redirect()->route('office.index')->with('success', 'Office deleted successfully.');
+            return redirect()->route('offices.index')->with('success', 'Office deleted successfully.');
         } catch (\Exception $e) {
-            return back()->with('error', 'Error deleting office');
+            return back()->with('error', 'Error deleting office: ' . $e->getMessage());
         }
     }
 }

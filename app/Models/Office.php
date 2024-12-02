@@ -26,8 +26,13 @@ class Office extends Model
         return $this->belongsToMany(User::class);
     }
 
-    public function document()
+    public function sentTransactions()
     {
-        return $this->hasMany(Document::class);
+        return $this->hasMany(DocumentTransaction::class, 'from_office');
+    }
+
+    public function receivedTransactions()
+    {
+        return $this->hasMany(DocumentTransaction::class, 'to_office');
     }
 }

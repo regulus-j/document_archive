@@ -29,7 +29,8 @@ class Document extends Model
 
     public function office()
     {
-        return $this->belongsTo(Office::class);
+        return $this->belongsTo(Office::class, 'office_id');
+
     }
 
     public function masterDocument()
