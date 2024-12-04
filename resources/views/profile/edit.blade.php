@@ -28,8 +28,8 @@
     </div>
 
     @if (session('message'))
-    <script>
-        alert("{{ session('message') }}");
-    </script>
+        <script>
+            alert("{{ session('message') }}");
+        </script>
     @endif
 </x-app-layout>
