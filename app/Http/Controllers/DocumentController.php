@@ -37,9 +37,9 @@ class DocumentController extends Controller
             $documents = Document::with(['user', 'status', 'transaction.fromOffice', 'transaction.toOffice'])->latest()->paginate(5);
         } else {
             $userOfficeIds = auth()->user()->offices->pluck('id')->toArray();
-            
+
             $documents = Document::with(['user', 'status', 'transaction.fromOffice', 'transaction.toOffice'])
-                ->whereHas('user.offices', function($query) use ($userOfficeIds) {
+                ->whereHas('user.offices', function ($query) use ($userOfficeIds) {
                     $query->whereIn('offices.id', $userOfficeIds);
                 })
                 ->latest()
@@ -47,7 +47,30 @@ class DocumentController extends Controller
         }
 
         $auditLogs = DocumentAudit::paginate(15);
-    
+
+        return view('documents.index', array_merge([
+            'documents' => $documents,
+            'i' => (request()->input('page', 1) - 1) * 5
+        ], compact('auditLogs')));
+    }
+
+    public function showArchive(): View
+    {
+        if (auth()->user()->hasRole('Admin')) {
+            $documents = Document::with(['user', 'status', 'transaction.fromOffice', 'transaction.toOffice'])->latest()->paginate(5);
+        } else {
+            $userOfficeIds = auth()->user()->offices->pluck('id')->toArray();
+
+            $documents = Document::with(['user', 'status', 'transaction.fromOffice', 'transaction.toOffice'])
+                ->whereHas('user.offices', function ($query) use ($userOfficeIds) {
+                    $query->whereIn('offices.id', $userOfficeIds);
+                })
+                ->latest()
+                ->paginate(5);
+        }
+
+        $auditLogs = DocumentAudit::paginate(15);
+
         return view('documents.index', array_merge([
             'documents' => $documents,
             'i' => (request()->input('page', 1) - 1) * 5
@@ -63,7 +86,7 @@ class DocumentController extends Controller
             'text' => 'nullable|string|max:255',
             'image' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:10240'
         ]);
-    
+
         try {
             $searchText = $request->input('text', '');
             $content = '';
@@ -72,7 +95,7 @@ class DocumentController extends Controller
 
             if (!auth()->user()->hasRole('Admin')) {
                 $userOfficeIds = auth()->user()->offices->pluck('id')->toArray();
-                $query->whereHas('user.offices', function($q) use ($userOfficeIds) {
+                $query->whereHas('user.offices', function ($q) use ($userOfficeIds) {
                     $q->whereIn('offices.id', $userOfficeIds);
                 });
             }
@@ -124,7 +147,7 @@ class DocumentController extends Controller
         $offices = Office::all();
         $tracking = $this->generateTrackingNumber();
         $categories = DocumentCategory::all()->pluck('category', 'id');
-        return view('documents.create', compact('offices', 'tracking', 'categories'));    
+        return view('documents.create', compact('offices', 'tracking', 'categories'));
     }
 
     /**
@@ -150,7 +173,7 @@ class DocumentController extends Controller
             $fileName = time() . '_' . $file->getClientOriginalName();
             $filePath = $file->storeAs('documents', $fileName, 'public');
             // $fullPath = Storage::path('public/' . $filePath);
-            
+
             // Extract content based on file type
             // $content = '';
             // In the store method, replace the OCR section with:
@@ -158,12 +181,12 @@ class DocumentController extends Controller
             //     // Configure Tesseract with proper path
             //     $command = '"' . env('TESSERACT_PATH', 'C:\Program Files\Tesseract-OCR\tesseract.exe') . '" "' . $fullPath . '" stdout';
             //     $content = shell_exec($command);
-                
+
             //     if (empty($content)) {
             //         \Log::warning('OCR produced no output for file: ' . $fileName);
             //         $content = ''; // Fallback to empty content
             //     }
-                
+
             //     // Log the command and output for debugging
             //     \Log::info('OCR Command: ' . $command);
             //     \Log::info('OCR Output: ' . ($content ?? 'No output'));
@@ -179,7 +202,7 @@ class DocumentController extends Controller
                 'remarks' => $request->remarks ?? null,
             ]);
 
-            $document->categories()->attach([$request->classification]); 
+            $document->categories()->attach([$request->classification]);
 
             $document->status()->create([
                 'status' => 'pending'
@@ -210,7 +233,7 @@ class DocumentController extends Controller
                 ->withInput();
         }
     }
-    
+
     private function isImage($file): bool
     {
         $mimeType = $file->getMimeType();
@@ -224,32 +247,32 @@ class DocumentController extends Controller
             $pdfContent = (new Pdf(
                 env('POPPLER_PATH')
             ))
-            ->setPdf($path)
-            ->text();
-    
+                ->setPdf($path)
+                ->text();
+
             if (empty($pdfContent)) {
                 // If no content extracted, try using shell_exec as fallback
                 $outputFile = storage_path('app/temp/pdf_' . time() . '.txt');
                 $command = env('POPPLER_PATH') . ' ' . str_replace('/', '\\', $path) . ' ' . str_replace('/', '\\', $outputFile);
-                
+
                 // Log the command for debugging
                 \Log::info('PDF Command: ' . $command);
-                
+
                 $output = shell_exec($command);
                 \Log::info('Shell exec output: ' . ($output ?? 'No output'));
-                
+
                 if (file_exists($outputFile)) {
                     $pdfContent = file_get_contents($outputFile);
                     unlink($outputFile); // Clean up
                 }
             }
-    
+
             if (empty($pdfContent)) {
                 throw new Exception('PDF processing failed - no text extracted');
             }
-    
+
             return $pdfContent;
-    
+
         } catch (Exception $e) {
             \Log::error('PDF processing error: ' . $e->getMessage());
             \Log::error('PDF path: ' . $path);
@@ -262,7 +285,7 @@ class DocumentController extends Controller
         // Using PHPWord to extract text from DOCX
         $phpWord = IOFactory::load($path);
         $content = '';
-        
+
         foreach ($phpWord->getSections() as $section) {
             foreach ($section->getElements() as $element) {
                 if (method_exists($element, 'getText')) {
@@ -270,7 +293,7 @@ class DocumentController extends Controller
                 }
             }
         }
-        
+
         return $content;
     }
 
@@ -285,7 +308,7 @@ class DocumentController extends Controller
             ->with(['user'])
             ->orderBy('created_at', 'desc')
             ->paginate(15);
-        return view('documents.show',compact('document', 'auditLogs'));
+        return view('documents.show', compact('document', 'auditLogs'));
     }
 
     /**
@@ -296,7 +319,7 @@ class DocumentController extends Controller
         $userOffice = auth()->user()->offices->pluck('name', 'id');
         $offices = Office::all();
         $categories = DocumentCategory::all()->pluck('category', 'id');
-        return view('documents.edit',compact('document', 'categories', 'offices', 'userOffice'));
+        return view('documents.edit', compact('document', 'categories', 'offices', 'userOffice'));
     }
 
     /**
@@ -316,42 +339,42 @@ class DocumentController extends Controller
 
         try {
             $updateData = [
-            'title' => $request->title,
-            'description' => $request->description,
-            'remarks' => $request->remarks ?? null,
+                'title' => $request->title,
+                'description' => $request->description,
+                'remarks' => $request->remarks ?? null,
             ];
 
             if ($request->hasFile('upload')) {
-            // Delete old file
-            Storage::disk('public')->delete($document->path);
-            
-            // Store new file
-            $file = $request->file('upload');
-            $fileName = time() . '_' . $file->getClientOriginalName();
-            $filePath = $file->storeAs('documents', $fileName, 'public');
-            $updateData['path'] = $filePath;
+                // Delete old file
+                Storage::disk('public')->delete($document->path);
+
+                // Store new file
+                $file = $request->file('upload');
+                $fileName = time() . '_' . $file->getClientOriginalName();
+                $filePath = $file->storeAs('documents', $fileName, 'public');
+                $updateData['path'] = $filePath;
             }
 
             $document->update($updateData);
             $document->categories()->sync([$request->classification]);
-            
+
             DocumentTransaction::where('doc_id', $document->id)->update([
-            'from_office' => $request->from_office,
-            'to_office' => $request->to_office
+                'from_office' => $request->from_office,
+                'to_office' => $request->to_office
             ]);
 
             $this->logDocumentAction($document, 'updated', null, 'Document information updated');
 
             return redirect()->route('documents.index')
-                    ->with('success','Document updated successfully');
+                ->with('success', 'Document updated successfully');
 
         } catch (Exception $e) {
             \Log::error('Document update error: ' . $e->getMessage());
             return redirect()->back()
-            ->with('error', 'Error updating document: ' . $e->getMessage())
-            ->withInput();
+                ->with('error', 'Error updating document: ' . $e->getMessage())
+                ->withInput();
         }
-        }
+    }
 
     /**
      * Remove the specified document from storage.
@@ -363,7 +386,7 @@ class DocumentController extends Controller
         $document->delete();
 
         return redirect()->route('documents.index')
-                        ->with('success','Document deleted successfully');
+            ->with('success', 'Document deleted successfully');
     }
 
     public function uploadImage(Request $request)
@@ -397,18 +420,19 @@ class DocumentController extends Controller
         return response()->download($filePath);
     }
 
-    function generateTrackingNumber($prefix = 'TRK', $length = 10) {
+    function generateTrackingNumber($prefix = 'TRK', $length = 10)
+    {
         do {
             // Define the characters to use for the random part
             $characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
             $charactersLength = strlen($characters);
             $randomString = '';
-        
+
             // Generate the random part of the tracking number
             for ($i = 0; $i < $length; $i++) {
-            $randomString .= $characters[rand(0, $charactersLength - 1)];
+                $randomString .= $characters[rand(0, $charactersLength - 1)];
             }
-        
+
             // Combine the prefix with the random string and a timestamp
             $trackingNumber = $prefix . '-' . $randomString . '-' . time();
 
@@ -427,7 +451,8 @@ class DocumentController extends Controller
 
     }
 
-    public function scanQr($image){
+    public function scanQr($image)
+    {
 
     }
 
@@ -448,7 +473,7 @@ class DocumentController extends Controller
         $auditLogs = DocumentAudit::with(['document', 'user'])
             ->orderBy('created_at', 'desc')
             ->paginate(15);
-            
+
         return view('documents.audit', compact('auditLogs'));
     }
 
@@ -456,19 +481,19 @@ class DocumentController extends Controller
     {
         // Get the IDs of the offices associated with the authenticated user
         $userOfficeIds = auth()->user()->offices->pluck('id')->toArray();
-    
+
         // Retrieve documents where the transaction's from_office or to_office matches the user's offices
         $documents = Document::with(['user', 'status', 'transaction.fromOffice', 'transaction.toOffice'])
-            ->whereHas('transaction', function($query) use ($userOfficeIds) {
+            ->whereHas('transaction', function ($query) use ($userOfficeIds) {
                 $query->whereIn('from_office', $userOfficeIds)
-                      ->orWhereIn('to_office', $userOfficeIds);
+                    ->orWhereIn('to_office', $userOfficeIds);
             })
-            ->whereHas('status', function($query) {
+            ->whereHas('status', function ($query) {
                 $query->whereIn('status', ['pending', 'received', 'released', 'terminal']);
             })
             ->latest()
             ->paginate(5);
-    
+
         return view('documents.pending', [
             'documents' => $documents,
             'i' => (request()->input('page', 1) - 1) * 5,
@@ -480,7 +505,7 @@ class DocumentController extends Controller
         try {
             $document = Document::findOrFail($id);
             $document->status()->update(['status' => 'received']);
-            
+
             $this->logDocumentAction($document, 'status_changed', 'received', 'Document marked as received');
 
             return redirect()->back()->with('success', 'Document marked as received');
@@ -493,15 +518,68 @@ class DocumentController extends Controller
     {
         $document = Document::with(['transaction.fromOffice', 'transaction.toOffice'])->findOrFail($id);
 
-        return view('documents.releasing_form', compact('document'));    
+        return view('documents.releasing_form', compact('document'));
     }
 
-    public function setReleased($id){
+    public function setReleased($id)
+    {
         $document = Document::findOrFail($id);
+
         $document->status()->update(['status' => 'released']);
-        
+
         $this->logDocumentAction($document, 'status_changed', 'released', 'Document marked as released');
 
         return redirect()->route('documents.pending')->with('success', 'Document marked as released');
+    }
+
+    public function tagTerminal()
+    {
+        // Get the IDs of the offices associated with the authenticated user
+        $userOfficeIds = auth()->user()->offices->pluck('id')->toArray();
+
+        // Retrieve documents where the transaction's from_office or to_office matches the user's offices
+        $documents = Document::with(['user', 'status', 'transaction.fromOffice', 'transaction.toOffice'])
+            ->whereHas('transaction', function ($query) use ($userOfficeIds) {
+                $query->whereIn('from_office', $userOfficeIds)
+                    ->orWhereIn('to_office', $userOfficeIds);
+            })
+            ->whereHas('status', function ($query) {
+                $query->whereIn('status', ['released', 'terminal', 'retracted']);
+            })
+            ->latest()
+            ->paginate(5);
+
+        return view('documents.tagterminal', [
+            'documents' => $documents,
+            'i' => (request()->input('page', 1) - 1) * 5,
+        ]);
+    }
+
+    public function tagAsTerminal($id)
+    {
+        try {
+            $document = Document::findOrFail($id);
+            $document->status()->update(['status' => 'terminal']);
+
+            $this->logDocumentAction($document, 'status_changed', 'terminal', 'Document marked as received');
+
+            return redirect()->back()->with('success', 'Document marked as received');
+        } catch (Exception $e) {
+            return redirect()->back()->with('error', 'Error updating document status: ' . $e->getMessage());
+        }
+    }
+
+    public function retractTerminal($id)
+    {
+        try {
+            $document = Document::findOrFail($id);
+            $document->status()->update(['status' => 'retracted']);
+
+            $this->logDocumentAction($document, 'status_changed', 'retracted', 'Document marked as received');
+
+            return redirect()->back()->with('success', 'Document marked as retracted');
+        } catch (Exception $e) {
+            return redirect()->back()->with('error', 'Error updating document status: ' . $e->getMessage());
+        }
     }
 }
