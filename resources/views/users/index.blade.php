@@ -1,77 +1,133 @@
 @extends('layouts.app')
 
 @section('content')
-
-<div class="container mx-auto px-4 py-6">
-    <div class="mb-6">
-        <div class="flex justify-between items-center">
-            <h2 class="text-2xl font-semibold text-gray-800">{{ __('User Management') }}</h2>
-            <a class="inline-flex items-center bg-green-500 hover:bg-green-600 text-white text-sm py-2 px-4 rounded transition-colors" href="{{ route('users.create') }}">
-                <i class="fa fa-plus mr-2"></i> Create New User
-            </a>
+<div class="min-h-screen bg-gray-50/50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="bg-white rounded-lg shadow-md p-4 mt-8">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <svg class="h-8 w-8 text-[#0066FF]" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                    <h1 class="text-xl font-semibold text-gray-900">{{ __('Users') }}</h1>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <a href="{{ route('users.create') }}"
+                        class="inline-flex items-center px-4 py-2 bg-[#0066FF] text-white text-sm font-medium rounded-md hover:bg-[#0052CC] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0066FF] transition-colors duration-150">
+                        <svg class="h-5 w-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        {{ __('Add New User') }}
+                    </a>
+                </div>
+            </div>
         </div>
-    </div>
 
-    @if (session('success'))
-        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6" role="alert">
-            {{ session('success') }}
-        </div>
-    @endif
-
-    <div class="bg-white rounded-lg shadow-md overflow-hidden">
-        <div class="p-6 border-b border-gray-200">
-            <form method="POST" action="{{ route('users.search') }}" class="space-y-4">
+        <!-- Filters -->
+        <div class="mt-4 bg-white rounded-lg shadow-md p-6">
+            <form method="POST" action="{{ route('users.search') }}" class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 @csrf
-                <div class="flex space-x-4">
-                    <input type="text" name="name" placeholder="Name" value="{{ request('name') }}" class="form-input w-full">
-                    <input type="text" name="email" placeholder="Email" value="{{ request('email') }}" class="form-input w-full">
-                    <select name="role" class="form-select w-full">
-                        <option value="">Select Role</option>
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700 mb-1">{{ __('Name') }}</label>
+                    <input type="text" name="name" id="name" placeholder="{{ __('Search by name') }}"
+                        value="{{ request('name') }}"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-[#0066FF] focus:border-[#0066FF] sm:text-sm">
+                </div>
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700 mb-1">{{ __('Email') }}</label>
+                    <input type="text" name="email" id="email" placeholder="{{ __('Search by email') }}"
+                        value="{{ request('email') }}"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-[#0066FF] focus:border-[#0066FF] sm:text-sm">
+                </div>
+                <div>
+                    <label for="role" class="block text-sm font-medium text-gray-700 mb-1">{{ __('Role') }}</label>
+                    <select name="role" id="role"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-[#0066FF] focus:border-[#0066FF] sm:text-sm">
+                        <option value="">{{ __('Select Role') }}</option>
                         @foreach ($roles as $role)
-                        <option value="{{ $role->name }}" {{ request('role') == $role->name ? 'selected' : '' }}>
-                            {{ $role->name }}
-                        </option>
+                            <option value="{{ $role->name }}" {{ request('role') == $role->name ? 'selected' : '' }}>
+                                {{ $role->name }}
+                            </option>
                         @endforeach
                     </select>
                 </div>
-                <button type="submit" class="inline-flex items-center bg-blue-500 hover:bg-blue-600 text-white text-sm py-2 px-4 rounded transition-colors">Filter</button>
+                <div class="md:col-span-3">
+                    <button type="submit"
+                        class="inline-flex items-center px-4 py-2 bg-[#EEF2FF] text-[#0066FF] text-sm font-medium rounded-md hover:bg-[#0066FF]/10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0066FF] transition-colors duration-150 shadow-sm">
+                        <svg class="h-5 w-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        {{ __('Filter') }}
+                    </button>
+                </div>
             </form>
         </div>
 
-        <div class="overflow-x-auto">
-            <table class="w-full text-sm text-left text-gray-500">
-                <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+        <!-- Users Table -->
+        <div class="mt-4 bg-white rounded-lg shadow-md overflow-hidden">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
                     <tr>
-                        <th scope="col" class="px-6 py-3 whitespace-nowrap">No</th>
-                        <th scope="col" class="px-6 py-3">Name</th>
-                        <th scope="col" class="px-6 py-3">Email</th>
-                        <th scope="col" class="px-6 py-3">Roles</th>
-                        <th scope="col" class="px-6 py-3 text-right" width="280px">Action</th>
+                        <th scope="col"
+                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {{ __('NO') }}
+                        </th>
+                        <th scope="col"
+                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {{ __('NAME') }}
+                        </th>
+                        <th scope="col"
+                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {{ __('EMAIL') }}
+                        </th>
+                        <th scope="col"
+                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {{ __('ROLES') }}
+                        </th>
+                        <th scope="col"
+                            class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {{ __('ACTION') }}
+                        </th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="bg-white divide-y divide-gray-200">
                     @foreach ($users as $user)
-                        <tr class="bg-white border-b hover:bg-gray-50">
-                            <td class="px-6 py-4 font-medium text-gray-900">{{ ++$i }}</td>
-                            <td class="px-6 py-4">{{ $user->first_name }} {{ $user->last_name }}</td>
-                            <td class="px-6 py-4">{{ $user->email }}</td>
-                            <td class="px-6 py-4">
+                        <tr class="hover:bg-gray-50 transition-colors duration-150">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ $loop->iteration }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                {{ $user->first_name }} {{ $user->last_name }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ $user->email }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
                                 @foreach ($user->roles as $role)
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">{{ $role->name }}</span>
+                                    <span
+                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#0066FF]/10 text-[#0066FF]">
+                                        {{ $role->name }}
+                                    </span>
                                 @endforeach
                             </td>
-                            <td class="px-6 py-4 text-right space-x-2">
-                                <a class="inline-flex items-center text-blue-600 hover:text-blue-800" href="{{ route('users.show', $user->id) }}">
-                                    <i class="fa-solid fa-list mr-1"></i> Show
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                                <a href="{{ route('users.show', $user->id) }}" class="text-[#0066FF] hover:text-[#0052CC]">
+                                    {{ __('View') }}
                                 </a>
-                                <a class="inline-flex items-center text-blue-600 hover:text-blue-800" href="{{ route('users.edit', $user->id) }}">
-                                    <i class="fa-solid fa-pen-to-square mr-1"></i> Edit
+                                <a href="{{ route('users.edit', $user->id) }}" class="text-[#0066FF] hover:text-[#0052CC]">
+                                    {{ __('Edit') }}
                                 </a>
-                                <form action="{{ route('users.destroy', $user->id) }}" method="POST" class="inline-block">
+                                <form action="{{ route('users.destroy', $user->id) }}" method="POST" class="inline">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="inline-flex items-center text-red-600 hover:text-red-800" onclick="return confirm('Are you sure you want to delete this user?')">
-                                        <i class="fa-solid fa-trash mr-1"></i> Delete
+                                    <button type="submit" class="text-red-600 hover:text-red-900"
+                                        onclick="return confirm('{{ __('Are you sure you want to delete this user?') }}')">
+                                        {{ __('Delete') }}
                                     </button>
                                 </form>
                             </td>
@@ -80,11 +136,11 @@
                 </tbody>
             </table>
         </div>
-    </div>
 
-    <div class="mt-6">
-        {!! $users->links() !!}
+        <!-- Pagination -->
+        <div class="mt-4">
+            {{ $users->links() }}
+        </div>
     </div>
 </div>
-
 @endsection
