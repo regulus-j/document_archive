@@ -13,10 +13,11 @@ return new class extends Migration
     {
         Schema::create('documents', function (Blueprint $table) {
             $table->id();
-            $table->string('title');
             $table->unsignedBigInteger('uploader');
+            $table->string('title');
             $table->longText('description');
-            $table->text('content');
+            $table->text('remarks')->nullable();
+            $table->text('content')->nullable();
             $table->string('path');
             $table->timestamps();
 
@@ -35,24 +36,41 @@ return new class extends Migration
             $table->foreign('nextdoc_id')->references('id')->on('documents');
         });
 
-        Schema::create('folders', function (Blueprint $table)
-        {
-            $table->id();
-            $table->string('name');
-            $table->unsignedBigInteger('parent_id')->nullable();
-            $table->timestamps();
-
-            $table->foreign('parent_id')->references('id')->on('folders');
-        });
-
-        Schema::create('document_folder', function (Blueprint $table)
+        Schema::create('document_status', function (Blueprint $table)
         {
             $table->id();
             $table->unsignedBigInteger('doc_id');
-            $table->unsignedBigInteger('folder_id');
+            $table->string('status');
+            $table->timestamps();
 
             $table->foreign('doc_id')->references('id')->on('documents');
-            $table->foreign('folder_id')->references('id')->on('folders');
+        });
+
+        Schema::create('document_trackingnumbers', function (Blueprint $table)
+        {
+            $table->id();
+            $table->unsignedBigInteger('doc_id');
+            $table->string('tracking_number');
+            $table->timestamps();
+
+            $table->foreign('doc_id')->references('id')->on('documents');
+        });
+
+        Schema::create('document_categories', function (Blueprint $table)
+        {
+            $table->id();
+            $table->string('category');
+            $table->timestamps();        
+        });
+
+        Schema::create('document_category', function (Blueprint $table)
+        {
+            $table->id();
+            $table->unsignedBigInteger('doc_id');
+            $table->unsignedBigInteger('category_id');
+
+            $table->foreign('doc_id')->references('id')->on('documents');
+            $table->foreign('category_id')->references('id')->on('document_categories');
         });
     }
 
