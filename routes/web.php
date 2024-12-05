@@ -51,10 +51,12 @@ Route::middleware('auth')->group(function() {
     
         // Move the 'pending' route here
         Route::get('/pending', [DocumentController::class, 'showPending'])->name('documents.pending');
-    
+        
+        Route::delete('/attachments/{id}', [DocumentController::class, 'deleteAttachment'])->name('attachments.delete');
+        
         // Parameterized routes should come after static routes
+        Route::get('/edit/{document}', [DocumentController::class, 'edit'])->name('documents.edit');
         Route::get('/{document}', [DocumentController::class, 'show'])->name('documents.show');
-        Route::get('/{document}/edit', [DocumentController::class, 'edit'])->name('documents.edit');
         Route::put('/{document}', [DocumentController::class, 'update'])->name('documents.update');
         Route::delete('/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');
 

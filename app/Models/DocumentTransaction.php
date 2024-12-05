@@ -28,4 +28,9 @@ class DocumentTransaction extends Model
     {
         return $this->belongsTo(Office::class, 'to_office');
     }
+
+    public function toUser()
+    {
+        return $this->belongsTo(User::class, 'to_user_id');
+    }
 }

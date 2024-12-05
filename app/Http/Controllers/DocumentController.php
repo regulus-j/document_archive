@@ -17,16 +17,17 @@ use App\Models\Office;
 use App\Models\DocumentAudit;
 use App\Models\DocumentCategory;
 use App\Models\DocumentTransaction;
+use App\Models\DocumentAttachment;
 
 class DocumentController extends Controller
 {
-    // public function __construct()
-    // {
-    //     $this->middleware('permission:document-list|document-create|document-edit|document-delete', ['only' => ['index','show']]);
-    //     $this->middleware('permission:document-create', ['only' => ['create','store']]);
-    //     $this->middleware('permission:document-edit', ['only' => ['edit','update']]);
-    //     $this->middleware('permission:document-delete', ['only' => ['destroy']]); 
-    // }
+    public function __construct()
+    {
+        $this->middleware('permission:document-list|document-create|document-edit|document-delete', ['only' => ['index','show']]);
+        $this->middleware('permission:document-create', ['only' => ['create','store']]);
+        $this->middleware('permission:document-edit', ['only' => ['edit','update']]);
+        $this->middleware('permission:document-delete', ['only' => ['destroy']]); 
+    }
 
     /**
      * Display a listing of the documents.
@@ -122,9 +123,13 @@ class DocumentController extends Controller
     public function create(): View
     {
         $offices = Office::all();
-        $tracking = $this->generateTrackingNumber();
+        // $tracking = $this->generateTrackingNumber();
+        
+
+        $users = User::with('offices')->get();
+
         $categories = DocumentCategory::all()->pluck('category', 'id');
-        return view('documents.create', compact('offices', 'tracking', 'categories'));    
+        return view('documents.create', compact('offices', 'categories', 'users'));    
     }
 
     /**
@@ -134,7 +139,6 @@ class DocumentController extends Controller
     {
         // Validate the request
         $request->validate([
-            'tracking_number' => 'required|string|unique:document_trackingnumbers,tracking_number',
             'title' => 'required|string|max:255',
             'description' => 'required',
             'classification' => 'required|string',
@@ -185,10 +189,12 @@ class DocumentController extends Controller
                 'status' => 'pending'
             ]);
 
+            $tracking_number = $this->generateTrackingNumber($request->from_office, $request->classification);
+            
             // Create tracking number record
             DocumentTrackingNumber::create([
                 'doc_id' => $document->id,
-                'tracking_number' => $request->tracking_number,
+                'tracking_number' => $tracking_number, 
             ]);
 
             DocumentTransaction::create([
@@ -200,7 +206,7 @@ class DocumentController extends Controller
             // Log document creation
             $this->logDocumentAction($document, 'created', 'new', 'Document uploaded');
 
-            return redirect()->route('documents.index')
+            return redirect()->view('documents.qr_generated', compact('tracking_number'))
                 ->with('success', 'Document created successfully.');
 
         } catch (Exception $e) {
@@ -293,10 +299,11 @@ class DocumentController extends Controller
      */
     public function edit(Document $document): View
     {
+        $documents = Document::with('attachments')->findOrFail($document);
         $userOffice = auth()->user()->offices->pluck('name', 'id');
         $offices = Office::all();
         $categories = DocumentCategory::all()->pluck('category', 'id');
-        return view('documents.edit',compact('document', 'categories', 'offices', 'userOffice'));
+        return view('documents.edit',compact('document', 'documents', 'categories', 'offices', 'userOffice'));
     }
 
     /**
@@ -312,6 +319,7 @@ class DocumentController extends Controller
             'to_office' => 'required|exists:offices,id',
             'remarks' => 'nullable|string|max:250',
             'upload' => 'nullable|file|mimes:jpeg,png,jpg,gif,pdf,docx|max:10240',
+            'attachments.*' => 'file|mimes:jpeg,png,jpg,gif,pdf,docx|max:10240',
         ]);
 
         try {
@@ -330,6 +338,19 @@ class DocumentController extends Controller
             $fileName = time() . '_' . $file->getClientOriginalName();
             $filePath = $file->storeAs('documents', $fileName, 'public');
             $updateData['path'] = $filePath;
+            }
+
+            // Handle new attachments
+            if ($request->hasFile('attachments')) {
+                foreach ($request->file('attachments') as $file) {
+                    $fileName = time() . '_' . $file->getClientOriginalName();
+                    $filePath = $file->storeAs('attachments', $fileName, 'public');
+
+                    $document->attachments()->create([
+                        'filename' => $fileName,
+                        'path' => $filePath,
+                    ]);
+                }
             }
 
             $document->update($updateData);
@@ -366,6 +387,19 @@ class DocumentController extends Controller
                         ->with('success','Document deleted successfully');
     }
 
+    public function deleteAttachment($id)
+    {
+        $attachment = DocumentAttachment::findOrFail($id);
+
+        // Delete the file from storage
+        Storage::disk('public')->delete($attachment->path);
+
+        // Delete the record from the database
+        $attachment->delete();
+
+        return redirect()->back()->with('success', 'Attachment deleted successfully.');
+    }
+
     public function uploadImage(Request $request)
     {
         $data = $request->input('image');
@@ -397,25 +431,31 @@ class DocumentController extends Controller
         return response()->download($filePath);
     }
 
-    function generateTrackingNumber($prefix = 'TRK', $length = 10) {
+    function generateTrackingNumber($officeId, $documentTypeId, $length = 10) {
+        // Retrieve the office abbreviation and document type
+        $office = Office::findOrFail($officeId);
+        $documentType = DocumentCategory::findOrFail($documentTypeId);
+    
+        $prefix = strtoupper(substr($office->name, 0, 3)) . '-' . strtoupper(substr($documentType->category, 0, 3));
+    
         do {
             // Define the characters to use for the random part
             $characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
             $charactersLength = strlen($characters);
             $randomString = '';
-        
+    
             // Generate the random part of the tracking number
             for ($i = 0; $i < $length; $i++) {
-            $randomString .= $characters[rand(0, $charactersLength - 1)];
+                $randomString .= $characters[rand(0, $charactersLength - 1)];
             }
-        
+    
             // Combine the prefix with the random string and a timestamp
             $trackingNumber = $prefix . '-' . $randomString . '-' . time();
-
+    
             // Check if this tracking number already exists
             $exists = DocumentTrackingNumber::where('tracking_number', $trackingNumber)->exists();
         } while ($exists);
-
+    
         return $trackingNumber;
     }
 
@@ -452,6 +492,7 @@ class DocumentController extends Controller
         return view('documents.audit', compact('auditLogs'));
     }
 
+    //get all the documents that are pending
     public function showPending(): View
     {
         // Get the IDs of the offices associated with the authenticated user
@@ -475,33 +516,26 @@ class DocumentController extends Controller
         ]);
     }
 
-    public function setReceived($id): RedirectResponse
-    {
-        try {
-            $document = Document::findOrFail($id);
-            $document->status()->update(['status' => 'received']);
-            
-            $this->logDocumentAction($document, 'status_changed', 'received', 'Document marked as received');
-
-            return redirect()->back()->with('success', 'Document marked as received');
-        } catch (Exception $e) {
-            return redirect()->back()->with('error', 'Error updating document status: ' . $e->getMessage());
-        }
-    }
-
-    public function confirmReleased($id)
+    //redirect to document release form
+    public function confirmReleased($id): View
     {
         $document = Document::with(['transaction.fromOffice', 'transaction.toOffice'])->findOrFail($id);
 
         return view('documents.releasing_form', compact('document'));    
     }
 
-    public function setReleased($id){
-        $document = Document::findOrFail($id);
-        $document->status()->update(['status' => 'released']);
-        
-        $this->logDocumentAction($document, 'status_changed', 'released', 'Document marked as released');
+    //change the status of the document
+    public function changeStatus($id, $status, $request): RedirectResponse
+    {
+        try {
+            $document = Document::findOrFail($id);
+            $document->status()->update(['status' => $status]);
+            
+            $this->logDocumentAction($document, 'status_changed', $status, 'Document status changed');
 
-        return redirect()->route('documents.pending')->with('success', 'Document marked as released');
+            return redirect()->back()->with('success', 'Document status changed');
+        } catch (Exception $e) {
+            return redirect()->back()->with('error', 'Error updating document status: ' . $e->getMessage());
+        }
     }
 }

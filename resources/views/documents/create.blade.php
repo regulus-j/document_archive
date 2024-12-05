@@ -27,7 +27,7 @@
 
         <div class="grid grid-cols-1 gap-6">
             {{-- Tracking Number --}}
-            <div>
+            {{-- <div>
                 <label for="tracking_number" class="block text-sm font-medium text-gray-700">
                     Tracking Number
                 </label>
@@ -40,7 +40,7 @@
                            value="{{ $tracking }}">
                     <p class="mt-2 text-sm text-gray-500">Ensure the tracking number matches the physical document.</p>
                 </div>
-            </div>
+            </div> --}}
 
             {{-- Title and Description --}}
             <div>
@@ -132,6 +132,30 @@
                 </select>
             </div>
 
+            <!-- Recipient Users (optional) -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700">
+                    Recipient Users (optional)
+                </label>
+                <div class="mt-1 border border-gray-300 rounded-md max-h-48 overflow-y-auto p-2">
+                    <div class="space-y-2">
+                        @foreach($users as $user)
+                            <div class="flex items-center user-checkbox" data-office-ids="{{ implode(',', $user->offices->pluck('id')->toArray()) }}">
+                                <input type="checkbox" 
+                                    name="to_user_ids[]" 
+                                    value="{{ $user->id }}" 
+                                    id="user_{{ $user->id }}"
+                                    class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                                <label for="user_{{ $user->id }}" class="ml-2 block text-sm text-gray-900">
+                                    {{ $user->first_name }} {{ $user->last_name }}
+                                </label>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+                <p class="mt-2 text-xs text-gray-500">Select multiple users if needed</p>
+            </div>
+
             {{-- Remarks --}}
             <div>
                 <label for="remarks" class="block text-sm font-medium text-gray-700">
@@ -186,5 +210,24 @@
         </div>
     </form>
 </div>
+
+<script>
+    document.getElementById('to_office').addEventListener('change', function() {
+        const selectedOfficeId = this.value;
+        const userCheckboxes = document.querySelectorAll('.user-checkbox');
+    
+        userCheckboxes.forEach(function(userCheckbox) {
+            const officeIds = userCheckbox.getAttribute('data-office-ids').split(',');
+    
+            if (officeIds.includes(selectedOfficeId) || selectedOfficeId === '') {
+                userCheckbox.style.display = 'flex'; // Show the user
+            } else {
+                userCheckbox.style.display = 'none'; // Hide the user
+                // Uncheck the checkbox if hidden
+                userCheckbox.querySelector('input[type="checkbox"]').checked = false;
+            }
+        });
+    });
+</script>
 
 @endsection
