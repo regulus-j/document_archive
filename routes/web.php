@@ -30,8 +30,10 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
+Route::middleware('auth')->group(function () {
     Route::resource('roles', RoleController::class);
 
+    Route::prefix('users')->group(function () {
     Route::prefix('users')->group(function () {
         Route::get('/', [UserController::class, 'index'])->name('users.index');
         Route::get('/create', [UserController::class, 'create'])->name('users.create');
@@ -44,9 +46,11 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::prefix('documents')->group(function () {
+    Route::prefix('documents')->group(function () {
         Route::get('/', [DocumentController::class, 'index'])->name('documents.index');
         Route::get('/create', [DocumentController::class, 'create'])->name('documents.create');
         Route::post('/', [DocumentController::class, 'store'])->name('documents.store');
+
 
         // Move the 'pending' route here
         Route::get('/pending', [DocumentController::class, 'showPending'])->name('documents.pending');
@@ -73,6 +77,7 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::prefix('office')->group(function () {
+    Route::prefix('office')->group(function () {
         Route::get('/', [OfficeController::class, 'index'])->name('office.index');
         Route::get('/create', [OfficeController::class, 'create'])->name('office.create');
         Route::post('/', [OfficeController::class, 'store'])->name('office.store');
@@ -82,6 +87,7 @@ Route::middleware('auth')->group(function () {
         Route::delete('/{office}', [OfficeController::class, 'destroy'])->name('office.destroy');
     });
 
+    Route::prefix('reports')->group(function () {
     Route::prefix('reports')->group(function () {
         Route::get('/', [ReportController::class, 'index'])->name('reports.index');
         Route::get('/create', [ReportController::class, 'create'])->name('reports.create');
@@ -93,6 +99,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/generate', [ReportController::class, 'generate'])->name('reports.generate');
     });
 
+    Route::prefix('backup')->group(function () {
     Route::prefix('backup')->group(function () {
         Route::get('/', [BackupController::class, 'index'])->name('backup.index');
         Route::get('/create', [BackupController::class, 'create'])->name('backup.create');
@@ -114,4 +121,4 @@ Route::get('documents/download/{id}', [DocumentController::class, 'downloadFile'
 //     Mail::to('jamalalbadi03@gmail.com')->send(new TestMail($name));
 // });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

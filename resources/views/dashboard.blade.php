@@ -31,77 +31,44 @@
                             </svg>
                             {{ $item['title'] }}
                         </h3>
-            <div class="mb-4">
+                        <div class="mb-4">
                             <label for="{{ $item['id'] }}" class="block text-gray-700 font-medium mb-2">Tracking
                                 Number</label>
-                <div class="flex">
+                            <div class="flex">
                                 <input type="text" id="{{ $item['id'] }}"
                                     class="form-input flex-grow rounded-l-md border-gray-300 focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
                                 <button id="{{ strtolower($item['action']) }}"
                                     class="px-6 py-2 bg-blue-500 text-white font-semibold rounded-r-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75 transition duration-300">
                                     {{ $item['action'] }}
                                 </button>
-                </div>
-            </div>
-        </div>
+                            </div>
+                        </div>
+                    </div>
                 @endforeach
             </div>
-        </div>
-    </div>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-        <div class="bg-white shadow-md rounded-lg p-6">
-            <h3 class="font-semibold text-xl text-gray-900 mb-4">Receive Document</h3>
-            <div class="mb-4">
-                <label for="receive_tracking_number" class="block text-gray-700">Tracking Number</label>
-                <div class="flex">
-                    <input type="text" id="receive_tracking_number" class="form-input flex-grow rounded-l-md">
-                    <button id="receive" class="btn btn-primary rounded-r-md">Receive</button>
+
+            <div class="bg-white shadow-lg rounded-lg p-6 hover:shadow-xl transition duration-300">
+                <h3 class="font-bold text-2xl text-gray-900 mb-4 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-500 mr-3" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                    </svg>
+                    Tag as Terminal
+                </h3>
+                <div class="mb-4">
+                    <label for="terminal_tracking_number" class="block text-gray-700 font-medium mb-2">Tracking
+                        Number</label>
+                    <div class="flex">
+                        <input type="text" id="terminal_tracking_number"
+                            class="form-input flex-grow rounded-l-md border-gray-300 focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                        <button id="terminal"
+                            class="px-6 py-2 bg-blue-500 text-white font-semibold rounded-r-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75 transition duration-300">
+                            Terminal
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="bg-white shadow-md rounded-lg p-6">
-            <h3 class="font-semibold text-xl text-gray-900 mb-4">Release Document</h3>
-            <div class="mb-4">
-                <label for="release_tracking_number" class="block text-gray-700">Tracking Number</label>
-                <div class="flex">
-                    <input type="text" id="release_tracking_number" class="form-input flex-grow rounded-l-md">
-                    <button id="release" class="btn btn-primary rounded-r-md">Release</button>
-                </div>
-            </div>
-        </div>
     </div>
-    <div class="bg-white shadow-md rounded-lg p-6 mt-6">
-        <h3 class="font-semibold text-xl text-gray-900 mb-4">Tag as Terminal</h3>
-        <div class="mb-4">
-            <label for="terminal_tracking_number" class="block text-gray-700">Tracking Number</label>
-            <div class="flex">
-                <input type="text" id="terminal_tracking_number" class="form-input flex-grow rounded-l-md">
-                <button id="terminal" class="btn btn-primary rounded-r-md">Terminal</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-{{-- <!-- Filters and Actions -->
-<div class="py-4">
-    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 flex justify-between items-center">
-        <div class="flex space-x-4">
-            <select class="border-gray-300 rounded-md">
-                <option>Last 7 days</option>
-                <option>Last 30 days</option>
-                <option>This Year</option>
-            </select>
-            <select class="border-gray-300 rounded-md">
-                <option>All Users</option>
-                <option>New Users</option>
-                <option>Returning Users</option>
-            </select>
-        </div>
-        <div class="flex space-x-2">
-            <button class="px-4 py-2 bg-indigo-500 text-white rounded-md">Export</button>
-            <button class="px-4 py-2 bg-green-500 text-white rounded-md">Add Data</button>
-        </div>
-    </div>
-</div> --}}
-
 </x-app-layout>
