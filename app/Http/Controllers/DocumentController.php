@@ -499,8 +499,6 @@ class DocumentController extends Controller
                 return redirect()->back()->with('error', 'File not found or inaccessible.');
             }
 
-            $this->logDocumentAction($document, 'downloaded');
-
             return response()->download($filePath);
 
         } catch (\Exception $e) {
