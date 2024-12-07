@@ -138,6 +138,18 @@
                 <p class="text-xs text-gray-500 mt-1">Supported formats: jpeg, png, jpg, gif, pdf, docx (Max: 10MB)</p>
             </div>
 
+            <!-- Attachment Upload Section -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Upload Attachments</label>
+                <input 
+                    type="file" 
+                    name="attachments[]" 
+                    multiple
+                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                >
+                <p class="mt-2 text-sm text-gray-500">You can upload multiple attachments.</p>
+            </div>
+
             <div class="text-center">
                 <button 
                     type="submit" 

@@ -2,6 +2,6 @@
 
 @section('content')
 
-
+@echo($qr_code)
 
 @endsection
