@@ -10,7 +10,7 @@ class DocumentTrackingNumber extends Model
 
     protected $fillable = [
         'doc_id',
-        'tracking_number'
+        'tracking_number',
     ];
 
     public function document()
