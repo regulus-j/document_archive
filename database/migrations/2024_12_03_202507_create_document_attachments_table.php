@@ -16,8 +16,9 @@ return new class extends Migration
             $table->unsignedBigInteger('document_id');
             $table->string('filename');
             $table->string('path');
+            $table->softDeletes();
             $table->timestamps();
-    
+
             $table->foreign('document_id')->references('id')->on('documents')->onDelete('cascade');
         });
     }

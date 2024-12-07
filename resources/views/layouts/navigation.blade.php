@@ -47,7 +47,7 @@
                                 <a href="{{ route('documents.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600" role="menuitem">{{ __('View') }}</a>
                                 <a href="{{ route('documents.create') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600" role="menuitem">{{ __('Upload') }}</a>
                                 <a href="{{ route('documents.pending') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600" role="menuitem">{{ __('Receive/Release') }}</a>
-                                <a href="{{ route('documents.terminal') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600" role="menuitem">{{ __('Tag as Terminal') }}</a>
+                                <a href="{{ route('documents.complete') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600" role="menuitem">{{ __('Tag as Complete') }}</a>
                             </div>
                         </div>
                         @endcan

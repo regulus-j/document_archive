@@ -3,31 +3,32 @@
 namespace App\Http\Controllers;
 
 use App\Models\Document;
-use Illuminate\Http\Request;
-use Illuminate\View\View;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Storage;
-use Spatie\PdfToText\Pdf;
-use PhpOffice\PhpWord\IOFactory;
-use Exception;
-use Illuminate\Support\Facades\Response;
-use App\Models\User;
-use App\Models\DocumentTrackingNumber;
-use App\Models\Office;
+use App\Models\DocumentAttachment;
 use App\Models\DocumentAudit;
 use App\Models\DocumentCategory;
+use App\Models\DocumentTrackingNumber;
 use App\Models\DocumentTransaction;
-use App\Models\DocumentAttachment;
+use App\Models\Office;
+use App\Models\User;
+use chillerlan\QRCode\QRCode;
+use Exception;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\View\View;
+use PhpOffice\PhpWord\IOFactory;
+use Spatie\PdfToText\Pdf;
 
 class DocumentController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('permission:document-list|document-create|document-edit|document-delete', ['only' => ['index', 'show']]);
-        $this->middleware('permission:document-create', ['only' => ['create', 'store']]);
-        $this->middleware('permission:document-edit', ['only' => ['edit', 'update']]);
-        $this->middleware('permission:document-delete', ['only' => ['destroy']]);
-    }
+    // public function __construct()
+    // {
+    //     $this->middleware('permission:document-list|document-create|document-edit|document-delete', ['only' => ['index', 'show']]);
+    //     $this->middleware('permission:document-create', ['only' => ['create', 'store']]);
+    //     $this->middleware('permission:document-edit', ['only' => ['edit', 'update']]);
+    //     $this->middleware('permission:document-delete', ['only' => ['destroy']]);
+    // }
 
     /**
      * Display a listing of the documents.
@@ -47,12 +48,9 @@ class DocumentController extends Controller
                 ->paginate(5);
         }
 
-        $auditLogs = DocumentAudit::paginate(15);
+        $auditLogs = DocumentAudit::latest()->paginate(15);
 
-        return view('documents.index', array_merge([
-            'documents' => $documents,
-            'i' => (request()->input('page', 1) - 1) * 5
-        ], compact('auditLogs')));
+        return view('documents.index', compact('documents', 'auditLogs'));
     }
 
     public function showArchive(): View
@@ -74,7 +72,7 @@ class DocumentController extends Controller
 
         return view('documents.index', array_merge([
             'documents' => $documents,
-            'i' => (request()->input('page', 1) - 1) * 5
+            'i' => (request()->input('page', 1) - 1) * 5,
         ], compact('auditLogs')));
     }
 
@@ -85,7 +83,7 @@ class DocumentController extends Controller
     {
         $request->validate([
             'text' => 'nullable|string|max:255',
-            'image' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:10240'
+            'image' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:10240',
         ]);
 
         try {
@@ -105,19 +103,26 @@ class DocumentController extends Controller
                 $file = $request->file('image');
                 $fileName = time() . '_' . $file->getClientOriginalName();
                 $filePath = $file->storeAs('documents', $fileName, 'public');
-                $fullPath = storage_path("app/public/{$filePath}");
+                $fullPath = storage_path("app/public/temp/{$filePath}");
 
                 if ($this->isImage($file)) {
-                    $outputBase = storage_path("app/temp/ocr_{time()}");
-                    $command = '"C:\\Program Files\\Tesseract-OCR\\tesseract.exe" "' . str_replace('/', '\\', $fullPath) . '" "' . str_replace('/', '\\', $outputBase) . '" -l eng';
-                    $output = shell_exec($command);
+                    // $outputBase = storage_path('app/temp/ocr_{time()}');
+                    // $command = '"C:\\Program Files\\Tesseract-OCR\\tesseract.exe" "'.str_replace('/', '\\', $fullPath).'" "'.str_replace('/', '\\', $outputBase).'" -l eng';
+                    // $output = shell_exec($command);
 
-                    if (file_exists("{$outputBase}.txt")) {
-                        $content = file_get_contents("{$outputBase}.txt");
-                        unlink("{$outputBase}.txt");
-                        $searchText .= " {$content}";
-                    }
+                    // if (file_exists("{$outputBase}.txt")) {
+                    //     $content = file_get_contents("{$outputBase}.txt");
+                    //     unlink("{$outputBase}.txt");
+                    //     $searchText .= " {$content}";
+                    // }
+
+                    $qrResult = $this->scanQr($fullPath);
+
+                    $document = Document::where('tracking_number', $qrResult)->first();
+
+                    return view('documents.show', compact('document'));
                 }
+
             }
 
             if (!empty($searchText)) {
@@ -129,11 +134,12 @@ class DocumentController extends Controller
 
             return view('documents.index', array_merge([
                 'documents' => $documents,
-                'i' => (request()->input('page', 1) - 1) * 5
+                'i' => (request()->input('page', 1) - 1) * 5,
             ], compact('auditLogs')));
 
         } catch (Exception $e) {
             \Log::error('Search processing error: ' . $e->getMessage());
+
             return redirect()->back()
                 ->with('error', 'Error processing search: ' . $e->getMessage())
                 ->withInput();
@@ -148,10 +154,10 @@ class DocumentController extends Controller
         $offices = Office::all();
         // $tracking = $this->generateTrackingNumber();
 
-
         $users = User::with('offices')->get();
 
         $categories = DocumentCategory::all()->pluck('category', 'id');
+
         return view('documents.create', compact('offices', 'categories', 'users'));
     }
 
@@ -169,6 +175,7 @@ class DocumentController extends Controller
             'to_office' => 'required|exists:offices,id',
             'remarks' => 'nullable|string|max:250',
             'upload' => 'required|file|mimes:jpeg,png,jpg,gif,pdf,docx|max:10240', // 10MB max
+            'attachements.*' => 'file|mimes:jpeg,png,jpg,gif,pdf,docx|max:10240',
         ]);
 
         try {
@@ -209,7 +216,7 @@ class DocumentController extends Controller
             $document->categories()->attach([$request->classification]);
 
             $document->status()->create([
-                'status' => 'pending'
+                'status' => 'pending',
             ]);
             $tracking_number = $this->generateTrackingNumber($request->from_office, $request->classification);
 
@@ -222,17 +229,43 @@ class DocumentController extends Controller
             DocumentTransaction::create([
                 'doc_id' => $document->id,
                 'from_office' => $request->from_office,
-                'to_office' => $request->to_office
+                'to_office' => $request->to_office,
             ]);
 
-            // Log document creation
-            $this->logDocumentAction($document, 'created', 'new', 'Document uploaded');
+            // Handle additional attachments if any
 
-            return redirect()->view('documents.qr_generated', compact('tracking_number'))
-                ->with('success', 'Document created successfully.');
+            if ($request->hasFile('attachments')) {
+
+                foreach ($request->file('attachments') as $attachment) {
+
+                    $attachmentName = time() . '_' . $attachment->getClientOriginalName();
+
+                    $attachmentPath = $attachment->storeAs('attachments', $attachmentName, 'public');
+
+                    DocumentAttachment::create([
+
+                        'document_id' => $document->id,
+
+                        'filename' => $attachmentName,
+
+                        'path' => $attachmentPath,
+
+                    ]);
+                }
+            }
+
+            // Log document creation
+            $this->logDocumentAction($document, 'created', 'pending', 'Document uploaded');
+
+            $data = $this->generateTrackingSlip($document->id, auth()->id(), $tracking_number);
+
+            return redirect()->route('documents.index')
+                ->with('data', $data)
+                ->with('success', 'Document uploaded successfully');
 
         } catch (Exception $e) {
             \Log::error('Document processing error: ' . $e->getMessage());
+
             return redirect()->back()
                 ->with('error', 'Error processing document: ' . $e->getMessage())
                 ->withInput();
@@ -242,6 +275,7 @@ class DocumentController extends Controller
     private function isImage($file): bool
     {
         $mimeType = $file->getMimeType();
+
         return strpos($mimeType, 'image/') === 0;
     }
 
@@ -309,11 +343,13 @@ class DocumentController extends Controller
     {
         $this->logDocumentAction($document, 'viewed');
         $document->load(['trackingNumber', 'categories', 'transaction.fromOffice', 'transaction.toOffice', 'status']);
+        $attachments = Document::with('attachments')->findOrFail($document->id)->attachments;
         $auditLogs = DocumentAudit::where('document_id', $document->id)
             ->with(['user'])
             ->orderBy('created_at', 'desc')
             ->paginate(15);
-        return view('documents.show', compact('document', 'auditLogs'));
+
+        return view('documents.show', compact('document', 'auditLogs', 'attachments'));
     }
 
     /**
@@ -321,11 +357,16 @@ class DocumentController extends Controller
      */
     public function edit(Document $document): View
     {
-        $documents = Document::with('attachments')->findOrFail($document);
+        // Load attachments relationship
+        $document->load('attachments');
+
+        // Retrieve necessary data for the view
         $userOffice = auth()->user()->offices->pluck('name', 'id');
         $offices = Office::all();
         $categories = DocumentCategory::all()->pluck('category', 'id');
-        return view('documents.edit', compact('document', 'documents', 'categories', 'offices', 'userOffice'));
+
+        // Pass only the necessary variables to the view
+        return view('documents.edit', compact('document', 'categories', 'offices', 'userOffice'));
     }
 
     /**
@@ -345,51 +386,54 @@ class DocumentController extends Controller
         ]);
 
         try {
-            $updateData = [
+            // Update document basic information
+            $document->update([
                 'title' => $request->title,
                 'description' => $request->description,
                 'remarks' => $request->remarks ?? null,
-            ];
+            ]);
 
+            // Handle file upload if new file is provided
             if ($request->hasFile('upload')) {
-                // Delete old file
                 Storage::disk('public')->delete($document->path);
-
-                // Store new file
                 $file = $request->file('upload');
                 $fileName = time() . '_' . $file->getClientOriginalName();
                 $filePath = $file->storeAs('documents', $fileName, 'public');
-                $updateData['path'] = $filePath;
+                $document->update(['path' => $filePath]);
             }
+
+            // Update document categories
+            $document->categories()->sync([$request->classification]);
+
+            // Update document transaction
+            $document->transaction()->update([
+                'from_office' => $request->from_office,
+                'to_office' => $request->to_office,
+            ]);
 
             // Handle new attachments
             if ($request->hasFile('attachments')) {
-                foreach ($request->file('attachments') as $file) {
-                    $fileName = time() . '_' . $file->getClientOriginalName();
-                    $filePath = $file->storeAs('attachments', $fileName, 'public');
+                foreach ($request->file('attachments') as $attachment) {
+                    $attachmentName = time() . '_' . $attachment->getClientOriginalName();
+                    $attachmentPath = $attachment->storeAs('attachments', $attachmentName, 'public');
 
-                    $document->attachments()->create([
-                        'filename' => $fileName,
-                        'path' => $filePath,
+                    DocumentAttachment::create([
+                        'document_id' => $document->id,
+                        'filename' => $attachmentName,
+                        'path' => $attachmentPath,
                     ]);
                 }
             }
 
-            $document->update($updateData);
-            $document->categories()->sync([$request->classification]);
-
-            DocumentTransaction::where('doc_id', $document->id)->update([
-                'from_office' => $request->from_office,
-                'to_office' => $request->to_office
-            ]);
-
-            $this->logDocumentAction($document, 'updated', null, 'Document information updated');
+            // Log document update
+            $this->logDocumentAction($document, 'updated');
 
             return redirect()->route('documents.index')
                 ->with('success', 'Document updated successfully');
 
         } catch (Exception $e) {
             \Log::error('Document update error: ' . $e->getMessage());
+
             return redirect()->back()
                 ->with('error', 'Error updating document: ' . $e->getMessage())
                 ->withInput();
@@ -412,12 +456,16 @@ class DocumentController extends Controller
     public function deleteAttachment($id)
     {
         $attachment = DocumentAttachment::findOrFail($id);
+        $document = Document::findOrFail($attachment->document_id);
+        $real_status = $document->status()->get();
 
         // Delete the file from storage
         Storage::disk('public')->delete($attachment->path);
 
         // Delete the record from the database
         $attachment->delete();
+
+        $document->status()->update(['status' => $real_status[0]->status]);
 
         return redirect()->back()->with('success', 'Attachment deleted successfully.');
     }
@@ -427,8 +475,8 @@ class DocumentController extends Controller
         $data = $request->input('image');
 
         // Decode the base64 image
-        list($type, $data) = explode(';', $data);
-        list(, $data) = explode(',', $data);
+        [$type, $data] = explode(';', $data);
+        [, $data] = explode(',', $data);
         $data = base64_decode($data);
 
         // Generate a unique filename
@@ -442,18 +490,22 @@ class DocumentController extends Controller
 
     public function downloadFile($id)
     {
-        $document = Document::findOrFail($id);
-        $this->logDocumentAction($document, 'downloaded');
-        $filePath = storage_path('app/public/' . $document->path);
+        try {
+            $document = Document::findOrFail($id) ?? $document = DocumentAttachment::findOrFail($id);
+            $filePath = storage_path('app/public/' . $document->path);
 
-        if (!file_exists($filePath)) {
-            return redirect()->back()->with('error', 'File not found.');
+            if (!$document || !$document->path || !file_exists($filePath)) {
+                return redirect()->back()->with('error', 'File not found or inaccessible.');
+            }
+
+            return response()->download($filePath);
+
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Error downloading file: ' . $e->getMessage());
         }
-
-        return response()->download($filePath);
     }
 
-    function generateTrackingNumber($officeId, $documentTypeId, $length = 10)
+    public function generateTrackingNumber($officeId, $documentTypeId, $length = 5)
     {
         // Retrieve the office abbreviation and document type
         $office = Office::findOrFail($officeId);
@@ -467,15 +519,14 @@ class DocumentController extends Controller
             $charactersLength = strlen($characters);
             $randomString = '';
 
-
             // Generate the random part of the tracking number
             for ($i = 0; $i < $length; $i++) {
                 $randomString .= $characters[rand(0, $charactersLength - 1)];
+                $randomString .= $characters[rand(0, $charactersLength - 1)];
             }
 
-
             // Combine the prefix with the random string and a timestamp
-            $trackingNumber = $prefix . '-' . $randomString . '-' . time();
+            $trackingNumber = $prefix . '-' . $randomString . '-' . date('Y');
 
             // Check if this tracking number already exists
             $exists = DocumentTrackingNumber::where('tracking_number', $trackingNumber)->exists();
@@ -484,18 +535,36 @@ class DocumentController extends Controller
         return $trackingNumber;
     }
 
-
-    public function generateTrackingSlip($docid, $uploaderid)
+    public function generateTrackingSlip($docid = 0, $uploaderid = 0, $tracking_number = 5)
     {
         $document = Document::findOrFail($docid);
         $uploader = User::findOrFail($uploaderid);
 
+        $qr = new QRCode;
 
+        $data = $qr->render($tracking_number);
+
+        return $data;
     }
 
     public function scanQr($image)
     {
+        try {
+            $result = (new QRCode)->readFromFile($image); // -> DecoderResult
 
+            // you can now use the result instance...
+            $content = $result->data;
+            $matrix = $result->getMatrix(); // -> QRMatrix
+
+            // ...or simply cast it to string to get the content:
+            $content = (string) $result;
+
+            return $result;
+
+        } catch (Throwable $e) {
+            // oopsies!
+            return $e->getMessage();
+        }
     }
 
     //auditing
@@ -505,8 +574,8 @@ class DocumentController extends Controller
             'document_id' => $document->id,
             'user_id' => auth()->id(),
             'action' => $action,
-            'status' => $status,
-            'details' => $details
+            'status' => $status ?? $document->status->status,
+            'details' => $details,
         ]);
     }
 
@@ -532,7 +601,30 @@ class DocumentController extends Controller
                     ->orWhereIn('to_office', $userOfficeIds);
             })
             ->whereHas('status', function ($query) {
-                $query->whereIn('status', ['pending', 'received', 'released', 'terminal']);
+                $query->whereIn('status', ['pending', 'received', 'released', 'completed', 'retracted']);
+            })
+            ->latest()
+            ->paginate(5);
+
+        return view('documents.pending', [
+            'documents' => $documents,
+            'i' => (request()->input('page', 1) - 1) * 5,
+        ]);
+    }
+
+    public function showComplete()
+    {
+        // Get the IDs of the offices associated with the authenticated user
+        $userOfficeIds = auth()->user()->offices->pluck('id')->toArray();
+
+        // Retrieve documents where the transaction's from_office or to_office matches the user's offices
+        $documents = Document::with(['user', 'status', 'transaction.fromOffice', 'transaction.toOffice'])
+            ->whereHas('transaction', function ($query) use ($userOfficeIds) {
+                $query->whereIn('from_office', $userOfficeIds)
+                    ->orWhereIn('to_office', $userOfficeIds);
+            })
+            ->whereHas('status', function ($query) {
+                $query->whereIn('status', ['released', 'completed', 'retracted']);
             })
             ->latest()
             ->paginate(5);
@@ -547,18 +639,35 @@ class DocumentController extends Controller
     public function confirmReleased($id): View
     {
         $document = Document::with(['transaction.fromOffice', 'transaction.toOffice'])->findOrFail($id);
+        $offices = Office::with('users')->get();
+        $users = User::with('offices')->get();
 
-        return view('documents.releasing_form', compact('document'));
+        return view('documents.releasing_form', compact('document', 'offices', 'users'));
     }
 
     //change the status of the document
-    public function changeStatus($id, $status, $request): RedirectResponse
+    public function changeStatus($id, $status, $request = null): RedirectResponse
     {
         try {
             $document = Document::findOrFail($id);
             $document->status()->update(['status' => $status]);
 
-            $this->logDocumentAction($document, 'status_changed', $status, 'Document status changed');
+            $this->logDocumentAction($document, 'updated', $status, 'Document status changed');
+
+            if ($status == 'rejected') {
+                $document->transaction()->update(['to_office' => $document->transaction->from_office]);
+            }
+
+            if ($request) {
+                DocumentTransaction::create([
+                    'doc_id' => $document->id,
+                    'from_office' => $document->transaction->to_office,
+                    'to_office' => $document->transaction->to_office,
+                    'to_user' => $request->to_user ?? null,
+                ]);
+
+                $document->update(['remarks' => $request->remarks]);
+            }
 
             return redirect()->back()->with('success', 'Document status changed');
         } catch (Exception $e) {

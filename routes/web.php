@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\BackupController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\OfficeController;
 use App\Http\Controllers\ProfileController;
@@ -13,9 +14,7 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -48,28 +47,26 @@ Route::middleware('auth')->group(function () {
         Route::get('/create', [DocumentController::class, 'create'])->name('documents.create');
         Route::post('/', [DocumentController::class, 'store'])->name('documents.store');
 
-        // Move the 'pending' route here
+        // Static routes
         Route::get('/pending', [DocumentController::class, 'showPending'])->name('documents.pending');
-
+        Route::get('/complete', [DocumentController::class, 'showComplete'])->name('documents.complete');
         Route::delete('/attachments/{id}', [DocumentController::class, 'deleteAttachment'])->name('attachments.delete');
 
-        Route::get('/terminal', [DocumentController::class, 'tagTerminal'])->name('documents.terminal');
-
-        // Parameterized routes should come after static routes
-        Route::get('/edit/{document}', [DocumentController::class, 'edit'])->name('documents.edit');
-        Route::get('/{document}', [DocumentController::class, 'show'])->name('documents.show');
+        // Parameterized routes
+        Route::get('/{document}/show', [DocumentController::class, 'show'])->name('documents.show');
+        Route::get('/{document}/edit', [DocumentController::class, 'edit'])->name('documents.edit');
         Route::put('/{document}', [DocumentController::class, 'update'])->name('documents.update');
-        Route::delete('/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');
+        Route::delete('/{document}/delete', [DocumentController::class, 'destroy'])->name('documents.destroy');
+        Route::delete('/{document}/delete-attachment', [DocumentController::class, 'deleteAttachment'])->name('documents.attachments.destroy');
 
-        //receive and release
-        Route::get('/receive/{document}', [DocumentController::class, 'setReceived'])->name('documents.receive');
-        Route::get('/release/{document}', [DocumentController::class, 'confirmReleased'])->name('documents.confirmrelease');
-        Route::put('/release/{document}', [DocumentController::class, 'setReleased'])->name('documents.release');
-        Route::get('/tag-terminal/{document}', [DocumentController::class, 'tagAsTerminal'])->name('documents.tagterminal');
-        Route::get('/retract-terminal/{document}', [DocumentController::class, 'retractTerminal'])->name('documents.retractterminal');
+        // Update status route
+        Route::get('/{document}/status', [DocumentController::class, 'confirmReleased'])->name('documents.confirmrelease');
+        Route::get('/{document}/{status}', [DocumentController::class, 'changeStatus'])->name('documents.changeStatus');
+
+        Route::put('/{document}/{status}', [DocumentController::class, 'changeStatus'])->name('documents.updateStatus');
 
         Route::post('/search', [DocumentController::class, 'search'])->name('documents.search');
-        Route::get('/search', [DocumentController::class, 'download'])->name('documents.download');
+        Route::get('/{id}/download', [DocumentController::class, 'downloadFile'])->name('documents.download');
     });
 
     Route::prefix('office')->group(function () {
@@ -103,8 +100,6 @@ Route::middleware('auth')->group(function () {
         Route::delete('/{backup}', [BackupController::class, 'destroy'])->name('backup.destroy');
     });
 });
-
-Route::get('documents/download/{id}', [DocumentController::class, 'downloadFile'])->name('documents.downloadFile');
 
 //stmp mail test
 // Route::get('/testroute', function() {

@@ -243,5 +243,6 @@
         });
         </script>
 
-        >>>>>>> origin/ocrProcessing
+
         @endsection
+        >>>>>>> f7c6a9a1dc6cbc21c9a7edd84f95f26f47b1c69c
