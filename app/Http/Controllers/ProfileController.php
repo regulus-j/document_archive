@@ -6,8 +6,8 @@ use App\Http\Requests\ProfileUpdateRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
 
 class ProfileController extends Controller
@@ -35,7 +35,7 @@ class ProfileController extends Controller
             'password' => 'required|same:password_confirmation|string|min:8',
         ]));
 
-        
+        $register->password ?? $register->user()->update('password_set', '1');
 
         if ($request->user()->isDirty('email')) {
             $request->user()->email_verified_at = null;
@@ -54,12 +54,12 @@ class ProfileController extends Controller
         $request->validate([
             'password' => 'required|confirmed|min:8',
         ]);
-    
+
         $user = $request->user();
         $user->password = Hash::make($request->password);
         $user->password_set = true;
         $user->save();
-    
+
         return Redirect::route('dashboard')->with('status', 'password-set');
     }
 
