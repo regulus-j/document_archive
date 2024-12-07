@@ -49,7 +49,7 @@
                     @method('POST')
 
                     <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
-                        <div class="sm:col-span-2">
+                        <!-- <div class="sm:col-span-2">
                             <label for="tracking_number" class="block text-sm font-medium text-gray-700">
                                 Tracking Number
                             </label>
@@ -67,7 +67,7 @@
                             </div>
                             <p class="mt-2 text-sm text-gray-500">Ensure the tracking number matches the physical
                                 document.</p>
-                        </div>
+                        </div> -->
 
                         <div class="sm:col-span-2">
                             <label for="title" class="block text-sm font-medium text-gray-700">Title</label>

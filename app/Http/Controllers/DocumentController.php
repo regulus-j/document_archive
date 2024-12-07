@@ -420,7 +420,7 @@ class DocumentController extends Controller
         return response()->download($filePath);
     }
 
-    function generateTrackingNumber($prefix = 'TRK', $length = 10)
+    function generateTrackingNumber($prefix = 'TRK', $length = 5)
     {
         do {
             // Define the characters to use for the random part
@@ -442,6 +442,7 @@ class DocumentController extends Controller
 
         return $trackingNumber;
     }
+
 
     public function generateTrackingSlip($docid, $uploaderid)
     {
