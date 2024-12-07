@@ -1,14 +1,13 @@
 <?php
 
 use App\Http\Controllers\BackupController;
-use App\Http\Controllers\FolderController;
+use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\OfficeController;
 use App\Http\Controllers\ProfileController;
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\DocumentController;
-use App\Http\Controllers\ReportController;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
@@ -51,11 +50,14 @@ Route::middleware('auth')->group(function () {
 
         // Move the 'pending' route here
         Route::get('/pending', [DocumentController::class, 'showPending'])->name('documents.pending');
+
+        Route::delete('/attachments/{id}', [DocumentController::class, 'deleteAttachment'])->name('attachments.delete');
+
         Route::get('/terminal', [DocumentController::class, 'tagTerminal'])->name('documents.terminal');
 
         // Parameterized routes should come after static routes
+        Route::get('/edit/{document}', [DocumentController::class, 'edit'])->name('documents.edit');
         Route::get('/{document}', [DocumentController::class, 'show'])->name('documents.show');
-        Route::get('/{document}/edit', [DocumentController::class, 'edit'])->name('documents.edit');
         Route::put('/{document}', [DocumentController::class, 'update'])->name('documents.update');
         Route::delete('/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');
 
@@ -65,7 +67,6 @@ Route::middleware('auth')->group(function () {
         Route::put('/release/{document}', [DocumentController::class, 'setReleased'])->name('documents.release');
         Route::get('/tag-terminal/{document}', [DocumentController::class, 'tagAsTerminal'])->name('documents.tagterminal');
         Route::get('/retract-terminal/{document}', [DocumentController::class, 'retractTerminal'])->name('documents.retractterminal');
-
 
         Route::post('/search', [DocumentController::class, 'search'])->name('documents.search');
         Route::get('/search', [DocumentController::class, 'download'])->name('documents.download');

@@ -68,4 +68,9 @@ class Document extends Model
     {
         return $this->hasOne(DocumentTrackingNumber::class, 'doc_id');
     }
+
+    public function attachments()
+    {
+        return $this->hasMany(DocumentAttachment::class);
+    }
 }
