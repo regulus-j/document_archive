@@ -32,7 +32,7 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 text-gray-700">
                             <div>
                                 <span class="block font-medium text-gray-500 mb-1">Tracking Number</span>
-                                <p class="text-lg">{{ $document->tracking_number }}</p>
+                                <p class="text-lg">{{ $document->trackingNumber->tracking_number }}</p>
                             </div>
                             <div>
                                 <span class="block font-medium text-gray-500 mb-1">Title</span>
@@ -58,12 +58,14 @@
                             </div>
                             <div>
                                 <span class="block font-medium text-gray-500 mb-1">Classification</span>
-                                <p class="text-lg">{{ $document->classification }}</p>
+                                <p class="text-lg">{{ $document->category }}</p>
                             </div>
                         </div>
                     </div>
 
-                    <form action="{{ route('documents.updateStatus', ['document' => $document, 'status' => 'released']) }}" method="POST" class="space-y-6">
+                    <form
+                        action="{{ route('documents.updateStatus', ['document' => $document, 'status' => 'released']) }}"
+                        method="POST" class="space-y-6">
                         @csrf
                         @method('PUT')
 
@@ -73,7 +75,8 @@
                             </label>
 
                             <div class="sm:col-span-2">
-                                <label for="to_office" class="block text-sm font-medium text-gray-700">Recipient Office</label>
+                                <label for="to_office" class="block text-sm font-medium text-gray-700">Recipient
+                                    Office</label>
                                 <select name="to_office" id="to_office"
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                                     required>
@@ -91,10 +94,9 @@
                                 <div class="mt-1 border border-gray-300 rounded-md max-h-48 overflow-y-auto p-2">
                                     <div class="space-y-2">
                                         @foreach($users as $user)
-                                            <div class="flex items-center user-checkbox" data-office-ids="{{ implode(',', $user->offices->pluck('id')->toArray()) }}">
-                                                <input type="checkbox" 
-                                                    name="to_user_ids[]" 
-                                                    value="{{ $user->id }}" 
+                                            <div class="flex items-center user-checkbox"
+                                                data-office-ids="{{ implode(',', $user->offices->pluck('id')->toArray()) }}">
+                                                <input type="checkbox" name="to_user_ids[]" value="{{ $user->id }}"
                                                     id="user_{{ $user->id }}"
                                                     class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
                                                 <label for="user_{{ $user->id }}" class="ml-2 block text-sm text-gray-900">
@@ -140,13 +142,13 @@
 </div>
 
 <script>
-        document.getElementById('to_office').addEventListener('change', function() {
+    document.getElementById('to_office').addEventListener('change', function () {
         const selectedOfficeId = this.value;
         const userCheckboxes = document.querySelectorAll('.user-checkbox');
-    
-        userCheckboxes.forEach(function(userCheckbox) {
+
+        userCheckboxes.forEach(function (userCheckbox) {
             const officeIds = userCheckbox.getAttribute('data-office-ids').split(',');
-    
+
             if (officeIds.includes(selectedOfficeId) || selectedOfficeId === '') {
                 userCheckbox.style.display = 'flex'; // Show the user
             } else {
