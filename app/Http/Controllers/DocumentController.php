@@ -638,7 +638,7 @@ class DocumentController extends Controller
     //redirect to document release form
     public function confirmReleased($id): View
     {
-        $document = Document::with(['transaction.fromOffice', 'transaction.toOffice'])->findOrFail($id);
+        $document = Document::with(['trackingNumber', 'transaction.fromOffice', 'transaction.toOffice'])->findOrFail($id);
         $offices = Office::with('users')->get();
         $users = User::with('offices')->get();
 
