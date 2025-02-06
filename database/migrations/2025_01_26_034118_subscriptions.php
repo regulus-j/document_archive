@@ -12,33 +12,6 @@ return new class extends Migration
     public function up(): void
     {
         //
-        Schema::create('company_subscriptions', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('company_id'); // References the company purchasing the subscription
-            $table->unsignedBigInteger('plan_id');   // References the subscription plan
-            $table->date('start_date');              // Start of the subscription
-            $table->date('end_date')->nullable();    // Optional: Used for non-auto-renewing plans
-            $table->enum('status', ['active', 'canceled', 'expired', 'pending'])->default('pending'); // Tracks subscription state
-            $table->boolean('auto_renew')->default(true); // Auto-renewal setting
-            $table->timestamps();
-
-            $table->foreign('company_id')->references('id')->on('company_accounts')->onDelete('cascade');
-            $table->foreign('plan_id')->references('id')->on('plans')->onDelete('cascade');
-        });
-
-        Schema::create('payments', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('company_subscription_id'); // Links to the company subscription
-            $table->date('payment_date')->default(DB::raw('CURRENT_TIMESTAMP')); // Payment timestamp
-            $table->decimal('amount', 10, 2); // Amount paid
-            $table->enum('payment_method', ['credit_card', 'paypal', 'bank_transfer', 'other']); // Payment type
-            $table->enum('status', ['successful', 'failed', 'pending'])->default('pending'); // Status of payment
-            $table->string('transaction_reference')->nullable(); // Optional field for reconciliation
-            $table->timestamps();
-
-            $table->foreign('company_subscription_id')->references('id')->on('company_subscriptions')->onDelete('cascade');
-        });
-
         Schema::create('plans', function (Blueprint $table) {
             $table->id();
             $table->string('plan_name');
@@ -46,7 +19,43 @@ return new class extends Migration
             $table->decimal('price', 10, 2); // Cost per billing cycle
             $table->enum('billing_cycle', ['monthly', 'yearly', 'custom'])->default('monthly'); // Frequency of billing
             $table->boolean('is_active')->default(true); // For activating/deactivating plans
+
+            // Plan Features
+            $table->boolean('feature_1')->default(false);
+            $table->boolean('feature_2')->default(false);
+            $table->boolean('feature_3')->default(false);
+            // ...
+
             $table->timestamps();
+        });
+
+        Schema::create('company_subscriptions', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('company_id'); // References the company purchasing the subscription
+            $table->unsignedBigInteger('plan_id');
+            $table->date('start_date');              // Start of the subscription
+            $table->date('end_date')->nullable();    // Optional: Used for non-auto-renewing plans
+            $table->enum('status', ['active', 'canceled', 'expired', 'pending'])->default('pending'); // Tracks subscription state
+            $table->boolean('auto_renew')->default(true); // Auto-renewal setting
+            $table->timestamps();
+
+            $table->foreign('plan_id')
+                ->references('id')
+                ->on('plans')
+                ->onDelete('cascade');
+        });
+
+        Schema::create('payments', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('company_subscription_id'); // Links to the company subscription
+            $table->date('payment_date')->default(DB::raw('CURRENT_TIMESTAMP')); // Payment timestamp
+            $table->decimal('amount', 10, 2); // Amount paid
+            $table->enum('payment_method', ['credit_card', 'paypal', 'bank_transfer', 'gcash', 'other']); // Payment type
+            $table->enum('status', ['successful', 'failed', 'pending'])->default('pending'); // Status of payment
+            $table->string('transaction_reference')->nullable(); // Optional field for reconciliation
+            $table->timestamps();
+
+            $table->foreign('company_subscription_id')->references('id')->on('company_subscriptions')->onDelete('cascade');
         });
 
         Schema::table('users', function (Blueprint $table) {

@@ -14,11 +14,19 @@ return new class extends Migration
         //
         Schema::create('company_accounts', function (Blueprint $table) {
             $table->id();
+
+            //owner of the company
             $table->unsignedBigInteger('user_id');
+
+            //company attributes
             $table->string('company_name');
             $table->string('registered_name');
             $table->string('company_email');
             $table->string('company_phone');
+
+            //demographic attributes
+            $table->string('industry')->nullable();
+            $table->string('company_size')->nullable();
 
             $table->timestamps();
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
