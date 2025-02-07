@@ -171,8 +171,8 @@ class DocumentController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required',
             'classification' => 'required|string',
-            'from_office' => 'required|exists:offices,id',
-            'to_office' => 'required|exists:offices,id',
+            // 'from_office' => 'required|exists:offices,id',
+            // 'to_office' => 'required|exists:offices,id',
             'remarks' => 'nullable|string|max:250',
             'upload' => 'required|file|mimes:jpeg,png,jpg,gif,pdf,docx|max:10240', // 10MB max
             'attachements.*' => 'file|mimes:jpeg,png,jpg,gif,pdf,docx|max:10240',
@@ -675,4 +675,70 @@ class DocumentController extends Controller
             return redirect()->back()->with('error', 'Error updating document status: '.$e->getMessage());
         }
     }
+
+    //workflow logic
+    public function createWorkflow(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'document_id' => 'required|exists:documents,id',
+            'sender_id' => 'required|exists:users,id',
+            'recipient_id' => 'required|exists:users,id',
+            'step_order' => 'required|integer',
+        ]);
+
+        try {
+            $workflow = DocumentWorkflow::create($request->only([
+                'document_id', 'sender_id', 'recipient_id', 'step_order',
+            ]));
+
+            // You can log creation (e.g., using DocumentAudit)
+            $this->logDocumentAction($workflow->document, 'workflow', 'pending', 'Document workflow created');
+
+            return redirect()->back()->with('success', 'Document workflow created successfully');
+        } catch (Exception $e) {
+            return redirect()->back()->with('error', 'Error creating document workflow: '.$e->getMessage());
+        }
+    }
+
+    public function approveWorkflow($id): RedirectResponse
+    {
+        $workflow = DocumentWorkflow::findOrFail($id);
+        $workflow->approve();
+        $this->logDocumentAction($workflow->document, 'workflow', 'approved', 'Document workflow approved');
+
+        // Example: Create next workflow step if current step_order = 1 and approval is required before moving on
+        if ($workflow->step_order === 1) {
+            DocumentWorkflow::create([
+                'document_id' => $workflow->document_id,
+                'sender_id' => $workflow->recipient_id,
+                'recipient_id' => $nextRecipientId,
+                'step_order' => 2,
+                'status' => 'pending',
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Document workflow approved');
+    }
+
+    public function rejectWorkflow($id): RedirectResponse
+    {
+        $workflow = DocumentWorkflow::findOrFail($id);
+        $workflow->reject();
+        $this->logDocumentAction($workflow->document, 'workflow', 'rejected', 'Document workflow rejected');
+
+        // Example: Route document back to original sender or add additional logic
+        // You may update the document status or trigger another workflow step here
+
+        return redirect()->back()->with('success', 'Document workflow rejected');
+    }
+
+    //helper functions
+    private function storeFile($file, $company_id)
+    {
+        Storage::disk('local')->put(date('mYd, '), 'Contents');
+    }
+
+    /*
+    - Count time difference between two dates function
+    */
 }
