@@ -74,18 +74,6 @@
                             </select>
                         </div>
 
-                        <div>
-                            <label for="from_office" class="block text-sm font-medium text-gray-700">Originating Office</label>
-                            <select name="from_office" id="from_office"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                                required>
-                                <option value="">Select Office</option>
-                                @foreach(Auth::user()->offices as $office)
-                                    <option value="{{ $office->id }}">{{ $office->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-
                         <div class="sm:col-span-2">
                             <label class="block text-sm font-medium text-gray-700 mb-2">Purpose of Document</label>
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -113,6 +101,18 @@
                             <textarea name="remarks" id="remarks" rows="3" maxlength="250"
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                                 placeholder="Enter additional remarks (max 250 characters)"></textarea>
+                        </div>
+
+                        {{-- <div> --}}
+                            {{-- <label for="from_office" class="block text-sm font-medium text-gray-700">Originating Office</label>
+                            <select name="from_office" id="from_office"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                required>
+                                <option value="">Select Office</option>
+                                @foreach(Auth::user()->offices as $office)
+                                    <option value="{{ $office->id }}">{{ $office->name }}</option>
+                                @endforeach
+                            </select>
                         </div>
 
                         <div class="sm:col-span-2">
@@ -148,7 +148,7 @@
                                 </div>
                             </div>
                             <p class="mt-2 text-xs text-gray-500">Select multiple users if needed</p>
-                        </div>
+                        </div> --}}
 
                         <div class="sm:col-span-2">
                             <label for="upload">Upload Main Document</label>
