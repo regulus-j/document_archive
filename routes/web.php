@@ -48,6 +48,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/', [DocumentController::class, 'store'])->name('documents.store');
 
         // Static routes
+        Route::get('/archive', [DocumentController::class, 'showArchive'])->name('documents.archive');
         Route::get('/pending', [DocumentController::class, 'showPending'])->name('documents.pending');
         Route::get('/complete', [DocumentController::class, 'showComplete'])->name('documents.complete');
         Route::delete('/attachments/{id}', [DocumentController::class, 'deleteAttachment'])->name('attachments.delete');
