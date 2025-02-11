@@ -25,7 +25,7 @@
 
             <div>
                 <strong class="text-gray-700">Tracking Number:</strong>
-                <p>{{ $document->trackingNumber->tracking_number }}</p>
+                <p>{{ $document->trackingNumber->tracking_number ?? 'N/A' }}</p>
             </div>
 
             <div>

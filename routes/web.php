@@ -45,17 +45,20 @@ Route::middleware('auth')->group(function () {
     Route::prefix('documents')->group(function () {
         Route::get('/', [DocumentController::class, 'index'])->name('documents.index');
         Route::get('/create', [DocumentController::class, 'create'])->name('documents.create');
-        Route::post('/', [DocumentController::class, 'store'])->name('documents.store');
+        Route::post('/', [DocumentController::class, 'uploadController'])->name('documents.store');
 
         // Static routes
         Route::get('/archive', [DocumentController::class, 'showArchive'])->name('documents.archive');
+        Route::get('/released', [DocumentController::class, 'showReleased'])->name('documents.released');
         Route::get('/pending', [DocumentController::class, 'showPending'])->name('documents.pending');
         Route::get('/complete', [DocumentController::class, 'showComplete'])->name('documents.complete');
         Route::delete('/attachments/{id}', [DocumentController::class, 'deleteAttachment'])->name('attachments.delete');
+        Route::get('/forward/{document}', [DocumentController::class, 'forwardDocument'])->name('documents.forward');
 
         // Parameterized routes
         Route::get('/{document}/show', [DocumentController::class, 'show'])->name('documents.show');
         Route::get('/{document}/edit', [DocumentController::class, 'edit'])->name('documents.edit');
+        Route::post('/{document}/forward', [DocumentController::class, 'forwardDocumentSubmit'])->name('documents.forward.submit');
         Route::put('/{document}', [DocumentController::class, 'update'])->name('documents.update');
         Route::delete('/{document}/delete', [DocumentController::class, 'destroy'])->name('documents.destroy');
         Route::delete('/{document}/delete-attachment', [DocumentController::class, 'deleteAttachment'])->name('documents.attachments.destroy');
