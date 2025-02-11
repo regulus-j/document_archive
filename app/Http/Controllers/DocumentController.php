@@ -70,10 +70,91 @@ class DocumentController extends Controller
 
         $auditLogs = DocumentAudit::paginate(15);
 
-        return view('documents.index', array_merge([
+        return view('documents.archive', array_merge([
             'documents' => $documents,
             'i' => (request()->input('page', 1) - 1) * 5,
         ], compact('auditLogs')));
+    }
+
+    //Storing the document
+    public function uploadController(Request $request){
+        //upload to database
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'required',
+            'classification' => 'required|string',
+            'remarks' => 'nullable|string|max:250',
+            'upload' => 'required|file|mimes:jpeg,png,jpg,gif,pdf,docx|max:10240', // 10MB max
+            'attachements.*' => 'file|mimes:jpeg,png,jpg,gif,pdf,docx|max:10240',
+        ]);
+
+        try{
+            $document = Document::create([
+                'title' => $request->title,
+                'uploader' => auth()->id(),
+                'description' => $request->description,
+                'path' => $filePath,
+                'remarks' => $request->remarks ?? null,
+            ]);
+
+            $document->categories()->attach([$request->classification]);
+
+            $document->status()->create([
+                'status' => 'pending',
+            ]);
+
+            $tracking_number = $this->generateTrackingNumber($request->from_office, $request->classification);
+
+            // Create tracking number record
+            DocumentTrackingNumber::create([
+                'doc_id' => $document->id,
+                'tracking_number' => $tracking_number,
+            ]);
+
+            DocumentTransaction::create([
+                'doc_id' => $document->id,
+                'from_office' => $request->from_office,
+                'to_office' => $request->to_office,
+            ]);
+
+        // Handle additional attachments if any
+
+        if ($request->hasFile('attachments')) {
+
+            foreach ($request->file('attachments') as $attachment) {
+
+                $attachmentName = time().'_'.$attachment->getClientOriginalName();
+
+                $attachmentPath = $attachment->storeAs('attachments', $attachmentName . '_' . auth()->id()->, 'public');
+
+                DocumentAttachment::create([
+
+                    'document_id' => $document->id,
+
+                    'filename' => $attachmentName,
+
+                    'path' => $attachmentPath,
+
+                ]);
+            }
+        }
+
+        // Log document creation
+        $this->logDocumentAction($document, 'created', 'pending', 'Document uploaded');
+
+        $data = $this->generateTrackingSlip($document->id, auth()->id(), $tracking_number);
+
+        return redirect()->route('documents.index')
+            ->with('data', $data)
+            ->with('success', 'Document uploaded successfully');
+
+        } catch (Exception $e) {
+        \Log::error('Document processing error: '.$e->getMessage());
+
+        return redirect()->back()
+            ->with('error', 'Error processing document: '.$e->getMessage())
+            ->withInput();
+        }
     }
 
     /**
