@@ -8,6 +8,7 @@ use App\Models\DocumentAudit;
 use App\Models\DocumentCategory;
 use App\Models\DocumentTrackingNumber;
 use App\Models\DocumentTransaction;
+use App\Models\CompanyAccount;
 use App\Models\Office;
 use App\Models\User;
 use chillerlan\QRCode\QRCode;
@@ -84,11 +85,19 @@ class DocumentController extends Controller
             'description' => 'required',
             'classification' => 'required|string',
             'remarks' => 'nullable|string|max:250',
-            'upload' => 'required|file|mimes:jpeg,png,jpg,gif,pdf,docx|max:10240', // 10MB max
+            'upload' => 'required|file', // 10MB max
             'attachements.*' => 'file|mimes:jpeg,png,jpg,gif,pdf,docx|max:10240',
+            'archive' => 'string',
+            'forward' => 'string',
         ]);
 
-        try{
+        try {
+            $companyPath = auth()->user()->company->id ?? 'default';
+
+            $file = $request->file('upload');
+            $fileName = time().'_'.$file->getClientOriginalName();
+            $filePath = $file->storeAs($companyPath . '/documents', $fileName, 'public');
+
             $document = Document::create([
                 'title' => $request->title,
                 'uploader' => auth()->id(),
@@ -97,25 +106,25 @@ class DocumentController extends Controller
                 'remarks' => $request->remarks ?? null,
             ]);
 
-            $document->categories()->attach([$request->classification]);
+            // $document->categories()->attach([$request->classification]);
 
             $document->status()->create([
                 'status' => 'pending',
             ]);
 
-            $tracking_number = $this->generateTrackingNumber($request->from_office, $request->classification);
+            // $tracking_number = $this->generateTrackingNumber($request->from_office, $request->classification);
 
-            // Create tracking number record
-            DocumentTrackingNumber::create([
-                'doc_id' => $document->id,
-                'tracking_number' => $tracking_number,
-            ]);
+            // // Create tracking number record
+            // DocumentTrackingNumber::create([
+            //     'doc_id' => $document->id,
+            //     'tracking_number' => $tracking_number,
+            // ]);
 
-            DocumentTransaction::create([
-                'doc_id' => $document->id,
-                'from_office' => $request->from_office,
-                'to_office' => $request->to_office,
-            ]);
+            // DocumentTransaction::create([
+            //     'doc_id' => $document->id,
+            //     'from_office' => $request->from_office,
+            //     'to_office' => $request->to_office,
+            // ]);
 
         // Handle additional attachments if any
 
@@ -125,7 +134,8 @@ class DocumentController extends Controller
 
                 $attachmentName = time().'_'.$attachment->getClientOriginalName();
 
-                $attachmentPath = $attachment->storeAs('attachments', $attachmentName . '_' . auth()->id()->, 'public');
+                $companyPath = auth()->user()->company->id ?? 'default';
+                $attachmentPath = $attachment->storeAs($companyPath . '/attachments', $attachmentName, 'public');
 
                 DocumentAttachment::create([
 
@@ -144,10 +154,17 @@ class DocumentController extends Controller
 
         $data = $this->generateTrackingSlip($document->id, auth()->id(), $tracking_number);
 
+        if($request->archive == '1'){
+            $document->status()->update(['status' => 'archived']);
+        }if($request->forward == '1'){
+            return redirect()->route('documents.forward', $document->id)
+                ->with('data', $data)
+                ->with('success', 'Document uploaded successfully');
+        }
         return redirect()->route('documents.index')
             ->with('data', $data)
             ->with('success', 'Document uploaded successfully');
-
+        
         } catch (Exception $e) {
         \Log::error('Document processing error: '.$e->getMessage());
 
@@ -155,6 +172,30 @@ class DocumentController extends Controller
             ->with('error', 'Error processing document: '.$e->getMessage())
             ->withInput();
         }
+    }
+
+    public function forwardDocument(Request $request, $id){
+        $document = Document::findOrFail($id);
+
+        $offices = Office::all();
+        $users = User::with('offices')->get();
+
+        return view('documents.forward', compact('document', 'offices', 'users'));
+    }
+
+    public function forwardDocumentSubmit(Request $request, $id){
+        $document = Document::findOrFail($id);
+
+        $request->validate([
+
+        ]);
+
+        $document->status()->update(['status' => 'forwarded']);
+
+        $this->logDocumentAction($document, 'forwarded', 'forwarded', 'Document forwarded');
+
+        return redirect()->route('documents.index')
+            ->with('success', 'Document forwarded successfully');
     }
 
     /**
@@ -591,7 +632,7 @@ class DocumentController extends Controller
     {
         // Retrieve the office abbreviation and document type
         $office = Office::findOrFail($officeId);
-        $documentType = DocumentCategory::findOrFail($documentTypeId);
+        $documentType = DocumentCategory::find($documentTypeId) ?? 'GEN';
 
         $prefix = strtoupper(substr($office->name, 0, 3)).'-'.strtoupper(substr($documentType->category, 0, 3));
 

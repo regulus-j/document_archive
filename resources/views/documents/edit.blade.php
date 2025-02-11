@@ -96,7 +96,7 @@
                         @foreach($userOffice as $id => $name)
                             <option 
                                 value="{{ $id }}" 
-                                {{ old('from_office', $document->transaction->from_office) == $id ? 'selected' : '' }}
+                                {{ old('from_office', optional($document->transaction)->from_office) == $id ? 'selected' : '' }}
                             >
                                 {{ $name }}
                             </option>
