@@ -103,8 +103,8 @@
                                 placeholder="Enter additional remarks (max 250 characters)"></textarea>
                         </div>
 
-                        {{-- <div> --}}
-                            {{-- <label for="from_office" class="block text-sm font-medium text-gray-700">Originating Office</label>
+                        <div>
+                            <label for="from_office" class="block text-sm font-medium text-gray-700">Originating Office</label>
                             <select name="from_office" id="from_office"
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                                 required>
@@ -148,7 +148,7 @@
                                 </div>
                             </div>
                             <p class="mt-2 text-xs text-gray-500">Select multiple users if needed</p>
-                        </div> --}}
+                        </div>
 
                         <div class="sm:col-span-2">
                             <label for="upload">Upload Main Document</label>
