@@ -71,6 +71,26 @@
                 @endforelse
             </div>
 
+            <h2>Workflow</h2>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Receive Order</th>
+                        <th>Recipient</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($workflows as $workflow)
+                    <tr>
+                        <td>{{ $workflow->step_order }}</td>
+                        <td>{{ $workflow->recipient->first_name }} {{ $workflow->recipient->last_name }}</td>
+                        <td>{{ $workflow->status }}</td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+
             <div>
                 <strong class="text-gray-700">Attachments by Date:</strong>
                 @forelse ($document->attachments->groupBy(function($attachment) {

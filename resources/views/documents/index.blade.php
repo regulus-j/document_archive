@@ -226,10 +226,10 @@
                                         </span>
                                     </td>
                                     <td class="border-dashed border-t border-gray-200 px-6 py-4">
-                                        {{ $document->transaction?->fromOffice?->name ?? 'N/A' }}
+                                        {{ $document->transaction?->fromOffice?->name }}
                                     </td>
                                     <td class="border-dashed border-t border-gray-200 px-6 py-4">
-                                        {{ $document->transaction?->toOffice?->name ?? 'N/A' }}
+                                        {{ isset($highestRecipients[$document->id]) ? $highestRecipients[$document->id]->implode(', ') : 'N/A' }}
                                     </td>
                                     <td class="border-dashed border-t border-gray-200 px-6 py-4">
                                         {{ $document->created_at->format('M d, Y H:i') }}
