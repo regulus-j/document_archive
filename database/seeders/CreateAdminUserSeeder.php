@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\User;
+use App\Models\Admin;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use Illuminate\Support\Facades\Hash;
@@ -29,6 +30,10 @@ class CreateAdminUserSeeder extends Seeder
 
         // Check if the 'Admin' role already exists
         $role = Role::firstOrCreate(['name' => 'Admin']);
+
+        $admin = Admin::firstOrCreate([
+            'user_id' => $user->id,
+        ]);
 
         // Assign the 'Admin' role to the user
         $user->assignRole($role);

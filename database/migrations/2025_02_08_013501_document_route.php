@@ -32,6 +32,27 @@ return new class extends Migration
             $table->unsignedBigInteger('route_id');
             $table->foreign('route_id')->references('id')->on('document_workflows')->onDelete('cascade');   
         });
+
+        Schema::create('admins', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('user_id');
+            $table->timestamps();
+
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+        });
+
+        Schema::create('company_users', function (Blueprint $table) {
+            $table->unsignedBigInteger('company_id')->nullable(); // Make it nullable
+            $table->unsignedBigInteger('user_id')->nullable();      // Make it nullable
+        
+            $table->foreign('company_id')->references('id')->on('company_accounts')->onDelete('set null');
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('set null');
+        });
+
+        Schema::table('offices', function (Blueprint $table) {
+            $table->unsignedBigInteger('company_id')->nullable()->after('id');
+            $table->foreign('company_id')->references('id')->on('company_accounts')->onDelete('cascade');
+        });
     }
 
     /**
