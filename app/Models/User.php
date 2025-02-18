@@ -74,4 +74,9 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(CompanyAccount::class, 'company_users', 'user_id', 'company_id');
     }
+
+    public function isAdmin(): bool
+    {
+        return Admin::where('user_id', $this->id)->exists();
+    }
 }
