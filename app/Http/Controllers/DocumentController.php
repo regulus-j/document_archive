@@ -226,43 +226,6 @@ class DocumentController extends Controller
         return view('documents.forward', compact('document', 'offices', 'users'));
     }
 
-    public function forwardDocumentSubmit(Request $request, $id){
-        $document = Docudment::findOrFail($id);
-
-        // Validate that at least one recipient is selected in each batch.
-        $request->validate([
-            'recipient_batch' => 'required|array',
-            'step_order' => 'required|array',
-        ]);
-
-        // Update document status to forwarded.
-        $document->status()->update(['status' => 'forwarded']);
-
-        // Log the forwarding action.
-        $this->logDocumentAction($document, 'forwarded', 'forwarded', 'Document forwarded');
-
-        // Process each batch of recipients.
-        foreach ($request->recipient_batch as $batchIndex => $recipients) {
-            // Skip if no recipient selected in this batch.
-            if (empty($recipients)) {
-                continue;
-            }
-            // For each recipient in the current batch, create a workflow record.
-            foreach ($recipients as $recipientId) {
-                \App\Models\DocumentWorkflow::create([
-                    'document_id' => $document->id,
-                    'sender_id' => auth()->id(),
-                    'recipient_id' => $recipientId,
-                    'step_order' => $request->step_order[$batchIndex],
-                    'status' => 'pending'
-                ]);
-            }
-        }
-
-        return redirect()->route('documents.index')
-            ->with('success', 'Document forwarded successfully');
-    }
-
     /**
      * Search for documents using text input or image upload.
      */
@@ -796,93 +759,6 @@ class DocumentController extends Controller
         return view('documents.audit', compact('auditLogs'));
     }
 
-    //get all the documents that are pending
-    public function showPending(): View
-    {
-        // Get the IDs of the offices associated with the authenticated user
-        $userOfficeIds = auth()->user()->offices->pluck('id')->toArray();
-
-        // Retrieve documents where the transaction's from_office or to_office matches the user's offices
-        $documents = Document::with(['user', 'status', 'transaction.fromOffice', 'transaction.toOffice'])
-            ->whereHas('transaction', function ($query) use ($userOfficeIds) {
-                $query->whereIn('from_office', $userOfficeIds)
-                    ->orWhereIn('to_office', $userOfficeIds);
-            })
-            ->whereHas('status', function ($query) {
-                $query->whereIn('status', ['pending', 'received', 'released', 'completed', 'retracted']);
-            })
-            ->latest()
-            ->paginate(5);
-
-        return view('documents.pending', [
-            'documents' => $documents,
-            'i' => (request()->input('page', 1) - 1) * 5,
-        ]);
-    }
-
-    public function showComplete()
-    {
-        // Get the IDs of the offices associated with the authenticated user
-        $userOfficeIds = auth()->user()->offices->pluck('id')->toArray();
-
-        // Retrieve documents where the transaction's from_office or to_office matches the user's offices
-        $documents = Document::with(['user', 'status', 'transaction.fromOffice', 'transaction.toOffice'])
-            ->whereHas('transaction', function ($query) use ($userOfficeIds) {
-                $query->whereIn('from_office', $userOfficeIds)
-                    ->orWhereIn('to_office', $userOfficeIds);
-            })
-            ->whereHas('status', function ($query) {
-                $query->whereIn('status', ['released', 'completed', 'retracted']);
-            })
-            ->latest()
-            ->paginate(5);
-
-        return view('documents.pending', [
-            'documents' => $documents,
-            'i' => (request()->input('page', 1) - 1) * 5,
-        ]);
-    }
-
-    //redirect to document release form
-    public function confirmReleased($id): View
-    {
-        $document = Document::with(['transaction.fromOffice', 'transaction.toOffice'])->findOrFail($id);
-        $offices = Office::with('users')->get();
-        $users = User::with('offices')->get();
-
-        return view('documents.releasing_form', compact('document', 'offices', 'users'));
-    }
-
-    //change the status of the document
-    public function changeStatus($id, $status, $request = null): RedirectResponse
-    {
-        try {
-            $document = Document::findOrFail($id);
-            $document->status()->update(['status' => $status]);
-
-            $this->logDocumentAction($document, 'updated', $status, 'Document status changed');
-
-            if ($status == 'rejected') {
-                $document->transaction()->update(['to_office' => $document->transaction->from_office]);
-            }
-
-            if ($request) {
-                DocumentTransaction::create([
-                    'doc_id' => $document->id,
-                    'from_office' => $document->transaction->to_office,
-                    'to_office' => $document->transaction->to_office,
-                    'to_user' => $request->to_user ?? null,
-                ]);
-
-                $document->update(['remarks' => $request->remarks]);
-            }
-
-            return redirect()->back()->with('success', 'Document status changed');
-        } catch (Exception $e) {
-            return redirect()->back()->with('error', 'Error updating document status: '.$e->getMessage());
-        }
-    }
-
     //workflow logic
     public function createWorkflow(Request $request): RedirectResponse
     {
@@ -907,22 +783,50 @@ class DocumentController extends Controller
         }
     }
 
+    public function forwardDocumentSubmit(Request $request, $id){
+        $document = Document::findOrFail($id);
+
+        // Validate that at least one recipient is selected in each batch.
+        $request->validate([
+            'recipient_batch' => 'required|array',
+            'step_order' => 'required|array',
+            'remarks' => 'nullable|array',
+        ]);
+
+        // Update document status to forwarded.
+        $document->status()->update(['status' => 'forwarded']);
+
+        // Log the forwarding action.
+        $this->logDocumentAction($document, 'forwarded', 'forwarded', 'Document forwarded');
+
+        // Process each batch of recipients.
+        foreach ($request->recipient_batch as $batchIndex => $recipients) {
+            // Skip if no recipient selected in this batch.
+            if (empty($recipients)) {
+                continue;
+            }
+            // For each recipient in the current batch, create a workflow record.
+            foreach ($recipients as $recipientId) {
+                \App\Models\DocumentWorkflow::create([
+                    'document_id' => $document->id,
+                    'sender_id' => auth()->id(),
+                    'recipient_id' => $recipientId,
+                    'step_order' => $request->step_order[$batchIndex],
+                    'remarks' => $request->remarks[$batchIndex] ?? null,
+                    'status' => 'pending'
+                ]);
+            }
+        }
+
+        return redirect()->route('documents.index')
+            ->with('success', 'Document forwarded successfully');
+    }
+
     public function approveWorkflow($id): RedirectResponse
     {
         $workflow = DocumentWorkflow::findOrFail($id);
         $workflow->approve();
         $this->logDocumentAction($workflow->document, 'workflow', 'approved', 'Document workflow approved');
-
-        // Example: Create next workflow step if current step_order = 1 and approval is required before moving on
-        if ($workflow->step_order === 1) {
-            DocumentWorkflow::create([
-                'document_id' => $workflow->document_id,
-                'sender_id' => $workflow->recipient_id,
-                'recipient_id' => $nextRecipientId,
-                'step_order' => 2,
-                'status' => 'pending',
-            ]);
-        }
 
         return redirect()->back()->with('success', 'Document workflow approved');
     }
@@ -945,7 +849,35 @@ class DocumentController extends Controller
         Storage::disk('local')->put(date('mYd, '), 'Contents');
     }
 
-    /*
-    - Count time difference between two dates function
-    */
+    //workflow management
+    public function workflowManagement()
+    {
+        $workflows = DocumentWorkflow::with(['document', 'sender', 'recipient'])
+            ->where('recipient_id', auth()->id())
+            ->whereNotExists(function ($query) {
+                $query->select('*')
+                      ->from('document_workflows as dw')
+                      ->whereColumn('dw.document_id', 'document_workflows.document_id')
+                      ->whereColumn('dw.step_order', 'document_workflows.step_order')
+                      ->whereIn('dw.status', ['approved', 'rejected']);
+            })
+            ->orderBy('created_at', 'desc')
+            ->paginate(15);
+    
+        return view('documents.workflow', compact('workflows'));
+    }
+
+    public function receiveWorkflow($id){
+        $workflow = DocumentWorkflow::findOrFail($id);
+
+        $workflow->receive();
+    }
+
+    public function reviewDocument($id)
+    {
+        $workflow = DocumentWorkflow::findOrFail($id);
+        $document = $workflow->document;
+
+        return view('documents.review', compact('workflow', 'document'));
+    }
 }

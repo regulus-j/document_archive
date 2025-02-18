@@ -4,7 +4,7 @@
 @section('content')
 <div class="container">
     <h1>Forward Document</h1>
-    <form action="{{ route('documents.forward', $document) }}" method="POST">
+    <form action="{{ route('documents.forward.submit', $document->id) }}" method="POST">
         @csrf
         <div id="batches-container">
             <div class="batch-group mb-3" data-index="0">
@@ -18,7 +18,7 @@
                                id="step0_user{{ $user->id }}" 
                                value="{{ $user->id }}">
                         <label class="form-check-label" for="step0_user{{ $user->id }}">
-                            {{ $user->name }}
+                            {{ $user->first_name . ' ' . $user->last_name }}
                         </label>
                     </div>
                 @endforeach
@@ -30,6 +30,8 @@
 </div>
 
 <script>
+    let batchIndex = 1;
+
     function updateBatchOrders() {
         const batches = document.querySelectorAll('#batches-container .batch-group');
         batches.forEach((batch, index) => {
@@ -59,20 +61,74 @@
         });
     }
 
+    // Attach change event listeners on initial load
+    document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        cb.addEventListener('change', removeDuplicates);
+    });
+
+    function removeDuplicates(){
+        // Gather all checkboxes on the page
+        const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+        const groups = {};
+
+        // Group checkboxes by their value
+        checkboxes.forEach(cb => {
+            const val = cb.value;
+            if (!groups[val]) {
+                groups[val] = [];
+            }
+            groups[val].push(cb);
+        });
+
+        // For each group of checkboxes with the same value...
+        Object.keys(groups).forEach(val => {
+            const group = groups[val];
+            // Find if any checkbox in this group is checked
+            const checked = group.find(cb => cb.checked);
+            if (checked) {
+                // If one is checked, hide all the others in its group
+                group.forEach(cb => {
+                    if (cb !== checked) {
+                        const formCheck = cb.closest('.form-check');
+                        if (formCheck) {
+                            formCheck.style.display = 'none';
+                        }
+                    }
+                });
+            } else {
+                // If none are checked, show all checkboxes in this group
+                group.forEach(cb => {
+                    const formCheck = cb.closest('.form-check');
+                    if (formCheck) {
+                        formCheck.style.display = '';
+                    }
+                });
+            }
+        });
+    }
+
     function addBatch() {
         const container = document.getElementById('batches-container');
         // Clone the first batch-group as a template
         const template = container.querySelector('.batch-group');
         const newBatch = template.cloneNode(true);
 
-        // Reset all checkboxes in the new batch
+        // Reset checkboxes in the new batch and add change event listeners
         const checkboxes = newBatch.querySelectorAll('input[type="checkbox"]');
         checkboxes.forEach(cb => {
             cb.checked = false;
+            // Make sure duplicates removal reacts to changes
+            cb.addEventListener('change', removeDuplicates);
+            // Ensure any hidden elements are displayed
+            const formCheck = cb.closest('.form-check');
+            if (formCheck) {
+                formCheck.style.display = '';
+            }
         });
 
         container.appendChild(newBatch);
         updateBatchOrders();
+        removeDuplicates();
     }
 </script>
 @endsection
