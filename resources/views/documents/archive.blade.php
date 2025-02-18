@@ -89,6 +89,11 @@
                         </tr>
                     </thead>
                     <tbody>
+                        @if($documents->isEmpty())
+                        <tr>
+                            <td colspan="8" class="border-dashed border-t border-gray-200 mt-5 px-6 py-4 text-center">No records found.</td>
+                        </tr>
+                        @endif
                         @foreach($documents as $index => $document)
                             <tr>
                                 <td class="border-dashed border-t border-gray-200 px-6 py-4">{{ $index + 1 }}</td>

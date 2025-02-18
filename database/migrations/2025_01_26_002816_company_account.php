@@ -44,6 +44,12 @@ return new class extends Migration
 
             $table->foreign('company_id')->references('id')->on('company_accounts')->onDelete('cascade');
         });
+
+        Schema::table('documents', function (Blueprint $table) {
+            $table->unsignedBigInteger('company_id');
+
+            $table->foreign('company_id')->references('id')->on('company_accounts')->onDelete('cascade');
+        });
     }
 
     /**

@@ -620,7 +620,7 @@ class DocumentController extends Controller
         Storage::disk('public')->delete($document->path);
         $document->delete();
 
-        return redirect()->route('documents.index')
+        return redirect()->back()
             ->with('success', 'Document deleted successfully');
     }
 
@@ -854,23 +854,20 @@ class DocumentController extends Controller
     {
         $workflows = DocumentWorkflow::with(['document', 'sender', 'recipient'])
             ->where('recipient_id', auth()->id())
-            ->whereNotExists(function ($query) {
-                $query->select('*')
-                      ->from('document_workflows as dw')
-                      ->whereColumn('dw.document_id', 'document_workflows.document_id')
-                      ->whereColumn('dw.step_order', 'document_workflows.step_order')
-                      ->whereIn('dw.status', ['approved', 'rejected']);
+            ->where(function($query) {
+                $query->where('status', 'pending')
+                      ->orWhere('status', 'received');
             })
             ->orderBy('created_at', 'desc')
             ->paginate(15);
+
+        $acceptedWorkflows = DocumentWorkflow::with(['document', 'sender', 'recipient'])
+            ->where('recipient_id', auth()->id())
+            ->where('status', 'approved')
+            ->orderBy('created_at', 'desc')
+            ->paginate(15);
     
-        return view('documents.workflow', compact('workflows'));
-    }
-
-    public function receiveWorkflow($id){
-        $workflow = DocumentWorkflow::findOrFail($id);
-
-        $workflow->receive();
+        return view('documents.workflow', compact('workflows', 'acceptedWorkflows'));
     }
 
     public function reviewDocument($id)
@@ -879,5 +876,52 @@ class DocumentController extends Controller
         $document = $workflow->document;
 
         return view('documents.review', compact('workflow', 'document'));
+    }
+
+    public function receiveWorkflow($id){
+        $workflow = DocumentWorkflow::findOrFail($id);
+
+        $workflow->receive();
+
+        return redirect()->back()->with('success', 'Workflow received successfully');
+    }
+
+    public function reviewSubmit(Request $request, $id){
+        $workflow = DocumentWorkflow::findOrFail($id);
+        $document = Document::findOrFail($workflow->document_id);
+
+        $request->validate([
+            'remark' => 'string|max:250',
+            'attachments' => 'file|max:10240',
+            'action' => 'required',
+        ]);
+
+        switch ($request->action){
+            case 'approve':
+                $workflow->approve();
+                if(isset($request->attachments)){
+                    foreach ($request->attachments as $attachment) {
+                        $attachmentName = $workflow->sender_id->office_name . '_' . time() . '_' . $attachment->getClientOriginalName();
+                        $attachmentPath = $attachment->storeAs('attachments', $attachmentName, 'public');
+                    
+                        DocumentAttachment::create([
+                            'document_id' => $document->id,
+                            'filename'   => $attachmentName,
+                            'path'       => $attachmentPath,
+                        ]);
+                    }
+                }
+                return redirect()->back()->with('success', 'Workflow action processed successfully.');
+                break;
+
+            case 'reject':
+                $workflow->reject();
+                return redirect()->back()->with('success', 'Workflow action processed successfully.');
+                break;
+            default:
+                return response()->json(['status' => 'Invalid Request', 401]);
+        }
+
+        return redirect()->back()->with('success', 'Workflow action processed successfully.');
     }
 }

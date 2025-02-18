@@ -33,6 +33,13 @@ class DocumentWorkflow extends Model
         return $this->belongsTo(User::class, 'recipient_id');
     }
 
+    
+    public function receive()
+    {
+        $this->status = 'received';
+        $this->save();
+    }
+
     public function approve()
     {
         $this->status = 'approved';
