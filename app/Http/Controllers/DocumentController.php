@@ -242,7 +242,7 @@ class DocumentController extends Controller
 
             $query = Document::with(['user', 'status', 'transaction.fromOffice', 'transaction.toOffice']);
 
-            if (! auth()->user()->hasRole('Admin')) {
+            if (!auth()->user()->hasRole('Admin')) {
                 $userOfficeIds = auth()->user()->offices->pluck('id')->toArray();
                 $query->whereHas('user.offices', function ($q) use ($userOfficeIds) {
                     $q->whereIn('offices.id', $userOfficeIds);
@@ -251,7 +251,7 @@ class DocumentController extends Controller
 
             if ($request->hasFile('image')) {
                 $file = $request->file('image');
-                $fileName = time().'_'.$file->getClientOriginalName();
+                $fileName = time() . '_' . $file->getClientOriginalName();
                 $filePath = $file->storeAs('documents', $fileName, 'public');
                 $fullPath = storage_path("app/public/temp/{$filePath}");
 
@@ -275,7 +275,7 @@ class DocumentController extends Controller
 
             }
 
-            if (! empty($searchText)) {
+            if (!empty($searchText)) {
                 $query->whereRaw('MATCH(content) AGAINST(? IN NATURAL LANGUAGE MODE)', [$searchText]);
             }
 
@@ -288,10 +288,10 @@ class DocumentController extends Controller
             ], compact('auditLogs')));
 
         } catch (Exception $e) {
-            \Log::error('Search processing error: '.$e->getMessage());
+            \Log::error('Search processing error: ' . $e->getMessage());
 
             return redirect()->back()
-                ->with('error', 'Error processing search: '.$e->getMessage())
+                ->with('error', 'Error processing search: ' . $e->getMessage())
                 ->withInput();
         }
     }
@@ -331,7 +331,7 @@ class DocumentController extends Controller
         try {
             // Handle file upload
             $file = $request->file('upload');
-            $fileName = time().'_'.$file->getClientOriginalName();
+            $fileName = time() . '_' . $file->getClientOriginalName();
             $filePath = $file->storeAs('documents', $fileName, 'public');
             // $fullPath = Storage::path('public/' . $filePath);
 
@@ -368,7 +368,6 @@ class DocumentController extends Controller
             $document->status()->create([
                 'status' => 'pending',
             ]);
-
             $tracking_number = $this->generateTrackingNumber($request->from_office, $request->classification);
 
             // Create tracking number record
@@ -389,7 +388,7 @@ class DocumentController extends Controller
 
                 foreach ($request->file('attachments') as $attachment) {
 
-                    $attachmentName = time().'_'.$attachment->getClientOriginalName();
+                    $attachmentName = time() . '_' . $attachment->getClientOriginalName();
 
                     $attachmentPath = $attachment->storeAs('attachments', $attachmentName, 'public');
 
@@ -415,10 +414,10 @@ class DocumentController extends Controller
                 ->with('success', 'Document uploaded successfully');
 
         } catch (Exception $e) {
-            \Log::error('Document processing error: '.$e->getMessage());
+            \Log::error('Document processing error: ' . $e->getMessage());
 
             return redirect()->back()
-                ->with('error', 'Error processing document: '.$e->getMessage())
+                ->with('error', 'Error processing document: ' . $e->getMessage())
                 ->withInput();
         }
     }
@@ -442,14 +441,14 @@ class DocumentController extends Controller
 
             if (empty($pdfContent)) {
                 // If no content extracted, try using shell_exec as fallback
-                $outputFile = storage_path('app/temp/pdf_'.time().'.txt');
-                $command = env('POPPLER_PATH').' '.str_replace('/', '\\', $path).' '.str_replace('/', '\\', $outputFile);
+                $outputFile = storage_path('app/temp/pdf_' . time() . '.txt');
+                $command = env('POPPLER_PATH') . ' ' . str_replace('/', '\\', $path) . ' ' . str_replace('/', '\\', $outputFile);
 
                 // Log the command for debugging
-                \Log::info('PDF Command: '.$command);
+                \Log::info('PDF Command: ' . $command);
 
                 $output = shell_exec($command);
-                \Log::info('Shell exec output: '.($output ?? 'No output'));
+                \Log::info('Shell exec output: ' . ($output ?? 'No output'));
 
                 if (file_exists($outputFile)) {
                     $pdfContent = file_get_contents($outputFile);
@@ -464,9 +463,9 @@ class DocumentController extends Controller
             return $pdfContent;
 
         } catch (Exception $e) {
-            \Log::error('PDF processing error: '.$e->getMessage());
-            \Log::error('PDF path: '.$path);
-            throw new Exception('PDF processing failed: '.$e->getMessage());
+            \Log::error('PDF processing error: ' . $e->getMessage());
+            \Log::error('PDF path: ' . $path);
+            throw new Exception('PDF processing failed: ' . $e->getMessage());
         }
     }
 
@@ -479,7 +478,7 @@ class DocumentController extends Controller
         foreach ($phpWord->getSections() as $section) {
             foreach ($section->getElements() as $element) {
                 if (method_exists($element, 'getText')) {
-                    $content .= $element->getText()."\n";
+                    $content .= $element->getText() . "\n";
                 }
             }
         }
@@ -568,7 +567,7 @@ class DocumentController extends Controller
             if ($request->hasFile('upload')) {
                 Storage::disk('public')->delete($document->path);
                 $file = $request->file('upload');
-                $fileName = time().'_'.$file->getClientOriginalName();
+                $fileName = time() . '_' . $file->getClientOriginalName();
                 $filePath = $file->storeAs('documents', $fileName, 'public');
                 $document->update(['path' => $filePath]);
             }
@@ -585,7 +584,7 @@ class DocumentController extends Controller
             // Handle new attachments
             if ($request->hasFile('attachments')) {
                 foreach ($request->file('attachments') as $attachment) {
-                    $attachmentName = time().'_'.$attachment->getClientOriginalName();
+                    $attachmentName = time() . '_' . $attachment->getClientOriginalName();
                     $attachmentPath = $attachment->storeAs('attachments', $attachmentName, 'public');
 
                     DocumentAttachment::create([
@@ -603,10 +602,10 @@ class DocumentController extends Controller
                 ->with('success', 'Document updated successfully');
 
         } catch (Exception $e) {
-            \Log::error('Document update error: '.$e->getMessage());
+            \Log::error('Document update error: ' . $e->getMessage());
 
             return redirect()->back()
-                ->with('error', 'Error updating document: '.$e->getMessage())
+                ->with('error', 'Error updating document: ' . $e->getMessage())
                 ->withInput();
         }
     }
@@ -651,28 +650,28 @@ class DocumentController extends Controller
         $data = base64_decode($data);
 
         // Generate a unique filename
-        $filename = 'uploads/'.uniqid().'.png';
+        $filename = 'uploads/' . uniqid() . '.png';
 
         // Store the image
         Storage::put($filename, $data);
 
-        return Response::json(['success' => 'Image uploaded successfully', 'filename' => $filename, 'path' => asset('storage/'.$filename)]);
+        return Response::json(['success' => 'Image uploaded successfully', 'filename' => $filename, 'path' => asset('storage/' . $filename)]);
     }
 
     public function downloadFile($id)
     {
         try {
             $document = Document::findOrFail($id) ?? $document = DocumentAttachment::findOrFail($id);
-            $filePath = storage_path('app/public/'.$document->path);
+            $filePath = storage_path('app/public/' . $document->path);
 
-            if (! $document || ! $document->path || ! file_exists($filePath)) {
+            if (!$document || !$document->path || !file_exists($filePath)) {
                 return redirect()->back()->with('error', 'File not found or inaccessible.');
             }
 
             return response()->download($filePath);
 
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Error downloading file: '.$e->getMessage());
+            return redirect()->back()->with('error', 'Error downloading file: ' . $e->getMessage());
         }
     }
 
@@ -682,7 +681,7 @@ class DocumentController extends Controller
         $office = Office::findOrFail($officeId);
         $documentType = DocumentCategory::find($documentTypeId) ?? 'GEN';
 
-        $prefix = strtoupper(substr($office->name, 0, 3)).'-'.strtoupper(substr($documentType->category, 0, 3));
+        $prefix = strtoupper(substr($office->name, 0, 3)) . '-' . strtoupper(substr($documentType->category, 0, 3));
 
         do {
             // Define the characters to use for the random part
@@ -697,7 +696,7 @@ class DocumentController extends Controller
             }
 
             // Combine the prefix with the random string and a timestamp
-            $trackingNumber = $prefix.'-'.$randomString.'-'.date('Y');
+            $trackingNumber = $prefix . '-' . $randomString . '-' . date('Y');
 
             // Check if this tracking number already exists
             $exists = DocumentTrackingNumber::where('tracking_number', $trackingNumber)->exists();
