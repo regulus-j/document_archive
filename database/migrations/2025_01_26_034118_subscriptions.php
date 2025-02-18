@@ -58,9 +58,12 @@ return new class extends Migration
             $table->foreign('company_subscription_id')->references('id')->on('company_subscriptions')->onDelete('cascade');
         });
 
-        Schema::table('users', function (Blueprint $table) {
-            $table->unsignedBigInteger('company_id')->nullable(); // Links user to a company
+        Schema::create('company_users', function (Blueprint $table) {
+            $table->unsignedBigInteger('company_id'); // Links user to a company
+            $table->unsignedBigInteger('user_id');
+
             $table->foreign('company_id')->references('id')->on('company_accounts')->onDelete('set null');
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('set null');
         });
     }
 

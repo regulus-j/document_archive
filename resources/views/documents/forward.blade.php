@@ -1,4 +1,3 @@
-{{-- filepath: /c:/xampp/htdocs/development/document_archive/resources/views/documents/forward.blade.php --}}
 @extends('layouts.app')
 
 @section('content')

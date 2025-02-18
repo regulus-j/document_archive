@@ -38,4 +38,9 @@ class Office extends Model
     {
         return $this->hasMany(DocumentTransaction::class, 'to_office');
     }
+
+    public function company()
+    {
+        return $this->belongsTo(CompanyAccount::class);
+    }
 }
