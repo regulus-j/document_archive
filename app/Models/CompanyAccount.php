@@ -17,7 +17,7 @@ class CompanyAccount extends Model
     ];
 
     //owner of the company
-    public function user()
+    public function owner()
     {
         return $this->belongsTo(User::class, 'user_id');
     }
@@ -25,7 +25,12 @@ class CompanyAccount extends Model
     //users under the company
     public function employees()
     {
-        return $this->hasMany(User::class, 'company_id');
+        return $this->belongsToMany(User::class, 'company_users', 'company_id', 'user_id');
+    }
+
+    public function offices()
+    {
+        return $this->hasMany(CompanyOffice::class, 'company_id');
     }
 
     //company addresses

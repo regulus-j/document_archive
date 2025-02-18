@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Mail\UserInvite;
 use App\Models\Office;
 use App\Models\User;
+use App\Models\CompanyAccount;
+
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -21,7 +23,9 @@ class UserController extends Controller
      */
     public function index(Request $request): View
     {
-        $users = User::latest()->paginate(perPage: 5);
+        $company = CompanyAccount::where('user_id', auth()->id())->first();
+        $users = $company ? $company->employees()->paginate(10) : collect();
+
         $roles = Role::all();
 
         return view('users.index', compact('users', 'roles'))
@@ -61,10 +65,11 @@ class UserController extends Controller
      */
     public function create(): View
     {
+        $userCompany = CompanyAccount::where('user_id', auth()->id())->get();
         $roles = Role::pluck('name', 'name')->all();
         $offices = Office::pluck('name', 'id')->all();
 
-        return view('users.create', compact('roles', 'offices'));
+        return view('users.create', compact('roles', 'offices', 'userCompany'));
     }
 
     /**

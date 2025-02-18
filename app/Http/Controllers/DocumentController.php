@@ -219,9 +219,10 @@ class DocumentController extends Controller
 
     public function forwardDocument(Request $request, $id){
         $document = Document::findOrFail($id);
+        $company = CompanyAccount::where('user_id', auth()->id())->first();
 
-        $offices = Office::all();
-        $users = User::with('offices')->get();
+        $users = $company ? $company->employees()->paginate(10) : collect();
+        $offices = $company ? $company->offices()->paginate(10) : collect();;
 
         return view('documents.forward', compact('document', 'offices', 'users'));
     }
@@ -301,10 +302,10 @@ class DocumentController extends Controller
      */
     public function create(): View
     {
-        $offices = Office::all();
-        // $tracking = $this->generateTrackingNumber();
+        $company = CompanyAccount::where('user_id', auth()->id())->first();
 
-        $users = User::with('offices')->get();
+        $users = $company ? $company->employees()->paginate(10) : collect();
+        $offices = $company ? $company->offices()->paginate(10) : collect();;
 
         $categories = DocumentCategory::all()->pluck('category', 'id');
 

@@ -53,6 +53,68 @@
             <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
         </div>
 
+        <!-- Company Details -->
+        <div class="mt-4">
+            <h2 class="text-lg font-semibold">Company Information</h2>
+            <div class="mt-2">
+                <x-input-label for="company_name" :value="__('Company Name')" />
+                <x-text-input id="company_name" class="block mt-1 w-full" type="text" name="company_name" :value="old('company_name')" required />
+                <x-input-error :messages="$errors->get('company_name')" class="mt-2" />
+            </div>
+
+            <div class="mt-4">
+                <x-input-label for="registered_name" :value="__('Registered Name')" />
+                <x-text-input id="registered_name" class="block mt-1 w-full" type="text" name="registered_name" :value="old('registered_name')" required />
+                <x-input-error :messages="$errors->get('registered_name')" class="mt-2" />
+            </div>
+
+            <div class="mt-4">
+                <x-input-label for="company_email" :value="__('Company Email')" />
+                <x-text-input id="company_email" class="block mt-1 w-full" type="email" name="company_email" :value="old('company_email')" required />
+                <x-input-error :messages="$errors->get('company_email')" class="mt-2" />
+            </div>
+
+            <div class="mt-4">
+                <x-input-label for="company_phone" :value="__('Company Phone')" />
+                <x-text-input id="company_phone" class="block mt-1 w-full" type="text" name="company_phone" :value="old('company_phone')" required />
+                <x-input-error :messages="$errors->get('company_phone')" class="mt-2" />
+            </div>
+        </div>
+
+        <!-- Company Address -->
+        <div class="mt-4">
+            <h2 class="text-lg font-semibold">Company Address</h2>
+            <div class="mt-2">
+                <x-input-label for="address" :value="__('Street Address')" />
+                <x-text-input id="address" class="block mt-1 w-full" type="text" name="address" :value="old('address')" required />
+                <x-input-error :messages="$errors->get('address')" class="mt-2" />
+            </div>
+
+            <div class="mt-4">
+                <x-input-label for="city" :value="__('City')" />
+                <x-text-input id="city" class="block mt-1 w-full" type="text" name="city" :value="old('city')" required />
+                <x-input-error :messages="$errors->get('city')" class="mt-2" />
+            </div>
+
+            <div class="mt-4">
+                <x-input-label for="state" :value="__('State')" />
+                <x-text-input id="state" class="block mt-1 w-full" type="text" name="state" :value="old('state')" required />
+                <x-input-error :messages="$errors->get('state')" class="mt-2" />
+            </div>
+
+            <div class="mt-4">
+                <x-input-label for="zip_code" :value="__('ZIP Code')" />
+                <x-text-input id="zip_code" class="block mt-1 w-full" type="text" name="zip_code" :value="old('zip_code')" required />
+                <x-input-error :messages="$errors->get('zip_code')" class="mt-2" />
+            </div>
+
+            <div class="mt-4">
+                <x-input-label for="country" :value="__('Country')" />
+                <x-text-input id="country" class="block mt-1 w-full" type="text" name="country" :value="old('country')" required />
+                <x-input-error :messages="$errors->get('country')" class="mt-2" />
+            </div>
+        </div>
+
         <div class="flex items-center justify-end mt-4">
             <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('login') }}">
                 {{ __('Already registered?') }}

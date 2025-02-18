@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\CompanyAccount;
+use App\Models\CompanyAddress;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -31,10 +33,19 @@ class RegisteredUserController extends Controller
     {
         $request->validate([
             'first_name' => ['required', 'string', 'max:255'],
-            'middle_name' => ['required', 'string', 'max:255'],
+            'middle_name' => ['nullable', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'company_name' => ['required', 'string', 'max:255'],
+            'registered_name' => ['required', 'string', 'max:255'],
+            'company_email' => ['required', 'email', 'max:255'],
+            'company_phone' => ['required', 'string', 'max:20'],
+            'address' => ['required', 'string', 'max:255'],
+            'city' => ['required', 'string', 'max:255'],
+            'state' => ['required', 'string', 'max:255'],
+            'zip_code' => ['required', 'string', 'max:20'],
+            'country' => ['required', 'string', 'max:255'],
         ]);
 
         $user = User::create([
@@ -45,18 +56,27 @@ class RegisteredUserController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        //pre-emptive code for company registration
-        // $company = Company::create([
-        //     'user_id' => $user->id,
-        //     'company_name' => $request->company_name,
-        //     'registered_name' => $request->registered_name,
-        //     'company_email' => $request->company_email,
-        //     'company_phone' => $request->company_phone,
-        // ]);
-
         event(new Registered($user));
 
         Auth::login($user);
+
+        //pre-emptive code for company registration
+        $company = CompanyAccount::create([
+            'user_id' => auth()->id(),
+            'company_name' => $request->company_name,
+            'registered_name' => $request->registered_name,
+            'company_email' => $request->company_email,
+            'company_phone' => $request->company_phone,
+        ]);
+
+        $companyAddress = CompanyAddress::create([
+            'company_id' => $company->id,
+            'address' => $request->address,
+            'city' => $request->city,
+            'state' => $request->state,
+            'zip_code' => $request->zip_code,
+            'country' => $request->country,
+        ]);
 
         return redirect(route('dashboard', absolute: false));
     }

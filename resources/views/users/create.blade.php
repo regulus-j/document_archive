@@ -26,94 +26,103 @@
     @endif
 
     <!-- Form -->
-    <form method="POST" action="{{ route('users.store') }}" class="bg-white shadow-md rounded-lg px-8 pt-6 pb-8 mb-4">
+    <form method="POST" action="{{ route('users.store') }}" class="bg-white shadow-lg rounded-xl p-8 max-w-4xl mx-auto">
         @csrf
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- First Name -->
-            <div>
-                <x-input-label for="first_name" :value="__('First Name')"
-                    class="block text-sm font-medium text-gray-700" />
-                <x-text-input id="first_name"
-                    class="mt-1 block w-full rounded-md border-[#4285F4] shadow-sm focus:border-[#4285F4] focus:ring focus:ring-[#4285F4] focus:ring-opacity-50"
-                    type="text" name="first_name" :value="old('first_name')" required autofocus
-                    autocomplete="given-name" />
-                <x-input-error :messages="$errors->get('first_name')" class="mt-2" />
-            </div>
+        <div class="space-y-8">
+            <!-- Personal Information Section -->
+            <div class="border-b border-gray-200 pb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6">Personal Information</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- First Name -->
+                    <div class="space-y-2">
+                        <x-input-label for="first_name" :value="__('First Name')" class="text-sm font-medium text-gray-700" />
+                        <x-text-input id="first_name" class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-[#4285F4] focus:border-transparent transition-all"
+                            type="text" name="first_name" :value="old('first_name')" required autofocus autocomplete="given-name" />
+                        <x-input-error :messages="$errors->get('first_name')" class="text-sm" />
+                    </div>
 
-            <!-- Middle Name -->
-            <div>
-                <x-input-label for="middle_name" :value="__('Middle Name')"
-                    class="block text-sm font-medium text-gray-700" />
-                <x-text-input id="middle_name"
-                    class="mt-1 block w-full rounded-md border-[#4285F4] shadow-sm focus:border-[#4285F4] focus:ring focus:ring-[#4285F4] focus:ring-opacity-50"
-                    type="text" name="middle_name" :value="old('middle_name')" autocomplete="additional-name" />
-                <x-input-error :messages="$errors->get('middle_name')" class="mt-2" />
-            </div>
+                    <!-- Middle Name -->
+                    <div class="space-y-2">
+                        <x-input-label for="middle_name" :value="__('Middle Name')" class="text-sm font-medium text-gray-700" />
+                        <x-text-input id="middle_name" class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-[#4285F4] focus:border-transparent transition-all"
+                            type="text" name="middle_name" :value="old('middle_name')" autocomplete="additional-name" />
+                        <x-input-error :messages="$errors->get('middle_name')" class="text-sm" />
+                    </div>
 
-            <!-- Last Name -->
-            <div>
-                <x-input-label for="last_name" :value="__('Last Name')"
-                    class="block text-sm font-medium text-gray-700" />
-                <x-text-input id="last_name"
-                    class="mt-1 block w-full rounded-md border-[#4285F4] shadow-sm focus:border-[#4285F4] focus:ring focus:ring-[#4285F4] focus:ring-opacity-50"
-                    type="text" name="last_name" :value="old('last_name')" required autocomplete="family-name" />
-                <x-input-error :messages="$errors->get('last_name')" class="mt-2" />
-            </div>
+                    <!-- Last Name -->
+                    <div class="space-y-2">
+                        <x-input-label for="last_name" :value="__('Last Name')" class="text-sm font-medium text-gray-700" />
+                        <x-text-input id="last_name" class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-[#4285F4] focus:border-transparent transition-all"
+                            type="text" name="last_name" :value="old('last_name')" required autocomplete="family-name" />
+                        <x-input-error :messages="$errors->get('last_name')" class="text-sm" />
+                    </div>
 
-            <!-- Email -->
-            <div>
-                <x-input-label for="email" :value="__('Email')" class="block text-sm font-medium text-gray-700" />
-                <x-text-input id="email"
-                    class="mt-1 block w-full rounded-md border-[#4285F4] shadow-sm focus:border-[#4285F4] focus:ring focus:ring-[#4285F4] focus:ring-opacity-50"
-                    type="email" name="email" :value="old('email')" required autocomplete="email" />
-                <x-input-error :messages="$errors->get('email')" class="mt-2" />
-            </div>
-
-            <!-- Roles -->
-            <div>
-                <x-input-label for="roles" :value="__('Roles')" class="block text-sm font-medium text-gray-700" />
-                <div class="mt-1 relative">
-                    <select name="roles[]" id="roles"
-                        class="block w-full rounded-md border-[#4285F4] shadow-sm focus:border-[#4285F4] focus:ring focus:ring-[#4285F4] focus:ring-opacity-50"
-                        multiple>
-                        @foreach ($roles as $value => $label)
-                            <option value="{{ $value }}">{{ $label }}</option>
-                        @endforeach
-                    </select>
+                    <!-- Email -->
+                    <div class="space-y-2">
+                        <x-input-label for="email" :value="__('Email')" class="text-sm font-medium text-gray-700" />
+                        <x-text-input id="email" class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-[#4285F4] focus:border-transparent transition-all"
+                            type="email" name="email" :value="old('email')" required autocomplete="email" />
+                        <x-input-error :messages="$errors->get('email')" class="text-sm" />
+                    </div>
                 </div>
-                <x-input-error :messages="$errors->get('roles')" class="mt-2" />
             </div>
 
-            <!-- Offices -->
-            <div>
-                <x-input-label for="offices" :value="__('Offices')" class="block text-sm font-medium text-gray-700" />
-                <div class="mt-1 relative">
-                    <input type="text" id="search-office"
-                        class="block w-full rounded-md border-[#4285F4] shadow-sm focus:border-[#4285F4] focus:ring focus:ring-[#4285F4] focus:ring-opacity-50 mb-2"
-                        placeholder="Search an office">
-                    <select name="offices[]" id="offices"
-                        class="block w-full rounded-md border-[#4285F4] shadow-sm focus:border-[#4285F4] focus:ring focus:ring-[#4285F4] focus:ring-opacity-50"
-                        multiple>
-                        @foreach ($offices as $value => $label)
-                            <option value="{{ $value }}">{{ $label }}</option>
-                        @endforeach
-                    </select>
+            <!-- Access & Permissions Section -->
+            <div class="border-b border-gray-200 pb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6">Access & Permissions</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Roles -->
+                    <div class="space-y-2">
+                        <x-input-label for="roles" :value="__('Roles')" class="text-sm font-medium text-gray-700" />
+                        <select name="roles[]" id="roles" class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-[#4285F4] focus:border-transparent transition-all"
+                            multiple>
+                            @foreach ($roles as $value => $label)
+                                <option value="{{ $value }}">{{ $label }}</option>
+                            @endforeach
+                        </select>
+                        <x-input-error :messages="$errors->get('roles')" class="text-sm" />
+                    </div>
+
+                    <!-- Companies -->
+                    <div class="space-y-2">
+                        <x-input-label for="companies" :value="__('Company')" class="text-sm font-medium text-gray-700" />
+                        <input type="text" id="search-company" class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-[#4285F4] focus:border-transparent transition-all mb-2"
+                            placeholder="Search a company">
+                        <select name="companies" id="companies" class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-[#4285F4] focus:border-transparent transition-all"
+                            multiple>
+                            @foreach ($userCompany as $company)
+                                <option value="{{ $company->id }}">{{ $company->company_name }}</option>
+                            @endforeach
+                        </select>
+                        <x-input-error :messages="$errors->get('companies')" class="text-sm" />
+                    </div>
+
+                    <!-- Offices -->
+                    <div class="space-y-2 md:col-span-2">
+                        <x-input-label for="offices" :value="__('Offices')" class="text-sm font-medium text-gray-700" />
+                        <input type="text" id="search-office" class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-[#4285F4] focus:border-transparent transition-all mb-2"
+                            placeholder="Search an office">
+                        <select name="offices[]" id="offices" class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-[#4285F4] focus:border-transparent transition-all"
+                            multiple>
+                            @foreach ($offices as $value => $label)
+                                <option value="{{ $value }}">{{ $label }}</option>
+                            @endforeach
+                        </select>
+                        <x-input-error :messages="$errors->get('offices')" class="text-sm" />
+                    </div>
                 </div>
-                <x-input-error :messages="$errors->get('offices')" class="mt-2" />
             </div>
-        </div>
 
-        <!-- Submit Button -->
-        <div class="flex justify-end mt-6">
-            <x-primary-button class="ml-3 bg-[#4285F4] hover:bg-[#4285F4]/90">
-                <i class="fas fa-save mr-2"></i>{{ __('Create User') }}
-            </x-primary-button>
+            <!-- Submit Button -->
+            <div class="flex justify-end pt-4">
+                <x-primary-button class="px-6 py-3 bg-[#4285F4] hover:bg-[#4285F4]/90 transition-colors duration-200">
+                    <i class="fas fa-save mr-2"></i>{{ __('Create User') }}
+                </x-primary-button>
+            </div>
         </div>
     </form>
 </div>
-
-@push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const searchOffice = document.getElementById('search-office');
@@ -150,7 +159,38 @@
                 console.warn('Select2 is not available. Falling back to native select elements.');
             }
         });
+
+        const searchCompany = document.getElementById('search-company');
+        const companiesSelect = document.getElementById('companies');
+
+        // Function to filter companies
+        function filterCompanies() {
+            const filter = searchCompany.value.toLowerCase();
+            Array.from(companiesSelect.options).forEach(option => {
+                const text = option.text.toLowerCase();
+                option.style.display = text.includes(filter) ? '' : 'none';
+            });
+        }
+
+        // Add event listener to search input
+        searchCompany.addEventListener('input', filterCompanies);
+
+        // Initialize select2 for companies if available
+        if (typeof $ !== 'undefined' && $.fn.select2) {
+            $('#companies').select2({
+                theme: 'classic',
+                width: '100%'
+            });
+
+            // Integrate select2 with the search functionality
+            $('#companies').on('select2:open', function () {
+                setTimeout(function () {
+                    $('.select2-search__field').on('input', function () {
+                        filterCompanies();
+                    });
+                }, 0);
+            });
+        }
     </script>
-@endpush
 
 @endsection
