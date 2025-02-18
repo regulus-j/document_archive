@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Document extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'title',
@@ -15,11 +16,11 @@ class Document extends Model
         'description',
         'content',
         'path',
-        'remarks'
+        'remarks',
     ];
-    
+
     protected $attributes = [
-        'content' => null
+        'content' => null,
     ];
 
     public function user()
@@ -64,8 +65,17 @@ class Document extends Model
     }
 
     public function trackingNumber()
-
     {
         return $this->hasOne(DocumentTrackingNumber::class, 'doc_id');
+    }
+
+    public function attachments()
+    {
+        return $this->hasMany(DocumentAttachment::class);
+    }
+
+    public function documentWorkflow()
+    {
+        return $this->hasMany(DocumentWorkflow::class, 'doc_id');
     }
 }

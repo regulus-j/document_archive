@@ -35,6 +35,26 @@
                         </div>
                     </div>
 
+                    @if(session('data'))
+                        <div class="fixed inset-0 flex items-center justify-center z-50">
+                            <div class="bg-gray-900 bg-opacity-50 absolute inset-0"></div>
+                            <div class="bg-white p-6 rounded-lg shadow-lg z-10">
+                                <h2 class="text-lg font-semibold text-gray-800 mb-4">QR Code Generated</h2>
+                                <div class="flex justify-center">
+                                    <img src="{{ session('data') }}" alt="QR Code" class="w-32 h-32">
+                                    <img src="data:image/png;base64,{{ base64_encode(session('data')) }}" alt="QR Code"
+                                        class="w-32 h-32 ml-4">
+                                </div>
+                                <a href="{{ session('data') }}" download="qr-code.png"
+                                    class="px-4 mx-2 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                    Save QR Code
+                                </a>
+                                <button onclick="document.querySelector('.fixed.inset-0').remove()"
+                                    class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">Close</button>
+                            </div>
+                        </div>
+                    @endif
+
                     <div class="flex flex-wrap gap-4 items-end">
                         <div class="flex-grow">
                             <label for="text-search" class="block text-sm font-medium text-gray-700 mb-1">Text
@@ -139,15 +159,6 @@
                                 Create New Document
                             </a>
                         @endcan
-                        <button id="open-modal" type="button"
-                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                            <svg class="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                            </svg>
-                            Create Folder
-                        </button>
                     </div>
                 </div>
 
@@ -191,8 +202,12 @@
                                     class="bg-gray-100 sticky top-0 border-b border-gray-200 px-6 py-3 text-gray-600 font-bold tracking-wider uppercase text-xs">
                                     Uploaded</th>
                                 <th
-                                    class="bg-gray-100 sticky top-0 border-b border-gray-200 px-6 py-3 text-gray-600 font-bold tracking-wider uppercase text-xs">
-                                    Description</th>
+                                    class="bg-gray-100 sticky top-0 border-b border-gray-200 px-6 py-3 text-gray-600 font-bold tracking-wider uppercase text-xs relative group cursor-help">
+                                    Days Lapsed
+                                    <div class="absolute hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2 -left-1/2 transform -translate-x-1/2 mt-1 z-10 w-40 text-center">
+                                        Days passed since previous update
+                                    </div>
+                                </th>
                                 <th
                                     class="bg-gray-100 sticky top-0 border-b border-gray-200 px-6 py-3 text-gray-600 font-bold tracking-wider uppercase text-xs">
                                     Action</th>
@@ -213,16 +228,16 @@
                                         </span>
                                     </td>
                                     <td class="border-dashed border-t border-gray-200 px-6 py-4">
-                                        {{ $document->transaction?->fromOffice?->name ?? 'N/A' }}
+                                        {{ $document->transaction?->fromOffice?->name }}
                                     </td>
                                     <td class="border-dashed border-t border-gray-200 px-6 py-4">
-                                        {{ $document->transaction?->toOffice?->name ?? 'N/A' }}
+                                        {{ isset($highestRecipients[$document->id]) ? $highestRecipients[$document->id]->implode(', ') : 'N/A' }}
                                     </td>
                                     <td class="border-dashed border-t border-gray-200 px-6 py-4">
                                         {{ $document->created_at->format('M d, Y H:i') }}
                                     </td>
                                     <td class="border-dashed border-t border-gray-200 px-6 py-4">
-                                        {{ Str::limit($document->description, 50) }}
+                                        {{ date_diff(new DateTime($document->updated_at), new DateTime(now()))->format('%Hh %Im %Ss') }}
                                     </td>
                                     <td class="border-dashed border-t border-gray-200 px-6 py-4">
                                         <div class="flex items-center space-x-2">
@@ -262,7 +277,7 @@
                                                     </button>
                                                 </form>
                                             @endcan
-                                            <form action="{{ route('documents.downloadFile', $document->id) }}" method="GET"
+                                            <form action="{{ route('documents.download', $document->id) }}" method="GET"
                                                 class="inline-block">
                                                 @csrf
                                                 <button type="submit" class="text-indigo-600 hover:text-indigo-900">
@@ -307,7 +322,7 @@
                         @forelse($auditLogs as $log)
                             <tr class="bg-white border-b hover:bg-gray-50">
                                 <td class="px-6 py-4">{{ $log->created_at->format('M d, Y H:i') }}</td>
-                                <td class="px-6 py-4">{{ $log->document->title }}</td>
+                                <td class="px-6 py-4">{{ $log->document?->title ?? 'Deleted Document' }}</td>
                                 <td class="px-6 py-4">{{ $log->user->first_name }} {{ $log->user->last_name }}</td>
                                 <td class="px-6 py-4">{{ $log->action }}</td>
                                 <td class="px-6 py-4">{{ $log->status }}</td>

@@ -19,13 +19,14 @@ return new class extends Migration
             $table->text('remarks')->nullable();
             $table->text('content')->nullable();
             $table->string('path');
+            $table->softDeletes();
+            $table->boolean('is_archived')->default(false);
             $table->timestamps();
 
             $table->foreign('uploader')->references('id')->on('users');
         });
 
-        Schema::create('document_versions', function (Blueprint $table)
-        {
+        Schema::create('document_versions', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('doc_id');
             $table->unsignedBigInteger('prevdoc_id')->nullable();
@@ -36,8 +37,7 @@ return new class extends Migration
             $table->foreign('nextdoc_id')->references('id')->on('documents');
         });
 
-        Schema::create('document_status', function (Blueprint $table)
-        {
+        Schema::create('document_status', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('doc_id');
             $table->string('status');
@@ -46,8 +46,7 @@ return new class extends Migration
             $table->foreign('doc_id')->references('id')->on('documents');
         });
 
-        Schema::create('document_trackingnumbers', function (Blueprint $table)
-        {
+        Schema::create('document_trackingnumbers', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('doc_id');
             $table->string('tracking_number');
@@ -56,15 +55,13 @@ return new class extends Migration
             $table->foreign('doc_id')->references('id')->on('documents');
         });
 
-        Schema::create('document_categories', function (Blueprint $table)
-        {
+        Schema::create('document_categories', function (Blueprint $table) {
             $table->id();
             $table->string('category');
-            $table->timestamps();        
+            $table->timestamps();
         });
 
-        Schema::create('document_category', function (Blueprint $table)
-        {
+        Schema::create('document_category', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('doc_id');
             $table->unsignedBigInteger('category_id');

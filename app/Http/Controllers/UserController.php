@@ -2,19 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use App\Http\Controllers\Controller;
-use App\Models\User;
-use Spatie\Permission\Models\Role;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Arr;
-use Illuminate\View\View;
-use Illuminate\Http\RedirectResponse;
 use App\Mail\UserInvite;
+use App\Models\Office;
+use App\Models\User;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
-use App\Models\Office;
+use Illuminate\View\View;
+use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
@@ -25,7 +23,6 @@ class UserController extends Controller
     {
         $users = User::latest()->paginate(perPage: 5);
         $roles = Role::all();
-
 
         return view('users.index', compact('users', 'roles'))
             ->with('i', ($request->input('page', 1) - 1) * 5);
@@ -76,7 +73,7 @@ class UserController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $temp_pass = Str::random(12);
-    
+
         $request->validate([
             'first_name' => 'required|string|max:255',
             'middle_name' => 'required|string|max:255',
@@ -84,20 +81,20 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email',
             'offices' => 'required|array', // Changed from 'office'
             'offices.*' => 'exists:offices,id', // Validate each office ID
-            'roles' => 'required'
+            'roles' => 'required',
         ]);
-    
+
         $user = User::create([
-            'first_name'=> $request->first_name,
+            'first_name' => $request->first_name,
             'middle_name' => $request->middle_name,
-            'last_name'=> $request->last_name,
-            'email'=> $request->email,
+            'last_name' => $request->last_name,
+            'email' => $request->email,
             'password' => bcrypt($temp_pass),
         ]);
-    
+
         // Attach multiple offices
         $user->offices()->attach($request->offices);
-        
+
         $user->assignRole($request->input('roles'));
 
         $roleNames = $user->roles->pluck('name')->implode(', ');
@@ -113,7 +110,7 @@ class UserController extends Controller
         $temp_pass = null;
 
         return redirect()->route('users.index')
-                        ->with('success', 'User created successfully');
+            ->with('success', 'User created successfully');
     }
 
     /**
@@ -122,6 +119,7 @@ class UserController extends Controller
     public function show($id): View
     {
         $user = User::find($id);
+
         return view('users.show', compact('user'));
     }
 
@@ -135,8 +133,7 @@ class UserController extends Controller
         $userRoles = $user->roles->pluck('name', 'name')->all();
         $offices = Office::pluck('name', 'id')->all();
         $userOffices = $user->offices->pluck('id')->all();
-        
-    
+
         return view('users.edit', compact('user', 'roles', 'userRoles', 'offices', 'userOffices'));
     }
 
@@ -174,7 +171,7 @@ class UserController extends Controller
         $user->offices()->sync($request->input('offices'));
 
         return redirect()->route('users.index')
-                        ->with('success', 'User updated successfully');
+            ->with('success', 'User updated successfully');
     }
 
     /**
@@ -183,7 +180,8 @@ class UserController extends Controller
     public function destroy($id): RedirectResponse
     {
         User::find($id)->delete();
+
         return redirect()->route('users.index')
-                        ->with('success', 'User deleted successfully');
+            ->with('success', 'User deleted successfully');
     }
 }
