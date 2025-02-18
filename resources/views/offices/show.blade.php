@@ -46,8 +46,10 @@
                             <li class="py-3 flex items-center">
 
                                 <div class="ml-3">
-                                    <p class="text-sm font-medium text-gray-900">{{ $user->name }}</p>
+                                <a href="{{ route('users.show', $user->id) }}">
+                                    <p class="text-sm font-medium text-gray-900">{{ $user->first_name . ' ' . $user->last_name }}</p>
                                     <p class="text-sm text-gray-500">{{ $user->email }}</p>
+                                </a>    
                                 </div>
                             </li>
                         @endforeach
