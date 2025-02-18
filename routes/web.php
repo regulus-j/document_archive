@@ -8,6 +8,10 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\PlanController;
+use App\Http\Controllers\SubscriptionController;
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\AddressController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -27,6 +31,26 @@ Route::middleware('auth')->group(function () {
 
     // Route::put('/profile/set-password', [ProfileController::class, 'set'])->name('profile.set');
 });
+
+
+//----------------------------------------------------------------------------------------------------------------
+Route::get('/plans', [PlanController::class, 'index'])->name('plans.index');
+Route::post('/plans/{plan}/subscribe', [PlanController::class, 'subscribe'])->name('plans.subscribe');
+
+Route::post('/subscriptions', [SubscriptionController::class, 'store']);
+Route::patch('/subscriptions/{subscription}', [SubscriptionController::class, 'update']);
+Route::post('/subscriptions/{subscription}/cancel', [SubscriptionController::class, 'cancel']);
+Route::post('/subscriptions/{subscription}/activate', [SubscriptionController::class, 'activate']);
+
+Route::middleware(['auth'])->group(function () {
+    Route::resource('payments', PaymentController::class)->only(['index', 'show']);
+});
+
+Route::middleware(['auth'])->group(function () {
+    Route::resource('addresses', AddressController::class);
+});
+
+//--------------------------------------------------------------------------------------------------------------------
 
 Route::middleware('auth')->group(function () {
     Route::resource('roles', RoleController::class);
