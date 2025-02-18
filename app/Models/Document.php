@@ -73,4 +73,9 @@ class Document extends Model
     {
         return $this->hasMany(DocumentAttachment::class);
     }
+
+    public function documentWorkflow()
+    {
+        return $this->hasMany(DocumentWorkflow::class, 'doc_id');
+    }
 }
