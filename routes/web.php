@@ -55,6 +55,12 @@ Route::middleware('auth')->group(function () {
         Route::delete('/attachments/{id}', [DocumentController::class, 'deleteAttachment'])->name('attachments.delete');
         Route::get('/forward/{document}', [DocumentController::class, 'forwardDocument'])->name('documents.forward');
 
+        Route::get('/workflows', [DocumentController::class, 'workflowManagement'])->name('documents.workflows');      
+        Route::get('/workflows/{workflow}/receive', [DocumentController::class, 'receiveWorkflow'])->name('documents.receive');
+        Route::get('/workflows/{workflow}', [DocumentController::class, 'approveWorkflow'])->name('documents.approveWorkflow');
+        Route::get('/workflows/{workflow}/reject', [DocumentController::class, 'rejectWorkflow'])->name('documents.rejectWorkflow');
+        Route::get('/workflows/{workflow}/review', [DocumentController::class, 'reviewDocument'])->name('documents.review');
+
         // Parameterized routes
         Route::get('/{document}/show', [DocumentController::class, 'show'])->name('documents.show');
         Route::get('/{document}/edit', [DocumentController::class, 'edit'])->name('documents.edit');
