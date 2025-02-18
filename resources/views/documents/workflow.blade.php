@@ -16,7 +16,7 @@
         </div>
     @endif
 
-    <div class="bg-white shadow rounded-lg p-6">
+    <div class="bg-white shadow rounded-lg p-6 mb-3">
         @if(isset($workflows) && $workflows->count() > 0)
             <table class="min-w-full divide-y divide-gray-200">
                 <thead>
@@ -50,6 +50,49 @@
                                 <a href="{{ route('documents.review', $workflow->id) }}"
                                    class="text-green-500 hover:underline">Review</a>
                                 @endif
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+
+            <div class="mt-6">
+                {{ $workflows->links() }}
+            </div>
+        @else
+            <p class="text-gray-600">No workflows found.</p>
+        @endif
+    </div>
+
+    <div class="bg-white shadow rounded-lg p-6">
+        <h2 class="text-2xl font-bold mb-4">Approved Documents</h2>
+        @if(isset($acceptedWorkflows) && $acceptedWorkflows->count() > 0)
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead>
+                    <tr>
+                        <th class="px-6 py-3 text-left text-sm font-medium text-gray-500">ID</th>
+                        <th class="px-6 py-3 text-left text-sm font-medium text-gray-500">Document</th>
+                        <th class="px-6 py-3 text-left text-sm font-medium text-gray-500">Current Step</th>
+                        <th class="px-6 py-3 text-left text-sm font-medium text-gray-500">Recipient</th>
+                        <th class="px-6 py-3 text-left text-sm font-medium text-gray-500">Status</th>
+                        <th class="px-6 py-3 text-left text-sm font-medium text-gray-500">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    @foreach($acceptedWorkflows as $workflow)
+                        <tr>
+                            <td class="px-6 py-4 text-sm text-gray-700">{{ $workflow->id }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-700">
+                                <a href="{{ route('documents.show', $workflow->document_id) }}">{{ $workflow->document->title ?? 'N/A' }}</a>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-700">{{ $workflow->step_order }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-700">
+                                {{ $workflow->recipient->name ?? 'N/A' }}
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-700">{{ $workflow->status }}</td>
+                            <td class="px-6 py-4 text-sm">
+                                    <a href="{{ route('documents.show', $workflow->document_id) }}"
+                                        class="text-green-500 hover:underline">View Doc</a>
                             </td>
                         </tr>
                     @endforeach

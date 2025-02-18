@@ -55,12 +55,12 @@ Route::middleware('auth')->group(function () {
         Route::delete('/attachments/{id}', [DocumentController::class, 'deleteAttachment'])->name('attachments.delete');
         Route::get('/forward/{document}', [DocumentController::class, 'forwardDocument'])->name('documents.forward');
 
+        
         Route::get('/workflows', [DocumentController::class, 'workflowManagement'])->name('documents.workflows');      
-        Route::get('/workflows/{workflow}/receive', [DocumentController::class, 'receiveWorkflow'])->name('documents.receive');
-        Route::get('/workflows/{workflow}', [DocumentController::class, 'approveWorkflow'])->name('documents.approveWorkflow');
-        Route::get('/workflows/{workflow}/reject', [DocumentController::class, 'rejectWorkflow'])->name('documents.rejectWorkflow');
         Route::get('/workflows/{workflow}/review', [DocumentController::class, 'reviewDocument'])->name('documents.review');
-
+        Route::post('/documents/{id}/review', [DocumentController::class, 'reviewSubmit'])
+        ->name('documents.review.submit');
+        Route::get('/workflows/{workflow}/receive', [DocumentController::class, 'receiveWorkflow'])->name('documents.receive');
         // Parameterized routes
         Route::get('/{document}/show', [DocumentController::class, 'show'])->name('documents.show');
         Route::get('/{document}/edit', [DocumentController::class, 'edit'])->name('documents.edit');
@@ -93,6 +93,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [ReportController::class, 'index'])->name('reports.index');
         Route::get('/create', [ReportController::class, 'create'])->name('reports.create');
         Route::post('/', [ReportController::class, 'store'])->name('reports.store');
+        Route::get('/reports/analytics', [ReportController::class, 'analytics'])->name('reports.analytics');
         Route::get('/{report}', [ReportController::class, 'show'])->name('reports.show');
         Route::get('/{report}/edit', [ReportController::class, 'edit'])->name('reports.edit');
         Route::put('/{report}', [ReportController::class, 'update'])->name('reports.update');
