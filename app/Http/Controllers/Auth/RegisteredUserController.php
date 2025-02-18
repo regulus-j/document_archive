@@ -45,6 +45,15 @@ class RegisteredUserController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
+        //pre-emptive code for company registration
+        // $company = Company::create([
+        //     'user_id' => $user->id,
+        //     'company_name' => $request->company_name,
+        //     'registered_name' => $request->registered_name,
+        //     'company_email' => $request->company_email,
+        //     'company_phone' => $request->company_phone,
+        // ]);
+
         event(new Registered($user));
 
         Auth::login($user);

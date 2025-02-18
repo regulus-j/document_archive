@@ -49,7 +49,7 @@
                                     <td class="py-4 px-6">
                                         @switch($document->status->status)
                                             @case('pending')
-                                                <a href="{{ route('documents.receive', $document->id) }}" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2">
+                                                <a href="{{ route('documents.changeStatus', ['document' => $document->id, 'status' => 'received']) }}" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2">
                                                     Receive
                                                 </a>
                                                 @break
@@ -57,18 +57,29 @@
                                                 <a href="{{ route('documents.confirmrelease', $document->id) }}" class="text-white bg-green-600 hover:bg-green-700 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2">
                                                     Release
                                                 </a>
+                                                <a href="{{ route('documents.changeStatus', ['document' => $document->id, 'status' => 'received']) }}" class="text-white bg-green-600 hover:bg-green-700 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2">
+                                                    Reject
+                                                </a>
                                                 @break
                                             @case('released')
                                                 <a href="{{ route('documents.show', $document->id) }}" class="text-white bg-indigo-600 hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2">
                                                     View
                                                 </a>
-                                                <a href="{{ route('documents.receive', $document->id) }}" class="text-white bg-purple-600 hover:bg-purple-700 focus:ring-4 focus:ring-purple-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2">
+                                                <a href="{{ route('documents.changeStatus', ['document' => $document->id, 'status' => 'retracted']) }}" class="text-white bg-purple-600 hover:bg-purple-700 focus:ring-4 focus:ring-purple-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2">
                                                     Retract
                                                 </a>
                                                 @break
-                                            @case('terminal')
+                                            @case('completed')
                                                 <a href="{{ route('documents.show', $document->id) }}" class="text-white bg-indigo-600 hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2">
                                                     View
+                                                </a>
+                                                @break
+                                            @case('retracted')
+                                                <a href="{{ route('documents.confirmrelease', $document->id) }}">
+                                                    Release
+                                                </a>
+                                                <a href="{{ route('documents.changeStatus', ['document' => $document->id, 'status' => 'received']) }}" class="text-white bg-green-600 hover:bg-green-700 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2">
+                                                    Reject
                                                 </a>
                                                 @break
                                         @endswitch
