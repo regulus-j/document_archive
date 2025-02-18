@@ -33,6 +33,12 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
+    Route::get('/admin/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
+
+    Route::get('/users/registered', [UserController::class, 'showRegistered'])->name('users.registered');
+});
+
+Route::middleware('auth')->group(function () {
     Route::resource('roles', RoleController::class);
 
     Route::prefix('users')->group(function () {

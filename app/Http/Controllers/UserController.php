@@ -32,6 +32,13 @@ class UserController extends Controller
             ->with('i', ($request->input('page', 1) - 1) * 5);
     }
 
+    public function showRegistered()
+    {
+        // Sample data fetch: adapt to your actual tables and relationships
+        $users = User::with(['plans', 'subscriptions.payments'])->paginate(10);
+        return view('admin.users.registered', compact('users'));
+    }
+
     /**
      * Search for users based on name, email, and role.
      */
