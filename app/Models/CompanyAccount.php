@@ -37,6 +37,6 @@ class CompanyAccount extends Model
     //company subscriptions
     public function subscriptions()
     {
-        return $this->hasMany(CompanySubscription::class, 'company_id');
+        return $this->hasMany(Subscriptions::class, 'company_id');
     }
 }

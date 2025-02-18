@@ -37,9 +37,9 @@ class ProfileController extends Controller
 
         // $register->password ?? $register->user()->update('password_set', '1');
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
-        }
+        // if ($request->user()->isDirty('email')) {
+        //     $request->user()->email_verified_at = null;
+        // }
 
         $request->user()->save();
 
