@@ -119,4 +119,4 @@ Route::middleware('auth')->group(function () {
 //     Mail::to('jamalalbadi03@gmail.com')->send(new TestMail($name));
 // });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
