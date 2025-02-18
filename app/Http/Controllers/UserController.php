@@ -37,16 +37,16 @@ class UserController extends Controller
         $roles = Role::all();
 
         if ($request->filled('name')) {
-            $query->where('first_name', 'like', '%'.$request->name.'%');
+            $query->where('first_name', 'like', '%' . $request->name . '%');
         }
 
         if ($request->filled('email')) {
-            $query->where('email', 'like', '%'.$request->email.'%');
+            $query->where('email', 'like', '%' . $request->email . '%');
         }
 
         if ($request->filled('role')) {
             $query->whereHas('roles', function ($q) use ($request) {
-                $q->where('name', 'like', '%'.$request->role.'%');
+                $q->where('name', 'like', '%' . $request->role . '%');
             });
         }
 
@@ -154,7 +154,7 @@ class UserController extends Controller
         ]);
 
         $input = $request->all();
-        if (! empty($input['password'])) {
+        if (!empty($input['password'])) {
             $input['password'] = Hash::make($input['password']);
         } else {
             $input = Arr::except($input, ['password']);
