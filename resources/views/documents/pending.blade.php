@@ -57,6 +57,9 @@
                                                 <a href="{{ route('documents.confirmrelease', $document->id) }}" class="text-white bg-green-600 hover:bg-green-700 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2">
                                                     Release
                                                 </a>
+                                                <a href="{{ route('documents.changeStatus', ['document' => $document->id, 'status' => 'received']) }}" class="text-white bg-green-600 hover:bg-green-700 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2">
+                                                    Reject
+                                                </a>
                                                 @break
                                             @case('released')
                                                 <a href="{{ route('documents.show', $document->id) }}" class="text-white bg-indigo-600 hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2">
@@ -74,6 +77,9 @@
                                             @case('retracted')
                                                 <a href="{{ route('documents.confirmrelease', $document->id) }}">
                                                     Release
+                                                </a>
+                                                <a href="{{ route('documents.changeStatus', ['document' => $document->id, 'status' => 'received']) }}" class="text-white bg-green-600 hover:bg-green-700 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2">
+                                                    Reject
                                                 </a>
                                                 @break
                                         @endswitch

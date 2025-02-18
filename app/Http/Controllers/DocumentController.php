@@ -8,6 +8,8 @@ use App\Models\DocumentAudit;
 use App\Models\DocumentCategory;
 use App\Models\DocumentTrackingNumber;
 use App\Models\DocumentTransaction;
+use App\Models\DocumentWorkflow;
+use App\Models\CompanyAccount;
 use App\Models\Office;
 use App\Models\User;
 use chillerlan\QRCode\QRCode;
@@ -36,10 +38,12 @@ class DocumentController extends Controller
     public function index(): View
     {
         if (auth()->user()->hasRole('Admin')) {
-            $documents = Document::with(['user', 'status', 'transaction.fromOffice', 'transaction.toOffice'])->latest()->paginate(5);
+            $documents = Document::with(['user', 'status', 'transaction.fromOffice', 'transaction.toOffice'])
+                ->latest()
+                ->paginate(5);
         } else {
             $userOfficeIds = auth()->user()->offices->pluck('id')->toArray();
-
+    
             $documents = Document::with(['user', 'status', 'transaction.fromOffice', 'transaction.toOffice'])
                 ->whereHas('user.offices', function ($query) use ($userOfficeIds) {
                     $query->whereIn('offices.id', $userOfficeIds);
@@ -47,10 +51,35 @@ class DocumentController extends Controller
                 ->latest()
                 ->paginate(5);
         }
-
+    
         $auditLogs = DocumentAudit::latest()->paginate(15);
-
-        return view('documents.index', compact('documents', 'auditLogs'));
+    
+        // Determine the recipients with the highest step_order for each document
+        $highestRecipients = [];
+        foreach ($documents as $doc) {
+            $maxStepOrder = DocumentWorkflow::where('document_id', $doc->id)->max('step_order');
+            if ($maxStepOrder) {
+                $topWorkflows  = DocumentWorkflow::where('document_id', $doc->id)
+                    ->where('step_order', $maxStepOrder)
+                    ->get();
+                $recipientIds  = $topWorkflows->pluck('recipient_id')->unique();
+                $users         = User::whereIn('id', $recipientIds)->get();
+    
+                // Build a collection of each user’s full name (assuming first_name and last_name)
+                $recipientNames = $users->map(function ($user) {
+                    $fname = $user->first_name ?? '';
+                    $lname = $user->last_name ?? '';
+                    return trim("$fname $lname");
+                });
+    
+                $highestRecipients[$doc->id] = $recipientNames;
+            } else {
+                // If the document has no workflow records
+                $highestRecipients[$doc->id] = collect([]);
+            }
+        }
+    
+        return view('documents.index', compact('documents', 'auditLogs', 'highestRecipients'));
     }
 
     public function showArchive(): View
@@ -70,10 +99,131 @@ class DocumentController extends Controller
 
         $auditLogs = DocumentAudit::paginate(15);
 
-        return view('documents.index', array_merge([
+        return view('documents.archive', array_merge([
             'documents' => $documents,
             'i' => (request()->input('page', 1) - 1) * 5,
         ], compact('auditLogs')));
+    }
+
+    //Storing the document
+    public function uploadController(Request $request){
+        \Log::info('uploadController called');
+
+        $request->from_office = 1;
+        $request->to_office = 2;
+
+        //upload to database
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'required',
+            'classification' => 'required|string',
+            'from_office' => 'required|exists:offices,id',
+            'to_office' => 'required|exists:offices,id',
+            'remarks' => 'nullable|string|max:250',
+            'upload' => 'required|file', // 10MB max
+            'attachements.*' => 'file|mimes:jpeg,png,jpg,gif,pdf,docx|max:10240',
+            'archive' => 'string',
+            'forward' => 'string',
+        ]);
+
+        try {
+            \Log::info('Starting document upload process');
+            $companyPath = auth()->user()->company->id ?? 'default';
+
+            $file = $request->file('upload');
+            $fileName = time().'_'.$file->getClientOriginalName();
+            \Log::info('Uploading file', ['fileName' => $fileName]);
+            $filePath = $file->storeAs($companyPath . '/documents', $fileName, 'public');
+
+            $document = Document::create([
+                'title' => $request->title,
+                'uploader' => auth()->id(),
+                'description' => $request->description,
+                'path' => $filePath,
+                'remarks' => $request->remarks ?? null,
+            ]);
+            \Log::info('Document created', ['document_id' => $document->id]);
+
+            // $document->categories()->attach([$request->classification]);
+
+            $document->status()->create([
+                'status' => 'pending',
+            ]);
+            \Log::info('Initial document status set to pending', ['document_id' => $document->id]);
+
+            $tracking_number = $this->generateTrackingNumber($request->from_office, $request->classification);
+            \Log::info('Generated tracking number', ['tracking_number' => $tracking_number]);
+
+            // Create tracking number record
+            DocumentTrackingNumber::create([
+                'doc_id' => $document->id,
+                'tracking_number' => $tracking_number,
+            ]);
+            \Log::info('Tracking number record created', ['document_id' => $document->id]);
+
+            DocumentTransaction::create([
+                'doc_id' => $document->id,
+                'from_office' => $request->from_office,
+                'to_office' => $request->to_office,
+            ]);
+            \Log::info('Document transaction created', ['document_id' => $document->id]);
+
+            // Handle additional attachments if any
+            if ($request->hasFile('attachments')) {
+                \Log::info('Processing attachments');
+                foreach ($request->file('attachments') as $attachment) {
+                    $attachmentName = time().'_'.$attachment->getClientOriginalName();
+                    $companyPath = auth()->user()->company->id ?? 'default';
+                    \Log::info('Uploading attachment', ['attachmentName' => $attachmentName]);
+                    $attachmentPath = $attachment->storeAs($companyPath . '/attachments', $attachmentName, 'public');
+
+                    DocumentAttachment::create([
+                        'document_id' => $document->id,
+                        'filename' => $attachmentName,
+                        'path' => $attachmentPath,
+                    ]);
+                    \Log::info('Attachment record created', ['document_id' => $document->id, 'attachmentName' => $attachmentName]);
+                }
+            }
+
+            // Log document creation
+            $this->logDocumentAction($document, 'created', 'pending', 'Document uploaded');
+            \Log::info('Document upload action logged', ['document_id' => $document->id]);
+
+            $data = $this->generateTrackingSlip($document->id, auth()->id(), $tracking_number);
+            \Log::info('Tracking slip generated', ['document_id' => $document->id]);
+
+            if($request->archive == '1'){
+                $document->status()->update(['status' => 'archived']);
+                \Log::info('Document status updated to archived', ['document_id' => $document->id]);
+            }
+            if($request->forward == '1'){
+                \Log::info('Redirecting to forward route', ['document_id' => $document->id]);
+                return redirect()->route('documents.forward', $document->id)
+                    ->with('data', $data)
+                    ->with('success', 'Document uploaded successfully');
+            } else {
+                \Log::info('Redirecting to index route', ['document_id' => $document->id]);
+                return redirect()->route('documents.index')
+                    ->with('data', $data)
+                    ->with('success', 'Document uploaded successfully');
+            }
+            
+        } catch (Exception $e) {
+            \Log::error('Document processing error in uploadController: '.$e->getMessage());
+            return redirect()->back()
+                ->with('error', 'Error processing document: '.$e->getMessage())
+                ->withInput();
+        }
+    }
+
+    public function forwardDocument(Request $request, $id){
+        $document = Document::findOrFail($id);
+
+        $offices = Office::all();
+        $users = User::with('offices')->get();
+
+        return view('documents.forward', compact('document', 'offices', 'users'));
     }
 
     /**
@@ -92,7 +242,7 @@ class DocumentController extends Controller
 
             $query = Document::with(['user', 'status', 'transaction.fromOffice', 'transaction.toOffice']);
 
-            if (! auth()->user()->hasRole('Admin')) {
+            if (!auth()->user()->hasRole('Admin')) {
                 $userOfficeIds = auth()->user()->offices->pluck('id')->toArray();
                 $query->whereHas('user.offices', function ($q) use ($userOfficeIds) {
                     $q->whereIn('offices.id', $userOfficeIds);
@@ -101,7 +251,7 @@ class DocumentController extends Controller
 
             if ($request->hasFile('image')) {
                 $file = $request->file('image');
-                $fileName = time().'_'.$file->getClientOriginalName();
+                $fileName = time() . '_' . $file->getClientOriginalName();
                 $filePath = $file->storeAs('documents', $fileName, 'public');
                 $fullPath = storage_path("app/public/temp/{$filePath}");
 
@@ -125,7 +275,7 @@ class DocumentController extends Controller
 
             }
 
-            if (! empty($searchText)) {
+            if (!empty($searchText)) {
                 $query->whereRaw('MATCH(content) AGAINST(? IN NATURAL LANGUAGE MODE)', [$searchText]);
             }
 
@@ -138,10 +288,10 @@ class DocumentController extends Controller
             ], compact('auditLogs')));
 
         } catch (Exception $e) {
-            \Log::error('Search processing error: '.$e->getMessage());
+            \Log::error('Search processing error: ' . $e->getMessage());
 
             return redirect()->back()
-                ->with('error', 'Error processing search: '.$e->getMessage())
+                ->with('error', 'Error processing search: ' . $e->getMessage())
                 ->withInput();
         }
     }
@@ -171,8 +321,8 @@ class DocumentController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required',
             'classification' => 'required|string',
-            'from_office' => 'required|exists:offices,id',
-            'to_office' => 'required|exists:offices,id',
+            // 'from_office' => 'required|exists:offices,id',
+            // 'to_office' => 'required|exists:offices,id',
             'remarks' => 'nullable|string|max:250',
             'upload' => 'required|file|mimes:jpeg,png,jpg,gif,pdf,docx|max:10240', // 10MB max
             'attachements.*' => 'file|mimes:jpeg,png,jpg,gif,pdf,docx|max:10240',
@@ -181,7 +331,7 @@ class DocumentController extends Controller
         try {
             // Handle file upload
             $file = $request->file('upload');
-            $fileName = time().'_'.$file->getClientOriginalName();
+            $fileName = time() . '_' . $file->getClientOriginalName();
             $filePath = $file->storeAs('documents', $fileName, 'public');
             // $fullPath = Storage::path('public/' . $filePath);
 
@@ -218,7 +368,6 @@ class DocumentController extends Controller
             $document->status()->create([
                 'status' => 'pending',
             ]);
-
             $tracking_number = $this->generateTrackingNumber($request->from_office, $request->classification);
 
             // Create tracking number record
@@ -239,7 +388,7 @@ class DocumentController extends Controller
 
                 foreach ($request->file('attachments') as $attachment) {
 
-                    $attachmentName = time().'_'.$attachment->getClientOriginalName();
+                    $attachmentName = time() . '_' . $attachment->getClientOriginalName();
 
                     $attachmentPath = $attachment->storeAs('attachments', $attachmentName, 'public');
 
@@ -265,10 +414,10 @@ class DocumentController extends Controller
                 ->with('success', 'Document uploaded successfully');
 
         } catch (Exception $e) {
-            \Log::error('Document processing error: '.$e->getMessage());
+            \Log::error('Document processing error: ' . $e->getMessage());
 
             return redirect()->back()
-                ->with('error', 'Error processing document: '.$e->getMessage())
+                ->with('error', 'Error processing document: ' . $e->getMessage())
                 ->withInput();
         }
     }
@@ -292,14 +441,14 @@ class DocumentController extends Controller
 
             if (empty($pdfContent)) {
                 // If no content extracted, try using shell_exec as fallback
-                $outputFile = storage_path('app/temp/pdf_'.time().'.txt');
-                $command = env('POPPLER_PATH').' '.str_replace('/', '\\', $path).' '.str_replace('/', '\\', $outputFile);
+                $outputFile = storage_path('app/temp/pdf_' . time() . '.txt');
+                $command = env('POPPLER_PATH') . ' ' . str_replace('/', '\\', $path) . ' ' . str_replace('/', '\\', $outputFile);
 
                 // Log the command for debugging
-                \Log::info('PDF Command: '.$command);
+                \Log::info('PDF Command: ' . $command);
 
                 $output = shell_exec($command);
-                \Log::info('Shell exec output: '.($output ?? 'No output'));
+                \Log::info('Shell exec output: ' . ($output ?? 'No output'));
 
                 if (file_exists($outputFile)) {
                     $pdfContent = file_get_contents($outputFile);
@@ -314,9 +463,9 @@ class DocumentController extends Controller
             return $pdfContent;
 
         } catch (Exception $e) {
-            \Log::error('PDF processing error: '.$e->getMessage());
-            \Log::error('PDF path: '.$path);
-            throw new Exception('PDF processing failed: '.$e->getMessage());
+            \Log::error('PDF processing error: ' . $e->getMessage());
+            \Log::error('PDF path: ' . $path);
+            throw new Exception('PDF processing failed: ' . $e->getMessage());
         }
     }
 
@@ -329,7 +478,7 @@ class DocumentController extends Controller
         foreach ($phpWord->getSections() as $section) {
             foreach ($section->getElements() as $element) {
                 if (method_exists($element, 'getText')) {
-                    $content .= $element->getText()."\n";
+                    $content .= $element->getText() . "\n";
                 }
             }
         }
@@ -344,13 +493,33 @@ class DocumentController extends Controller
     {
         $this->logDocumentAction($document, 'viewed');
         $document->load(['trackingNumber', 'categories', 'transaction.fromOffice', 'transaction.toOffice', 'status']);
+        $documentRoute = DocumentWorkflow::with('recipient')
+            ->where('document_id', $document->id)
+            ->where('recipient_id', auth()->id())
+            ->get()
+            ->map(function ($workflow) {
+            $user = $workflow->recipient;
+            return trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? ''));
+            });
+    
+        $workflows = DocumentWorkflow::with('recipient')
+            ->where('document_id', $document->id)
+            ->get();
+    
+        $docRoute = [];
+    
+        foreach ($workflows as $workflow) {
+            $recipientName = trim(($workflow->recipient->first_name ?? '') . ' ' . ($workflow->recipient->last_name ?? ''));
+            $docRoute[$workflow->step_order][] = $recipientName;
+        }
+            
         $attachments = Document::with('attachments')->findOrFail($document->id)->attachments;
         $auditLogs = DocumentAudit::where('document_id', $document->id)
             ->with(['user'])
             ->orderBy('created_at', 'desc')
             ->paginate(15);
-
-        return view('documents.show', compact('document', 'auditLogs', 'attachments'));
+    
+        return view('documents.show', compact('document', 'auditLogs', 'attachments', 'docRoute', 'workflows'));
     }
 
     /**
@@ -398,7 +567,7 @@ class DocumentController extends Controller
             if ($request->hasFile('upload')) {
                 Storage::disk('public')->delete($document->path);
                 $file = $request->file('upload');
-                $fileName = time().'_'.$file->getClientOriginalName();
+                $fileName = time() . '_' . $file->getClientOriginalName();
                 $filePath = $file->storeAs('documents', $fileName, 'public');
                 $document->update(['path' => $filePath]);
             }
@@ -415,7 +584,7 @@ class DocumentController extends Controller
             // Handle new attachments
             if ($request->hasFile('attachments')) {
                 foreach ($request->file('attachments') as $attachment) {
-                    $attachmentName = time().'_'.$attachment->getClientOriginalName();
+                    $attachmentName = time() . '_' . $attachment->getClientOriginalName();
                     $attachmentPath = $attachment->storeAs('attachments', $attachmentName, 'public');
 
                     DocumentAttachment::create([
@@ -433,10 +602,10 @@ class DocumentController extends Controller
                 ->with('success', 'Document updated successfully');
 
         } catch (Exception $e) {
-            \Log::error('Document update error: '.$e->getMessage());
+            \Log::error('Document update error: ' . $e->getMessage());
 
             return redirect()->back()
-                ->with('error', 'Error updating document: '.$e->getMessage())
+                ->with('error', 'Error updating document: ' . $e->getMessage())
                 ->withInput();
         }
     }
@@ -481,28 +650,28 @@ class DocumentController extends Controller
         $data = base64_decode($data);
 
         // Generate a unique filename
-        $filename = 'uploads/'.uniqid().'.png';
+        $filename = 'uploads/' . uniqid() . '.png';
 
         // Store the image
         Storage::put($filename, $data);
 
-        return Response::json(['success' => 'Image uploaded successfully', 'filename' => $filename, 'path' => asset('storage/'.$filename)]);
+        return Response::json(['success' => 'Image uploaded successfully', 'filename' => $filename, 'path' => asset('storage/' . $filename)]);
     }
 
     public function downloadFile($id)
     {
         try {
             $document = Document::findOrFail($id) ?? $document = DocumentAttachment::findOrFail($id);
-            $filePath = storage_path('app/public/'.$document->path);
+            $filePath = storage_path('app/public/' . $document->path);
 
-            if (! $document || ! $document->path || ! file_exists($filePath)) {
+            if (!$document || !$document->path || !file_exists($filePath)) {
                 return redirect()->back()->with('error', 'File not found or inaccessible.');
             }
 
             return response()->download($filePath);
 
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Error downloading file: '.$e->getMessage());
+            return redirect()->back()->with('error', 'Error downloading file: ' . $e->getMessage());
         }
     }
 
@@ -510,9 +679,9 @@ class DocumentController extends Controller
     {
         // Retrieve the office abbreviation and document type
         $office = Office::findOrFail($officeId);
-        $documentType = DocumentCategory::findOrFail($documentTypeId);
+        $documentType = DocumentCategory::find($documentTypeId) ?? 'GEN';
 
-        $prefix = strtoupper(substr($office->name, 0, 3)).'-'.strtoupper(substr($documentType->category, 0, 3));
+        $prefix = strtoupper(substr($office->name, 0, 3)) . '-' . strtoupper(substr($documentType->category, 0, 3));
 
         do {
             // Define the characters to use for the random part
@@ -527,7 +696,7 @@ class DocumentController extends Controller
             }
 
             // Combine the prefix with the random string and a timestamp
-            $trackingNumber = $prefix.'-'.$randomString.'-'.date('Y');
+            $trackingNumber = $prefix . '-' . $randomString . '-' . date('Y');
 
             // Check if this tracking number already exists
             $exists = DocumentTrackingNumber::where('tracking_number', $trackingNumber)->exists();
@@ -589,90 +758,125 @@ class DocumentController extends Controller
         return view('documents.audit', compact('auditLogs'));
     }
 
-    //get all the documents that are pending
-    public function showPending(): View
+    //workflow logic
+    public function createWorkflow(Request $request): RedirectResponse
     {
-        // Get the IDs of the offices associated with the authenticated user
-        $userOfficeIds = auth()->user()->offices->pluck('id')->toArray();
-
-        // Retrieve documents where the transaction's from_office or to_office matches the user's offices
-        $documents = Document::with(['user', 'status', 'transaction.fromOffice', 'transaction.toOffice'])
-            ->whereHas('transaction', function ($query) use ($userOfficeIds) {
-                $query->whereIn('from_office', $userOfficeIds)
-                    ->orWhereIn('to_office', $userOfficeIds);
-            })
-            ->whereHas('status', function ($query) {
-                $query->whereIn('status', ['pending', 'received', 'released', 'completed', 'retracted']);
-            })
-            ->latest()
-            ->paginate(5);
-
-        return view('documents.pending', [
-            'documents' => $documents,
-            'i' => (request()->input('page', 1) - 1) * 5,
+        $request->validate([
+            'document_id' => 'required|exists:documents,id',
+            'sender_id' => 'required|exists:users,id',
+            'recipient_id' => 'required|exists:users,id',
+            'step_order' => 'required|integer',
         ]);
-    }
 
-    public function showComplete()
-    {
-        // Get the IDs of the offices associated with the authenticated user
-        $userOfficeIds = auth()->user()->offices->pluck('id')->toArray();
-
-        // Retrieve documents where the transaction's from_office or to_office matches the user's offices
-        $documents = Document::with(['user', 'status', 'transaction.fromOffice', 'transaction.toOffice'])
-            ->whereHas('transaction', function ($query) use ($userOfficeIds) {
-                $query->whereIn('from_office', $userOfficeIds)
-                    ->orWhereIn('to_office', $userOfficeIds);
-            })
-            ->whereHas('status', function ($query) {
-                $query->whereIn('status', ['released', 'completed', 'retracted']);
-            })
-            ->latest()
-            ->paginate(5);
-
-        return view('documents.pending', [
-            'documents' => $documents,
-            'i' => (request()->input('page', 1) - 1) * 5,
-        ]);
-    }
-
-    //redirect to document release form
-    public function confirmReleased($id): View
-    {
-        $document = Document::with(['transaction.fromOffice', 'transaction.toOffice'])->findOrFail($id);
-        $offices = Office::with('users')->get();
-        $users = User::with('offices')->get();
-
-        return view('documents.releasing_form', compact('document', 'offices', 'users'));
-    }
-
-    //change the status of the document
-    public function changeStatus($id, $status, $request = null): RedirectResponse
-    {
         try {
-            $document = Document::findOrFail($id);
-            $document->status()->update(['status' => $status]);
+            $workflow = DocumentWorkflow::create($request->only([
+                'document_id', 'sender_id', 'recipient_id', 'step_order',
+            ]));
 
-            $this->logDocumentAction($document, 'updated', $status, 'Document status changed');
+            // You can log creation (e.g., using DocumentAudit)
+            $this->logDocumentAction($workflow->document, 'workflow', 'pending', 'Document workflow created');
 
-            if ($status == 'rejected') {
-                $document->transaction()->update(['to_office' => $document->transaction->from_office]);
-            }
-
-            if ($request) {
-                DocumentTransaction::create([
-                    'doc_id' => $document->id,
-                    'from_office' => $document->transaction->to_office,
-                    'to_office' => $document->transaction->to_office,
-                    'to_user' => $request->to_user ?? null,
-                ]);
-
-                $document->update(['remarks' => $request->remarks]);
-            }
-
-            return redirect()->back()->with('success', 'Document status changed');
+            return redirect()->back()->with('success', 'Document workflow created successfully');
         } catch (Exception $e) {
-            return redirect()->back()->with('error', 'Error updating document status: '.$e->getMessage());
+            return redirect()->back()->with('error', 'Error creating document workflow: '.$e->getMessage());
         }
+    }
+
+    public function forwardDocumentSubmit(Request $request, $id){
+        $document = Document::findOrFail($id);
+
+        // Validate that at least one recipient is selected in each batch.
+        $request->validate([
+            'recipient_batch' => 'required|array',
+            'step_order' => 'required|array',
+            'remarks' => 'nullable|array',
+        ]);
+
+        // Update document status to forwarded.
+        $document->status()->update(['status' => 'forwarded']);
+
+        // Log the forwarding action.
+        $this->logDocumentAction($document, 'forwarded', 'forwarded', 'Document forwarded');
+
+        // Process each batch of recipients.
+        foreach ($request->recipient_batch as $batchIndex => $recipients) {
+            // Skip if no recipient selected in this batch.
+            if (empty($recipients)) {
+                continue;
+            }
+            // For each recipient in the current batch, create a workflow record.
+            foreach ($recipients as $recipientId) {
+                \App\Models\DocumentWorkflow::create([
+                    'document_id' => $document->id,
+                    'sender_id' => auth()->id(),
+                    'recipient_id' => $recipientId,
+                    'step_order' => $request->step_order[$batchIndex],
+                    'remarks' => $request->remarks[$batchIndex] ?? null,
+                    'status' => 'pending'
+                ]);
+            }
+        }
+
+        return redirect()->route('documents.index')
+            ->with('success', 'Document forwarded successfully');
+    }
+
+    public function approveWorkflow($id): RedirectResponse
+    {
+        $workflow = DocumentWorkflow::findOrFail($id);
+        $workflow->approve();
+        $this->logDocumentAction($workflow->document, 'workflow', 'approved', 'Document workflow approved');
+
+        return redirect()->back()->with('success', 'Document workflow approved');
+    }
+
+    public function rejectWorkflow($id): RedirectResponse
+    {
+        $workflow = DocumentWorkflow::findOrFail($id);
+        $workflow->reject();
+        $this->logDocumentAction($workflow->document, 'workflow', 'rejected', 'Document workflow rejected');
+
+        // Example: Route document back to original sender or add additional logic
+        // You may update the document status or trigger another workflow step here
+
+        return redirect()->back()->with('success', 'Document workflow rejected');
+    }
+
+    //helper functions
+    private function storeFile($file, $company_id)
+    {
+        Storage::disk('local')->put(date('mYd, '), 'Contents');
+    }
+
+    //workflow management
+    public function workflowManagement()
+    {
+        $workflows = DocumentWorkflow::with(['document', 'sender', 'recipient'])
+            ->where('recipient_id', auth()->id())
+            ->whereNotExists(function ($query) {
+                $query->select('*')
+                      ->from('document_workflows as dw')
+                      ->whereColumn('dw.document_id', 'document_workflows.document_id')
+                      ->whereColumn('dw.step_order', 'document_workflows.step_order')
+                      ->whereIn('dw.status', ['approved', 'rejected']);
+            })
+            ->orderBy('created_at', 'desc')
+            ->paginate(15);
+    
+        return view('documents.workflow', compact('workflows'));
+    }
+
+    public function receiveWorkflow($id){
+        $workflow = DocumentWorkflow::findOrFail($id);
+
+        $workflow->receive();
+    }
+
+    public function reviewDocument($id)
+    {
+        $workflow = DocumentWorkflow::findOrFail($id);
+        $document = $workflow->document;
+
+        return view('documents.review', compact('workflow', 'document'));
     }
 }

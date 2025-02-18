@@ -20,6 +20,7 @@ return new class extends Migration
             $table->text('content')->nullable();
             $table->string('path');
             $table->softDeletes();
+            $table->boolean('is_archived')->default(false);
             $table->timestamps();
 
             $table->foreign('uploader')->references('id')->on('users');
