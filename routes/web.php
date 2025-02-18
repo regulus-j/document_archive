@@ -8,6 +8,10 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\PlanController;
+use App\Http\Controllers\SubscriptionController;
+use App\Http\Controllers\PaymentController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -40,6 +44,27 @@ Route::middleware('auth')->group(function () {
         Route::put('/{user}', [UserController::class, 'update'])->name('users.update');
         Route::delete('/{user}', [UserController::class, 'destroy'])->name('users.destroy');
         Route::post('/search', [UserController::class, 'search'])->name('users.search');
+    });
+
+    Route::prefix('companies')->group(function () {
+        Route::get('/', [CompanyController::class, 'index'])->name('companies.index');
+        Route::get('/create', [CompanyController::class, 'create'])->name('companies.create');
+        Route::post('/', [CompanyController::class, 'store'])->name('companies.store');
+        Route::get('/{company}',  [CompanyController::class, 'show'])->name('companies.show');
+        Route::get('/{company}/edit', [CompanyController::class, 'edit'])->name('companies.edit');
+        Route::put('/{company}', [CompanyController::class, 'update'])->name('companies.update');
+        Route::delete('/{company}', [CompanyController::class, 'destroy'])->name('companies.destroy');
+
+        Route::get('/managed/{user}', [CompanyController::class, 'userCompanies'])->name('companies.userManaged');
+
+        Route::prefix('{company}/addresses')->group(function () {
+            Route::get('/', [CompanyController::class, 'addresses'])->name('companies.addresses.index');
+            Route::get('/create', [CompanyController::class, 'createAddress'])->name('companies.addresses.create');
+            Route::post('/', [CompanyController::class, 'storeAddress'])->name('companies.addresses.store');
+            Route::get('/{address}/edit', [CompanyController::class, 'editAddress'])->name('companies.addresses.edit');
+            Route::put('/{address}', [CompanyController::class, 'updateAddress'])->name('companies.addresses.update');
+            Route::delete('/{address}', [CompanyController::class, 'destroyAddress'])->name('companies.addresses.destroy');
+        });
     });
 
     Route::prefix('documents')->group(function () {
@@ -93,6 +118,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [ReportController::class, 'index'])->name('reports.index');
         Route::get('/create', [ReportController::class, 'create'])->name('reports.create');
         Route::post('/', [ReportController::class, 'store'])->name('reports.store');
+        Route::get('/reports/analytics', [ReportController::class, 'analytics'])->name('reports.analytics');
         Route::get('/{report}', [ReportController::class, 'show'])->name('reports.show');
         Route::get('/{report}/edit', [ReportController::class, 'edit'])->name('reports.edit');
         Route::put('/{report}', [ReportController::class, 'update'])->name('reports.update');
@@ -100,14 +126,20 @@ Route::middleware('auth')->group(function () {
         Route::post('/generate', [ReportController::class, 'generate'])->name('reports.generate');
     });
 
-    Route::prefix('backup')->group(function () {
-        Route::get('/', [BackupController::class, 'index'])->name('backup.index');
-        Route::get('/create', [BackupController::class, 'create'])->name('backup.create');
-        Route::post('/', [BackupController::class, 'store'])->name('backup.store');
-        Route::get('/{backup}', [BackupController::class, 'show'])->name('backup.show');
-        Route::get('/{backup}/edit', [BackupController::class, 'edit'])->name('backup.edit');
-        Route::put('/{backup}', [BackupController::class, 'update'])->name('backup.update');
-        Route::delete('/{backup}', [BackupController::class, 'destroy'])->name('backup.destroy');
+    Route::get('/plans', [PlanController::class, 'index'])->name('plans.index');
+    Route::post('/plans/{plan}/subscribe', [PlanController::class, 'subscribe'])->name('plans.subscribe');
+
+    Route::post('/subscriptions', [SubscriptionController::class, 'store']);
+    Route::patch('/subscriptions/{subscription}', [SubscriptionController::class, 'update']);
+    Route::post('/subscriptions/{subscription}/cancel', [SubscriptionController::class, 'cancel']);
+    Route::post('/subscriptions/{subscription}/activate', [SubscriptionController::class, 'activate']);
+
+    Route::middleware(['auth'])->group(function () {
+        Route::resource('payments', PaymentController::class)->only(['index', 'show']);
+    });
+
+    Route::middleware(['auth'])->group(function () {
+        Route::resource('addresses', AddressController::class);
     });
 });
 

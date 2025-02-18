@@ -47,9 +47,7 @@
                                 <a href="{{ route('documents.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600" role="menuitem">{{ __('View') }}</a>
                                 <a href="{{ route('documents.archive') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600" role="menuitem">{{ __('Archives') }}</a>
                                 <a href="{{ route('documents.create') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600" role="menuitem">{{ __('Upload') }}</a>
-                                <a href="{{ route('documents.workflows') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600" role="menuitem">{{ __('Received') }}</a>
-                                <a href="{{ route('documents.complete') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600" role="menuitem">{{ __('Tag as Complete') }}</a>
-                            </div>
+                                <a href="{{ route('documents.workflows') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600" role="menuitem">{{ __('Received') }}</a>                                </div>
                         </div>
                         @endcan
                         
@@ -78,6 +76,15 @@
                         <x-slot name="content">
                             <x-dropdown-link :href="route('profile.edit')" class="hover:bg-blue-50 hover:text-blue-600">
                                 {{ __('Profile') }}
+                            </x-dropdown-link>
+
+                            {{-- Add condtion if company_onwer == auth()->id --}}
+                            <x-dropdown-link :href="route('companies.userManaged', auth()->id())" class="hover:bg-blue-50 hover:text-blue-600">
+                                {{ __('Company') }}
+                            </x-dropdown-link>
+
+                            <x-dropdown-link :href="route('plans.index', auth()->id())" class="hover:bg-blue-50 hover:text-blue-600">
+                                {{ __('Plans & Subscription') }}
                             </x-dropdown-link>
 
                             <form method="POST" action="{{ route('logout') }}">
