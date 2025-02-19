@@ -14,15 +14,17 @@ class SubscriptionPayment extends Model
         'payment_method',
         'status',
         'transaction_reference',
+        'payment_date',
     ];
 
     protected $casts = [
-        'payment_date' => 'date',
+        'payment_date' => 'datetime',
         'amount' => 'decimal:2',
     ];
 
-    public function subscription(): BelongsTo
+    public function subscription()
     {
-        return $this->belongsTo(Subscriptions::class, 'company_subscription_id');
+        return $this->belongsTo(CompanySubscription::class, 'company_subscription_id');
     }
 }
+
