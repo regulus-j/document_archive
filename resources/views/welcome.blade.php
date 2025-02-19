@@ -25,7 +25,7 @@
         </div>
     </nav>
 
-    <section class="bg-gray-100 py-20">
+    <section class="bg-gray-80 py-20">
         <div class="container mx-auto px-4">
             <div class="flex flex-wrap items-center">
                 <div class="w-full lg:w-1/2 mb-10 lg:mb-0">
@@ -36,16 +36,16 @@
                         store documents throughout their lifecycle, ensuring easy retrieval, quick and secure access to
                         documents by scanning or searching for keywords</p>
                     <div class="space-x-4">
-                        <a href="#"
+                        <a href="{{ route('dashboard') }}"
                             class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">Get
                             Started for free</a>
-                        <a href="#"
+                        <a href="#pricing"
                             class="border border-gray-300 text-gray-600 px-6 py-3 rounded-lg hover:bg-gray-100 transition-colors">Learn
                             More</a>
                     </div>
                 </div>
                 <div class="w-full lg:w-1/2">
-                    <video controls class="w-full h-64 rounded-lg shadow-lg">
+                    <video controls class="w-full h-auto lg:h-[400px] rounded-lg shadow-lg object-cover">
                         <source src="{{ asset('videos/intro.mp4') }}" type="video/mp4">
                         Your browser does not support the video tag.
                     </video>
@@ -54,12 +54,12 @@
         </div>
     </section>
 
-    <section class="py-20">
+    <section class="py-20 bg-gray-100">
         <div class="container mx-auto px-4">
-            <h2 class="text-3xl font-bold text-center mb-10">Upload your Documents</h2>
+            <h2 class="text-3xl font-bold text-center mb-6">Upload your Documents</h2>
             <div class="flex flex-wrap items-center">
                 <div class="w-full md:w-1/2 mb-10 md:mb-0">
-                    <img src="{{ asset('images/scan_document.jpg') }}" alt="From device & Scan"
+                    <img src="{{ asset('images/upload_document.png') }}" alt="From device & Scan"
                         class="w-full rounded-lg shadow-lg">
                 </div>
                 <div class="w-full md:w-1/2 md:pl-10">
@@ -123,7 +123,7 @@
         </div>
     </section>
 
-    <section class="text-gray-600 body-font overflow-hidden" x-data="{ plan: 'yearly' }">
+    <section id="pricing" class="text-gray-600 body-font overflow-hidden" x-data="{ plan: 'yearly' }">
     <div class="container px-5 py-24 mx-auto">
         <div class="flex flex-col text-center w-full mb-20">
             <h1 class="sm:text-4xl text-3xl font-medium title-font mb-2 text-gray-900">Plan & Pricing</h1>
@@ -176,7 +176,14 @@
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5 text-blue-600">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
-                        </span>Basic tracking and archiving
+                        </span>Max 10 file uploads per month
+                    </p>
+                    <p class="flex items-center text-gray-600 mb-2">
+                        <span class="w-4 h-4 mr-2 inline-flex items-center justify-center bg-gray-400 text-white rounded-full flex-shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5 text-blue-600">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </span>Archive up to 10 documents
                     </p>
 
                     <button class="flex items-center mt-auto text-white bg-blue-500 border-0 py-2 px-4 w-full focus:outline-none hover:bg-blue-600 rounded">
@@ -216,21 +223,35 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" class="h-10 w-9 flex-none text-blue-600">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                 </svg>
-                            </span>Advanced tracking and archiving features
+                            </span>Max 30 file uploads
                         </p>
                         <p class="flex items-center text-gray-600 mb-2">
                             <span class="w-4 h-4 mr-2 inline-flex items-center justify-center bg-gray-400 text-white rounded-full flex-shrink-0">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" class="h-10 w-9 flex-none text-blue-600">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                 </svg>
-                            </span>Full search capabilities with filters
+                            </span>Archive up to 15 documents 
                         </p>
-                        <p class="flex items-center text-gray-600 mb-6">
+                        <p class="flex items-center text-gray-600 mb-2">
                             <span class="w-4 h-4 mr-2 inline-flex items-center justify-center bg-gray-400 text-white rounded-full flex-shrink-0">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" class="h-10 w-9 flex-none text-blue-600">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                 </svg>
                             </span>Customizable user roles and permissions
+                        </p>
+                        <p class="flex items-center text-gray-600 mb-2">
+                            <span class="w-4 h-4 mr-2 inline-flex items-center justify-center bg-gray-400 text-white rounded-full flex-shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" class="h-10 w-9 flex-none text-blue-600">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </span>With Full search & tracking
+                        </p>
+                        <p class="flex items-center text-gray-600 mb-2">
+                            <span class="w-4 h-4 mr-2 inline-flex items-center justify-center bg-gray-400 text-white rounded-full flex-shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" class="h-10 w-9 flex-none text-blue-600">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </span>Basic reporting on documents and users
                         </p>
                         <button class="flex items-center mt-auto text-white bg-blue-500 border-0 py-2 px-4 w-full focus:outline-none hover:bg-blue-600 rounded">
                             Start Now
@@ -276,36 +297,30 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" class="h-10 w-9 flex-none text-blue-600">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                 </svg>
-                            </span>Real-time notifications and alerts
+                            </span>Max 50 file uploads
                         </p>
                         <p class="flex items-center text-gray-600 mb-2">
                             <span class="w-4 h-4 mr-2 inline-flex items-center justify-center bg-gray-400 text-white rounded-full flex-shrink-0">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" class="h-10 w-9 flex-none text-blue-600">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                 </svg>
-                            </span> Office management
+                            </span>Advance Reporting
                         </p>
                         <p class="flex items-center text-gray-600 mb-2">
                             <span class="w-4 h-4 mr-2 inline-flex items-center justify-center bg-gray-400 text-white rounded-full flex-shrink-0">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" class="h-10 w-9 flex-none text-blue-600">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                 </svg>
-                            </span> Customizable user roles & permissions
+                            </span> User roles & permissions management
                         </p>
                         <p class="flex items-center text-gray-600 mb-2">
                             <span class="w-4 h-4 mr-2 inline-flex items-center justify-center bg-gray-400 text-white rounded-full flex-shrink-0">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" class="h-10 w-9 flex-none text-blue-600">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                 </svg>
-                            </span> Generating of Reports
+                            </span> Office Management
                         </p>
-                        <p class="flex items-center text-gray-600 mb-6">
-                            <span class="w-4 h-4 mr-2 inline-flex items-center justify-center bg-gray-400 text-white rounded-full flex-shrink-0">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" class="h-10 w-9 flex-none text-blue-600">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                            </span>Advanced security features
-                        </p>
+                       
                         <button class="flex items-center mt-auto text-white bg-blue-500 border-0 py-2 px-4 w-full focus:outline-none hover:bg-blue-600 rounded">
                             Start Now
                             <svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="w-4 h-4 ml-auto" viewBox="0 0 24 24">

@@ -8,10 +8,11 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\PlanController;
+use App\Http\Controllers\PlanSelectionController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\AddressController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -31,6 +32,39 @@ Route::middleware('auth')->group(function () {
 
     // Route::put('/profile/set-password', [ProfileController::class, 'set'])->name('profile.set');
 });
+
+
+//----------------------------------------------------------------------------------------------------------------
+
+Route::get('/plans', [PlanController::class, 'index'])->name('plans.index');
+Route::get('/register/{plan}', [PlanController::class, 'register'])->name('plans.register');
+Route::post('/plans/{plan}/subscribe', [PlanController::class, 'subscribe'])->name('plans.subscribe');
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/plans/select', [PlanSelectionController::class, 'select'])->name('plans.select');
+    Route::post('/plans/store', [PlanSelectionController::class, 'store'])->name('plans.store');
+
+    // Payment routes
+    Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
+    Route::get('/payments/create/{plan}', [PaymentController::class, 'create'])->name('payments.create');
+    Route::post('/payments/{plan}', [PaymentController::class, 'store'])->name('payments.store');
+    Route::get('/payments/{payment}', [PaymentController::class, 'show'])->name('payments.show');
+
+    // Subscription routes
+    Route::post('/subscriptions', [SubscriptionController::class, 'store'])->name('subscriptions.store');
+    Route::patch('/subscriptions/{subscription}', [SubscriptionController::class, 'update'])->name('subscriptions.update');
+    Route::post('/subscriptions/{subscription}/cancel', [SubscriptionController::class, 'cancel'])->name('subscriptions.cancel');
+    Route::post('/subscriptions/{subscription}/activate', [SubscriptionController::class, 'activate'])->name('subscriptions.activate');
+});
+
+
+
+
+Route::middleware(['auth'])->group(function () {
+    Route::resource('addresses', AddressController::class);
+});
+
+//--------------------------------------------------------------------------------------------------------------------
 
 Route::middleware('auth')->group(function () {
     Route::get('/admin/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
@@ -86,7 +120,7 @@ Route::middleware('auth')->group(function () {
         Route::delete('/attachments/{id}', [DocumentController::class, 'deleteAttachment'])->name('attachments.delete');
         Route::get('/forward/{document}', [DocumentController::class, 'forwardDocument'])->name('documents.forward');
 
-        Route::get('/workflows', [DocumentController::class, 'workflowManagement'])->name('documents.workflows');      
+        Route::get('/workflows', [DocumentController::class, 'workflowManagement'])->name('documents.workflows');
         Route::get('/workflows/{workflow}/receive', [DocumentController::class, 'receiveWorkflow'])->name('documents.receive');
         Route::get('/workflows/{workflow}', [DocumentController::class, 'approveWorkflow'])->name('documents.approveWorkflow');
         Route::get('/workflows/{workflow}/reject', [DocumentController::class, 'rejectWorkflow'])->name('documents.rejectWorkflow');

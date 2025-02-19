@@ -8,9 +8,12 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class User extends Authenticatable
 {
+
+    use Notifiable;
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, HasRoles, Notifiable, SoftDeletes;
 
@@ -65,9 +68,14 @@ class User extends Authenticatable
         return "{$this->first_name} {$this->middle_name} {$this->last_name}";
     }
 
-    public function company()
+    public function company(): HasOne
     {
-        return $this->belongsTo(CompanyAccount::class);
+        return $this->hasOne(CompanyAccount::class);
+    }
+
+    public function companySubscriptions()
+    {
+        return $this->hasMany(CompanySubscription::class, 'company_id');
     }
 
     public function companies()
