@@ -1,31 +1,53 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
-    <h1>Forward Document</h1>
-    <form action="{{ route('documents.forward.submit', $document->id) }}" method="POST">
-        @csrf
-        <div id="batches-container">
-            <div class="batch-group mb-3" data-index="0">
-                <label>Recipients for Step <span class="step-order-label">1</span></label>
-                <input type="hidden" name="step_order[]" class="step-order" value="1">
-                @foreach($users as $user)
-                    <div class="form-check">
-                        <input class="form-check-input" 
-                               type="checkbox" 
-                               name="recipient_batch[0][]" 
-                               id="step0_user{{ $user->id }}" 
-                               value="{{ $user->id }}">
-                        <label class="form-check-label" for="step0_user{{ $user->id }}">
-                            {{ $user->first_name . ' ' . $user->last_name }}
-                        </label>
-                    </div>
-                @endforeach
-            </div>
+<div class="container mx-auto px-4">
+    <h1 class="text-3xl font-bold mb-6">Forward Document</h1>
+    
+    @if($users->isEmpty())
+        <div class="text-center">
+            <p class="text-lg text-gray-700 mb-4">No users available to forward the document to.</p>
+            <a href="{{ route('documents.index') }}" 
+               class="inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                Return to Documents
+            </a>
         </div>
-        <button type="button" class="btn btn-secondary mb-3" onclick="addBatch()">Add Batch</button>
-        <button type="submit" class="btn btn-primary">Forward Document</button>
-    </form>
+    @else
+        <form action="{{ route('documents.forward.submit', $document->id) }}" method="POST">
+            @csrf
+            <div id="batches-container">
+                <div class="batch-group mb-6" data-index="0">
+                    <label class="block text-gray-700 text-lg font-semibold mb-2">
+                          Recipients for Step <span class="step-order-label">1</span>
+                    </label>
+                    <input type="hidden" name="step_order[]" class="step-order" value="1">
+                    @foreach($users as $user)
+                        <div class="form-check mb-2">
+                            <input class="form-checkbox h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500" 
+                                   type="checkbox" 
+                                   name="recipient_batch[0][]" 
+                                   id="step0_user{{ $user->id }}" 
+                                   value="{{ $user->id }}">
+                            <label class="ml-2 text-gray-700" for="step0_user{{ $user->id }}">
+                                {{ $user->first_name . ' ' . $user->last_name }}
+                            </label>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+            <div class="flex gap-4 mt-6">
+                <button type="button" 
+                        class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400" 
+                        onclick="addBatch()">
+                    Add Batch
+                </button>
+                <button type="submit" 
+                        class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    Forward Document
+                </button>
+            </div>
+        </form>
+    @endif
 </div>
 
 <script>

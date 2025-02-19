@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use App\Models\CompanyAccount;
+use App\Models\CompanyAddress;
+
 
 class CompanyController extends Controller
 {
@@ -31,8 +34,6 @@ class CompanyController extends Controller
             'company_phone'   => 'required|string|max:20',
         ]);
 
-        CompanyAccount::create($validated);
-
         if($request->part == '2') {
             $addressValidated = $request->validate([
             'address'  => 'required|string|max:255',
@@ -43,23 +44,29 @@ class CompanyController extends Controller
             ]);
             
             // Update the company with address details
+            CompanyAccount::create($validated);
             $company = CompanyAccount::latest()->first();
             $company->addresses()->create($addressValidated);
             return redirect()->route('companies.index')->with('success', 'Company created successfully.');
         }
-        return redirect()->route('companies.create')->with('success', 'Company created successfully.');
+        return redirect()->route('companies.create')->with('success', 'Company created successfully.')->withInput();
     }
 
     public function show(CompanyAccount $company)
     {
-        // Display the specified company.
-        return view('companies.show', compact('company'));
+        // Display the specified company with its address
+        $address = $company->addresses()->first();
+        return view('companies.show', compact('company', 'address'));
     }
 
     public function edit(CompanyAccount $company)
     {
+        if(auth()->user()->isAdmin())
+        {
+           $users = User::paginate(10);
+        }
         // Show the form for editing the specified company.
-        return view('companies.edit', compact('company'));
+        return view('companies.edit', compact('company', 'users'));
     }
 
     public function update(Request $request, CompanyAccount $company)
@@ -86,7 +93,7 @@ class CompanyController extends Controller
 
     public function userCompanies($userId)
     {
-        $companies = CompanyAccount::where('user_id', $userId)->get();
+        $companies = CompanyAccount::where('user_id', $userId)->with('address')->get();
         return view('companies.userManaged', compact('companies'));
     }
 

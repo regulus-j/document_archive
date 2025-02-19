@@ -20,6 +20,7 @@ return new class extends Migration
             $table->unsignedInteger('step_order');       // The order or sequence of the workflow
             $table->enum('status', ['pending', 'received', 'approved', 'rejected'])->default('pending');
             $table->text('remarks')->nullable();         // Remarks if any during approval/rejection
+            $table->timestamp('received_at');
             $table->timestamps();
 
             $table->foreign('document_id')->references('id')->on('documents')->onDelete('cascade');
@@ -44,6 +45,7 @@ return new class extends Migration
         Schema::create('company_users', function (Blueprint $table) {
             $table->unsignedBigInteger('company_id')->nullable(); // Make it nullable
             $table->unsignedBigInteger('user_id')->nullable();      // Make it nullable
+            $table->timestamps();
         
             $table->foreign('company_id')->references('id')->on('company_accounts')->onDelete('set null');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('set null');

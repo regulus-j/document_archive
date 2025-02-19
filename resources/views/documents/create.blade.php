@@ -118,41 +118,6 @@
                         </div>
 
                         <div class="sm:col-span-2">
-                            <label for="to_office" class="block text-sm font-medium text-gray-700">Recipient
-                                Office</label>
-                            <select name="to_office" id="to_office"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                                required>
-                                <option value="">Select Office</option>
-                                @foreach($offices as $office)
-                                    <option value="{{ $office->id }}">{{ $office->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="sm:col-span-2">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Recipient Users (optional)
-                            </label>
-                            <div class="mt-1 border border-gray-300 rounded-md max-h-48 overflow-y-auto p-2">
-                                <div class="space-y-2">
-                                    @foreach($users as $user)
-                                        <div class="flex items-center user-checkbox"
-                                            data-office-ids="{{ implode(',', $user->offices->pluck('id')->toArray()) }}">
-                                            <input type="checkbox" name="to_user_ids[]" value="{{ $user->id }}"
-                                                id="user_{{ $user->id }}"
-                                                class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
-                                            <label for="user_{{ $user->id }}" class="ml-2 block text-sm text-gray-900">
-                                                {{ $user->first_name }} {{ $user->last_name }}
-                                            </label>
-                                        </div>
-                                    @endforeach
-                                </div>
-                            </div>
-                            <p class="mt-2 text-xs text-gray-500">Select multiple users if needed</p>
-                        </div>
-
-                        <div class="sm:col-span-2">
                             <label for="upload" class="block text-sm font-medium text-gray-700 mb-2">Upload Main
                                 Document</label>
                             <div

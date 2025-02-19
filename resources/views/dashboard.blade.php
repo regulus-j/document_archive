@@ -71,12 +71,39 @@
                             <input type="text" name="tracking_number" id="tracking_number"
                                 class="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-l-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm border-gray-300"
                                 placeholder="Enter tracking number">
+                            <button type="button" onclick="startScanner()"
+                                class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                                </svg>
+                                Scan QR
+                            </button>
                             <button type="submit"
                                 class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-r-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                                 Submit
                             </button>
                         </div>
+                        <div id="reader" class="mt-4 hidden"></div>
                     </div>
+
+                    @push('scripts')
+                    <script src="https://unpkg.com/html5-qrcode"></script>
+                    <script>
+                        function startScanner() {
+                            const reader = document.getElementById('reader');
+                            reader.classList.remove('hidden');
+                            
+                            const html5QrCode = new Html5Qrcode("reader");
+                            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+                            
+                            html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
+                                document.getElementById('tracking_number').value = decodedText;
+                                html5QrCode.stop();
+                                reader.classList.add('hidden');
+                            });
+                        }
+                    </script>
+                    @endpush
                 </form>
             </div>
         </div>

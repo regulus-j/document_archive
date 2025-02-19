@@ -30,13 +30,13 @@ class CompanyAccount extends Model
 
     public function offices()
     {
-        return $this->hasMany(CompanyOffice::class, 'company_id');
+        return $this->hasMany(Office::class, 'company_id');
     }
 
-    //company addresses
-    public function addresses()
+    //company address
+    public function address()
     {
-        return $this->hasMany(CompanyAddress::class, 'company_id');
+        return $this->hasOne(CompanyAddress::class, 'company_id');
     }
 
     //company subscriptions
