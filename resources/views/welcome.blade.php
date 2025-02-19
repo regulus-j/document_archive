@@ -18,7 +18,7 @@
                 <span class="text-xl font-semibold text-gray-800">DocArchive</span>
             </a>
             <div class="space-x-4">
-                <a href="{{ route('login') }}" class="text-gray-600 hover:text-gray-800 transition-colors">Login</a>
+                <a href="{{ route('login') }}" class="text-gray-600 hover:text-gray-800 transition-colors">Sign in</a>
                 <a href="{{ route('register') }}"
                     class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">Sign Up</a>
             </div>

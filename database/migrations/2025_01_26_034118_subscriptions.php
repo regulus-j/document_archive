@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -61,6 +60,17 @@ return new class extends Migration
         Schema::table('users', function (Blueprint $table) {
             $table->unsignedBigInteger('company_id')->nullable(); // Links user to a company
             $table->foreign('company_id')->references('id')->on('company_accounts')->onDelete('set null');
+        });
+
+        Schema::create('subscription_payments', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('company_subscription_id')->constrained()->onDelete('cascade');
+            $table->decimal('amount', 10, 2);
+            $table->enum('payment_method', ['credit_card', 'paypal', 'bank_transfer', 'gcash']);
+            $table->enum('status', ['pending', 'successful', 'failed'])->default('pending');
+            $table->string('transaction_reference')->unique();
+            $table->timestamp('payment_date');
+            $table->timestamps();
         });
     }
 
