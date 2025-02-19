@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Subscriptions;
+use App\Models\CompanySubscription;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -11,7 +11,7 @@ class SubscriptionController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'company_id' => 'required|exists:companies,id',
+            'company_id' => 'required|exists:company_accounts,id',
             'plan_id' => 'required|exists:plans,id',
             'start_date' => 'required|date',
             'end_date' => 'nullable|date|after:start_date',
@@ -19,7 +19,7 @@ class SubscriptionController extends Controller
         ]);
 
         return DB::transaction(function () use ($validated) {
-            $subscription = Subscriptions::create([
+            $subscription = CompanySubscription::create([
                 ...$validated,
                 'status' => 'pending',
             ]);
@@ -30,7 +30,7 @@ class SubscriptionController extends Controller
         });
     }
 
-    public function update(Request $request, Subscriptions $subscription)
+    public function update(Request $request, CompanySubscription $subscription)
     {
         $validated = $request->validate([
             'end_date' => 'nullable|date|after:start_date',
@@ -42,17 +42,18 @@ class SubscriptionController extends Controller
         return response()->json($subscription);
     }
 
-    public function cancel(Subscriptions $subscription)
+    public function cancel(CompanySubscription $subscription)
     {
-        $subscription->cancel();
+        $subscription->update(['status' => 'canceled']);
 
         return response()->json(['message' => 'Subscription canceled successfully']);
     }
 
-    public function activate(Subscriptions $subscription)
+    public function activate(CompanySubscription $subscription)
     {
-        $subscription->activate();
+        $subscription->update(['status' => 'active']);
 
         return response()->json(['message' => 'Subscription activated successfully']);
     }
 }
+

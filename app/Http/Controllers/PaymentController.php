@@ -2,8 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Plan;
+use App\Models\CompanySubscription;
 use App\Models\SubscriptionPayment;
+use App\Models\CompanyAccount;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class PaymentController extends Controller
 {
@@ -33,4 +37,73 @@ class PaymentController extends Controller
         $payment->load('subscription.company');
         return view('payments.show', compact('payment'));
     }
+
+    public function create(Request $request, Plan $plan)
+    {
+        $billing = $request->query('billing', 'monthly');
+        $price = $this->calculatePrice($plan->price, $billing);
+
+        return view('payments.create', compact('plan', 'billing', 'price'));
+    }
+
+    public function store(Request $request, Plan $plan)
+    {
+        $request->validate([
+            'payment_method' => ['required', 'in:credit_card,paypal,bank_transfer,gcash'],
+        ]);
+
+        $user = auth()->user();
+        $billing = $request->query('billing', 'monthly');
+        $price = $this->calculatePrice($plan->price, $billing);
+
+        try {
+            DB::beginTransaction();
+
+            $company = CompanyAccount::where('user_id', $user->id)->firstOrFail();
+
+            // Create subscription
+            $subscription = CompanySubscription::create([
+                'company_id' => $company->id,
+                'plan_id' => $plan->id,
+                'start_date' => now(),
+                'end_date' => $billing === 'yearly' ? now()->addYear() : now()->addMonth(),
+                'status' => 'pending',
+                'auto_renew' => true,
+            ]);
+
+            // Create payment record
+            $payment = SubscriptionPayment::create([
+                'company_subscription_id' => $subscription->id,
+                'payment_date' => now(),
+                'amount' => $price,
+                'payment_method' => $request->payment_method,
+                'status' => 'pending',
+                'transaction_reference' => $this->generateTransactionReference(),
+            ]);
+
+            // Here you would integrate with your payment gateway
+            // For this example, we'll simulate a successful payment
+            $payment->update(['status' => 'successful']);
+            $subscription->update(['status' => 'active']);
+
+            DB::commit();
+
+            return redirect()->route('dashboard')->with('success', 'Payment successful! Your subscription is now active.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Payment processing failed. Please try again.');
+        }
+    }
+
+    private function calculatePrice($basePrice, $billing)
+    {
+        return $billing === 'yearly' ? $basePrice * 12 : $basePrice;
+    }
+
+    private function generateTransactionReference()
+    {
+        return 'TXN-' . strtoupper(uniqid()) . '-' . date('Ymd');
+    }
 }
+

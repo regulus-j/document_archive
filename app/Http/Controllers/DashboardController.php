@@ -6,9 +6,16 @@ use App\Models\Document;
 
 class DashboardController extends Controller
 {
-    //
     public function index()
     {
+        $user = auth()->user();
+
+        $activeSubscription = $user->companySubscriptions()->where('status', 'active')->first();
+
+        if (!$activeSubscription) {
+            return redirect()->route('plans.select')->with('info', 'Please select a plan and complete the payment to continue.');
+        }
+
         $document = new Document;
         $recentTransactions = $document->transactions()->latest()->paginate(5);
         $totalDocuments = Document::count();
@@ -18,6 +25,6 @@ class DashboardController extends Controller
         })->count();
         $todayDocuments = Document::whereDate('created_at', today())->count();
 
-        return view('dashboard', compact('recentTransactions', 'totalDocuments', 'recentDocuments', 'pendingDocuments', 'todayDocuments'));
+        return view('dashboard', compact('recentTransactions', 'totalDocuments', 'recentDocuments', 'pendingDocuments', 'todayDocuments', 'activeSubscription'));
     }
 }
