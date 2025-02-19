@@ -33,4 +33,56 @@ class PaymentController extends Controller
         $payment->load('subscription.company');
         return view('payments.show', compact('payment'));
     }
+
+    public function linkCreate()
+    {
+        $client = new \GuzzleHttp\Client();
+        
+        $response = $client->request('POST', 'https://api.paymongo.com/v1/links', [
+            'body' => '{"data":{"attributes":{"amount":100000,"description":"string","remarks":"string"}}}',
+            'headers' => [
+                'accept' => 'application/json',
+                'authorization' => 'Basic ' . base64_encode(config('services.paymongo.secret_key') . ':'),
+                'content-type' => 'application/json',
+            ],
+        ]);
+        
+        $responseData = $response->getBody()->getContents();
+    
+        return view('payments.out')->with('responseData', $responseData);
+    }
+
+    public function checkPaymentStatus($referenceNumber)
+    {
+        $client = new \GuzzleHttp\Client();
+        $baseUrl = 'https://api.paymongo.com/v1/links';
+        
+        try {
+            $response = $client->request('GET', $baseUrl . '?reference_number=' . $referenceNumber, [
+                'headers' => [
+                    'accept' => 'application/json',
+                    'authorization' => 'Basic ' . base64_encode(config('services.paymongo.secret_key') . ':'),
+                ],
+            ]);
+    
+            $result = json_decode($response->getBody(), true);
+            \Log::debug('PayMongo Response:', $result);
+            
+            if (!empty($result['data'][0])) {
+                return $result['data'][0]['attributes']['status'];
+            }
+            
+            return 'pending';
+        } catch (\Exception $e) {
+            \Log::error('PayMongo Error: ' . $e->getMessage());
+            return 'error';
+        }
+    }
+
+    public function success()
+    {
+        return view('payments.success', [
+            'message' => 'Payment completed successfully!'
+        ]);
+    }
 }
