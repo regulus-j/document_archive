@@ -140,6 +140,17 @@ Route::middleware('auth')->group(function () {
     Route::post('/subscriptions/{subscription}/cancel', [SubscriptionController::class, 'cancel']);
     Route::post('/subscriptions/{subscription}/activate', [SubscriptionController::class, 'activate']);
 
+    Route::get('/pay', [PaymentController::class, 'linkCreate'])->name('payment.generate');
+    Route::get('/check-payment-status/{reference}', function ($reference) {
+        $controller = app(PaymentController::class);
+        return response()->json([
+            'status' => $controller->checkPaymentStatus($reference)
+        ]);
+    })->name('payment.check-status')->middleware('web');
+    Route::get('/payment/success', [PaymentController::class, 'success'])->name('payment.success');
+
+
+
     Route::middleware(['auth'])->group(function () {
         Route::resource('payments', PaymentController::class)->only(['index', 'show']);
     });
