@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use PhpOffice\PhpWord\IOFactory;
 use PhpOffice\PhpWord\PhpWord;
+use Illuminate\View\View;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class ReportController extends Controller
@@ -99,33 +100,37 @@ class ReportController extends Controller
         $endDate = $request->input('end_date') ?: now()->format('Y-m-d');
         $userId = $request->input('user_id');
         $officeId = $request->input('office_id');
-    
+
         $averageTimeToReceive = DocumentWorkflow::selectRaw('AVG(TIMESTAMPDIFF(MINUTE, created_at, received_at)) as avg_time')
             ->whereBetween('created_at', [$startDate, $endDate])
             ->when($userId, fn($q) => $q->where('recipient_id', $userId))
             ->when($officeId, fn($q) => $q->whereHas('recipientOffice', fn($o) => $o->where('office_id', $officeId)))
             ->value('avg_time');
-    
+
         $averageTimeToReview = DocumentWorkflow::selectRaw('AVG(TIMESTAMPDIFF(MINUTE, received_at, updated_at)) as avg_time')
             ->whereBetween('created_at', [$startDate, $endDate])
             ->when($userId, fn($q) => $q->where('recipient_id', $userId))
             ->when($officeId, fn($q) => $q->whereHas('recipientOffice', fn($o) => $o->where('office_id', $officeId)))
             ->value('avg_time');
-    
+
         $averageDocsForwarded = DocumentWorkflow::whereBetween('created_at', [$startDate, $endDate])
             ->when($userId, fn($q) => $q->where('sender_id', $userId))
             ->count();
-    
+
         $documentsUploaded = Document::whereBetween('created_at', [$startDate, $endDate])
-            ->when($userId, fn($q) => $q->where('user_id', $userId)) 
+            ->when($userId, fn($q) => $q->where('user_id', $userId))
             ->count();
-            
+
         // Get collections for dropdowns
         $company = CompanyAccount::where('user_id', auth()->id())->first();
+        if (!$company) {
+            \Log::warning('No company found for user: ' . auth()->id());
+            // Handle the case where no company exists
+        }
 
         $users = $company ? $company->employees()->paginate(5) : collect();
-        $offices = Office::where('company_id', $company->id)->get();
-    
+        $offices = $company ? Office::where('company_id', $company->id)->get() : collect();
+
         return view('reports.analytics', compact(
             'averageTimeToReceive',
             'averageTimeToReview',
@@ -171,7 +176,7 @@ class ReportController extends Controller
         return view('reports.index', compact('data', 'reportType', 'startDate', 'endDate'));
     }
 
-        public function create()
+    public function create()
     {
         return view('reports.create');
     }
