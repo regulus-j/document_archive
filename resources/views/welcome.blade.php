@@ -36,16 +36,16 @@
                         store documents throughout their lifecycle, ensuring easy retrieval, quick and secure access to
                         documents by scanning or searching for keywords</p>
                     <div class="space-x-4">
-                        <a href="#"
+                        <a href="{{ route('dashboard') }}"
                             class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">Get
                             Started for free</a>
-                        <a href="#"
+                        <a href="#pricing"
                             class="border border-gray-300 text-gray-600 px-6 py-3 rounded-lg hover:bg-gray-100 transition-colors">Learn
                             More</a>
                     </div>
                 </div>
                 <div class="w-full lg:w-1/2">
-                    <video controls class="w-full h-64 rounded-lg shadow-lg">
+                    <video controls class="w-full h-auto lg:h-[400px] rounded-lg shadow-lg object-cover">
                         <source src="{{ asset('videos/intro.mp4') }}" type="video/mp4">
                         Your browser does not support the video tag.
                     </video>
@@ -56,10 +56,10 @@
 
     <section class="py-20">
         <div class="container mx-auto px-4">
-            <h2 class="text-3xl font-bold text-center mb-10">Upload your Documents</h2>
+            <h2 class="text-3xl font-bold text-center mb-6">Upload your Documents</h2>
             <div class="flex flex-wrap items-center">
                 <div class="w-full md:w-1/2 mb-10 md:mb-0">
-                    <img src="{{ asset('images/scan_document.jpg') }}" alt="From device & Scan"
+                    <img src="{{ asset('images/upload_docs.png') }}" alt="From device & Scan"
                         class="w-full rounded-lg shadow-lg">
                 </div>
                 <div class="w-full md:w-1/2 md:pl-10">
@@ -123,7 +123,7 @@
         </div>
     </section>
 
-    <section class="text-gray-600 body-font overflow-hidden" x-data="{ plan: 'yearly' }">
+    <section id="pricing" class="text-gray-600 body-font overflow-hidden" x-data="{ plan: 'yearly' }">
     <div class="container px-5 py-24 mx-auto">
         <div class="flex flex-col text-center w-full mb-20">
             <h1 class="sm:text-4xl text-3xl font-medium title-font mb-2 text-gray-900">Plan & Pricing</h1>

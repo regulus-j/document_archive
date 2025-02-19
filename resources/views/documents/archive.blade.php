@@ -7,9 +7,10 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h1 class="text-3xl font-bold text-gray-900 mb-6">Document Archive</h1>
 
-        <!-- Move the overflow classes to the table container only -->
-        <div class="bg-white shadow-xl rounded-lg">
-            <div class="p-6 border-b border-gray-200">
+        <!-- Lower the z-index even further -->
+        <div class="bg-white shadow-xl rounded-lg" style="position: relative; z-index: 0;">
+            <!-- Add position relative and ensure the form container also has a lower z-index -->
+            <div class="p-6 border-b border-gray-200" style="position: relative; z-index: 0;">
                 <form method="GET" action="{{ route('documents.archive') }}" class="space-y-4" id="searchForm">
                     <div class="flex gap-4 items-end">
                     <div class="flex-grow">
