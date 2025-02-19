@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Report;
 use App\Models\Document;
 use App\Models\DocumentWorkflow;
+use App\Models\CompanyAccount;
+use App\Models\DocumentAudit;
 use App\Models\Office;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -69,12 +71,6 @@ class ReportController extends Controller
         //
     }
 
-    public function generate(Report $report)
-    {
-        //
-        return view('reports.index');
-    }
-
     public function analytics(Request $request): View
     {
         $startDate = $request->input('start_date') ?: now()->subMonth()->format('Y-m-d');
@@ -82,13 +78,13 @@ class ReportController extends Controller
         $userId = $request->input('user_id');
         $officeId = $request->input('office_id');
     
-        $averageTimeToReceive = DocumentWorkflow::selectRaw('AVG(TIMESTAMPDIFF(MINUTE, created_at, received_date)) as avg_time')
+        $averageTimeToReceive = DocumentWorkflow::selectRaw('AVG(TIMESTAMPDIFF(MINUTE, created_at, received_at)) as avg_time')
             ->whereBetween('created_at', [$startDate, $endDate])
             ->when($userId, fn($q) => $q->where('recipient_id', $userId))
             ->when($officeId, fn($q) => $q->whereHas('recipientOffice', fn($o) => $o->where('office_id', $officeId)))
             ->value('avg_time');
     
-        $averageTimeToReview = DocumentWorkflow::selectRaw('AVG(TIMESTAMPDIFF(MINUTE, received_date, updated_at)) as avg_time')
+        $averageTimeToReview = DocumentWorkflow::selectRaw('AVG(TIMESTAMPDIFF(MINUTE, received_at, updated_at)) as avg_time')
             ->whereBetween('created_at', [$startDate, $endDate])
             ->when($userId, fn($q) => $q->where('recipient_id', $userId))
             ->when($officeId, fn($q) => $q->whereHas('recipientOffice', fn($o) => $o->where('office_id', $officeId)))
@@ -101,10 +97,12 @@ class ReportController extends Controller
         $documentsUploaded = Document::whereBetween('created_at', [$startDate, $endDate])
             ->when($userId, fn($q) => $q->where('user_id', $userId)) 
             ->count();
-    
+            
         // Get collections for dropdowns
-        $users = User::all();
-        $offices = Office::all();
+        $company = CompanyAccount::where('user_id', auth()->id())->first();
+
+        $users = $company ? $company->employees()->paginate(5) : collect();
+        $offices = Office::where('company_id', $company->id)->get();
     
         return view('reports.analytics', compact(
             'averageTimeToReceive',
@@ -118,5 +116,36 @@ class ReportController extends Controller
             'users',
             'offices'
         ));
+    }
+
+    public function generate(Request $request)
+    {
+        $request->validate([
+            'report_type' => 'required|string',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+        ]);
+
+        $reportType = $request->input('report_type');
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+
+        // Initialize data to avoid undefined variable error
+        $data = collect();
+
+        // Generate report based on type
+        switch ($reportType) {
+            case 'audit_history':
+                $data = DocumentAudit::whereBetween('created_at', [$startDate, $endDate])->get();
+                break;
+            case 'company_performance':
+                $data = DocumentWorkflow::whereBetween('created_at', [$startDate, $endDate])->get();
+                break;
+            default:
+                return redirect()->back()->with('error', 'Invalid report type selected.');
+        }
+
+        // Return view with generated data
+        return view('reports.index', compact('data', 'reportType', 'startDate', 'endDate'));
     }
 }

@@ -52,6 +52,25 @@
                         @enderror
                     </div>
 
+                    <!-- Company -->
+                    <div class="space-y-2">
+                        <label for="company_id" class="block text-sm font-medium text-gray-700">
+                            {{ __('Company') }}
+                        </label>
+                        <select id="company_id" name="company_id"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#4285F4] focus:ring focus:ring-[#4285F4] focus:ring-opacity-50 @error('company_id') border-red-500 @enderror">
+                            <option value="">{{ __('Select Company') }}</option>
+                            @foreach($companies as $id => $name)
+                                <option value="{{ $id }}" {{ old('company_id') == $id ? 'selected' : '' }}>
+                                    {{ $name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('company_id')
+                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
                     <!-- Submit Button -->
                     <div class="flex justify-end mt-6">
                         <button type="submit"

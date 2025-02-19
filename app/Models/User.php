@@ -79,4 +79,9 @@ class User extends Authenticatable
     {
         return Admin::where('user_id', $this->id)->exists();
     }
+
+    public function plans()
+    {
+        return $this->belongsToMany(Plan::class);
+    }
 }

@@ -6,7 +6,8 @@ use App\Mail\UserInvite;
 use App\Models\Office;
 use App\Models\User;
 use App\Models\CompanyAccount;
-
+use App\Models\Plan;
+use App\Models\CompanyUser;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -24,9 +25,13 @@ class UserController extends Controller
     public function index(Request $request): View
     {
         $company = CompanyAccount::where('user_id', auth()->id())->first();
-        $users = $company ? $company->employees()->paginate(10) : new \Illuminate\Pagination\LengthAwarePaginator([], 0, 10);
+        $users = $company ? $company->employees()->paginate(5) : collect();
 
         $roles = Role::all();
+
+        if (auth()->user()->hasRole('Admin')) {
+            return $this->showRegistered();
+        }
 
         return view('users.index', compact('users', 'roles'))
             ->with('i', ($request->input('page', 1) - 1) * 5);
@@ -35,7 +40,7 @@ class UserController extends Controller
     public function showRegistered()
     {
         // Sample data fetch: adapt to your actual tables and relationships
-        $users = User::with(['plans', 'subscriptions.payments'])->paginate(10);
+        $users = User::paginate(10);
         return view('admin.users.registered', compact('users'));
     }
 
@@ -91,9 +96,10 @@ class UserController extends Controller
             'middle_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'offices' => 'required|array', // Changed from 'office'
-            'offices.*' => 'exists:offices,id', // Validate each office ID
+            'offices' => 'required|array',
+            'offices.*' => 'exists:offices,id',
             'roles' => 'required',
+            'companies' => 'required|exists:company_accounts,id'
         ]);
 
         $user = User::create([
@@ -120,6 +126,11 @@ class UserController extends Controller
         ));
 
         $temp_pass = null;
+
+        CompanyUser::create([
+            'company_id' => $request->companies,
+            'user_id'     => $user->id,
+        ]);
 
         return redirect()->route('users.index')
             ->with('success', 'User created successfully');

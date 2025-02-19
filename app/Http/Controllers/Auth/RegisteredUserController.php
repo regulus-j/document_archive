@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\CompanyAccount;
 use App\Models\CompanyAddress;
+use App\Models\CompanyUser;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -76,6 +77,11 @@ class RegisteredUserController extends Controller
             'state' => $request->state,
             'zip_code' => $request->zip_code,
             'country' => $request->country,
+        ]);
+
+        CompanyUser::create([
+            'company_id' => $company->id,
+            'user_id' => $user->id,
         ]);
 
         return redirect(route('dashboard', absolute: false));

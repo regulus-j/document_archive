@@ -12,7 +12,8 @@ class OfficeController extends Controller
      */
     public function index()
     {
-        $offices = Office::with('parentOffice')->get();
+        $company = auth()->user()->companies()->first();
+        $offices = Office::where('company_id', $company->id)->get();
 
         return view('offices.index', compact('offices'));
     }
@@ -23,19 +24,24 @@ class OfficeController extends Controller
     public function create()
     {
         $offices = Office::all()->pluck('name', 'id');
-        return view('offices.create', compact('offices'));
+        $companies = auth()->user()->companies()->pluck('company_name', 'id');
+
+        return view('offices.create', compact('offices', 'companies'));
     }
     
     public function store(Request $request)
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'parent_office_id' => 'nullable|exists:offices,id'
+            'parent_office_id' => 'nullable|exists:offices,id',
+            'company_id' => 'required|exists:company_accounts,id',
+
         ]);
     
-        Office::create([
+        $office = Office::create([
+            'company_id' => $request->company_id,
             'name' => $request->name,
-            'parent_office_id' => $request->parent_office_id
+            'parent_office_id' => $request->parent_office_id,
         ]);
     
         return redirect()->route('office.index')
@@ -107,4 +113,6 @@ class OfficeController extends Controller
             return back()->with('error', 'Error deleting office: ' . $e->getMessage());
         }
     }
+
+    
 }
