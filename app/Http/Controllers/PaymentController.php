@@ -51,7 +51,6 @@ class PaymentController extends Controller
     
         return view('payments.out')->with('responseData', $responseData);
     }
-
     public function checkPaymentStatus($referenceNumber)
     {
         $client = new \GuzzleHttp\Client();
@@ -78,28 +77,8 @@ class PaymentController extends Controller
             return 'error';
         }
     }
-
     public function success()
     {
-        $client = new \GuzzleHttp\Client();
-        $baseUrl = 'https://api.paymongo.com/v1/links';
-        
-        try {
-            $response = $client->request('GET', $baseUrl . '?reference_number=' . $referenceNumber, [
-                'headers' => [
-                    'accept' => 'application/json',
-                    'authorization' => 'Basic ' . base64_encode(config('services.paymongo.secret_key') . ':'),
-                ],
-            ]);
-    
-            $result = json_decode($response->getBody(), true);
-            \Log::debug('PayMongo Response:', $result);
-
-        } catch (\Exception $e) {
-            \Log::error('PayMongo Error: ' . $e->getMessage());
-            return 'error';
-        }
-
         return view('payments.success', [
             'message' => 'Payment completed successfully!'
         ]);

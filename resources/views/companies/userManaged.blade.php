@@ -49,6 +49,10 @@
                             </th>
                             <th scope="col"
                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Address
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Actions
                             </th>
                         </tr>
@@ -64,8 +68,15 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     {{ $company->company_email }}
-                                    <br>
-                                    {{ $company->company_email }}
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-500">
+                                    @if($company->address)
+                                        {{ $company->address->address }}<br>
+                                        {{ $company->address->city }}, {{ $company->address->state }}<br>
+                                        {{ $company->address->country }} {{ $company->address->zip_code }}
+                                    @else
+                                        No address provided
+                                    @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                     <a href="{{ route('companies.edit', $company->id) }}"
@@ -85,7 +96,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="4" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
+                                <td colspan="5" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
                                     No companies found
                                 </td>
                             </tr>

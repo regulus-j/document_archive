@@ -118,7 +118,6 @@ class DocumentController extends Controller
             'description' => 'required',
             'classification' => 'required|string',
             'from_office' => 'required|exists:offices,id',
-            'to_office' => 'required|exists:offices,id',
             'remarks' => 'nullable|string|max:250',
             'upload' => 'required|file', // 10MB max
             'attachements.*' => 'file|mimes:jpeg,png,jpg,gif,pdf,docx|max:10240',
