@@ -10,15 +10,13 @@
                     <button 
                         @click="billing = 'monthly'" 
                         :class="{ 'bg-blue-500 text-white': billing === 'monthly', 'border border-blue-500 text-blue-500': billing !== 'monthly' }"
-                        class="px-4 py-2 text-sm font-medium rounded-l-md"
-                    >
+                        class="px-4 py-2 text-sm font-medium rounded-l-md">
                         Monthly
                     </button>
                     <button 
                         @click="billing = 'yearly'" 
                         :class="{ 'bg-blue-500 text-white': billing === 'yearly', 'border border-blue-500 text-blue-500': billing !== 'yearly' }"
-                        class="px-4 py-2 text-sm font-medium rounded-r-md"
-                    >
+                        class="px-4 py-2 text-sm font-medium rounded-r-md">
                         Yearly
                     </button>
                 </div>
@@ -68,8 +66,8 @@
                         </li>
                     </ul>
 
-                    <a href="{{ route('payments.create', ['plan' => 1, 'billing' => 'monthly']) }}" 
-                       x-bind:href="'{{ route('payments.create', ['plan' => 1]) }}?billing=' + billing"
+                    <a href="{{ route('payment.generate', ['plan' => 1, 'billing' => 'monthly']) }}" 
+                       x-bind:href="'{{ route('payment.generate', ['plan' => 1]) }}?billing=' + billing"
                        class="mt-8 flex items-center justify-center px-4 py-3 text-sm font-semibold text-white bg-blue-500 rounded-md hover:bg-blue-600">
                         Start Now
                         <svg class="w-4 h-4 ml-2" viewBox="0 0 20 20" fill="currentColor">
@@ -100,11 +98,10 @@
                             </div>
                             <span class="ml-3 text-gray-600">Up to 20 users</span>
                         </li>
-                        <!-- Add other Premium features similarly -->
                     </ul>
 
-                    <a href="{{ route('payments.create', ['plan' => 2, 'billing' => 'monthly']) }}"
-                       x-bind:href="'{{ route('payments.create', ['plan' => 2]) }}?billing=' + billing"
+                    <a href="{{ route('payment.generate', ['plan' => 2, 'billing' => 'monthly']) }}"
+                       x-bind:href="'{{ route('payment.generate', ['plan' => 2]) }}?billing=' + billing"
                        class="mt-8 flex items-center justify-center px-4 py-3 text-sm font-semibold text-white bg-blue-500 rounded-md hover:bg-blue-600">
                         Start Now
                         <svg class="w-4 h-4 ml-2" viewBox="0 0 20 20" fill="currentColor">
@@ -135,11 +132,10 @@
                             </div>
                             <span class="ml-3 text-gray-600">Unlimited users</span>
                         </li>
-                        <!-- Add other Business features similarly -->
                     </ul>
 
-                    <a href="{{ route('payments.create', ['plan' => 3, 'billing' => 'monthly']) }}"
-                       x-bind:href="'{{ route('payments.create', ['plan' => 3]) }}?billing=' + billing"
+                    <a href="{{ route('payment.generate', ['plan' => 3, 'billing' => 'monthly']) }}"
+                       x-bind:href="'{{ route('payment.generate', ['plan' => 3]) }}?billing=' + billing"
                        class="mt-8 flex items-center justify-center px-4 py-3 text-sm font-semibold text-white bg-blue-500 rounded-md hover:bg-blue-600">
                         Start Now
                         <svg class="w-4 h-4 ml-2" viewBox="0 0 20 20" fill="currentColor">

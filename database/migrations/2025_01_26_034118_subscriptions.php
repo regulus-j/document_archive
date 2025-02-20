@@ -44,36 +44,24 @@ return new class extends Migration {
                 ->onDelete('cascade');
         });
 
-        Schema::create('payments', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('company_subscription_id'); // Links to the company subscription
-            $table->date('payment_date')->default(DB::raw('CURRENT_TIMESTAMP')); // Payment timestamp
-            $table->decimal('amount', 10, 2); // Amount paid
-            $table->enum('payment_method', ['credit_card', 'paypal', 'bank_transfer', 'gcash', 'other']); // Payment type
-            $table->enum('status', ['successful', 'failed', 'pending'])->default('pending'); // Status of payment
-            $table->string('transaction_reference')->nullable(); // Optional field for reconciliation
-            $table->timestamps();
-
-            $table->foreign('company_subscription_id')->references('id')->on('company_subscriptions')->onDelete('cascade');
-        });
-
         Schema::create('subscription_payments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_subscription_id')->constrained()->onDelete('cascade');
+            $table->timestamp('payment_date')->useCurrent();
             $table->decimal('amount', 10, 2);
-            $table->enum('payment_method', ['credit_card', 'paypal', 'bank_transfer', 'gcash']);
-            $table->enum('status', ['pending', 'successful', 'failed'])->default('pending');
+            $table->enum('payment_method', ['credit_card', 'paypal', 'bank_transfer', 'gcash', 'other']);
+            $table->enum('status', ['pending', 'successful', 'failed', 'refunded'])->default('pending');
             $table->string('transaction_reference')->unique();
-            $table->timestamp('payment_date');
+            $table->text('notes')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        //
+        Schema::dropIfExists('subscription_payments');
+        Schema::dropIfExists('company_subscriptions');
+        Schema::dropIfExists('plans');
     }
 };

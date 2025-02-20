@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Document;
 use App\Models\User;    
 use App\Models\CompanyAccount;
-use App\Models\Subscriptions;
+use App\Models\CompanySubscription;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
@@ -17,13 +17,21 @@ class DashboardController extends Controller
             return $this->superAdminDashboard();
         }
 
-        // Regular user dashboard logic
-        $user = auth()->user();
+        // Check if user has a company first
+        $userCompany = auth()->user()->company()->first();
 
-        $activeSubscription = $user->companySubscriptions()->where('status', 'active')->first();
+        if (!$userCompany) {
+            return redirect()->route('plans.select')
+                ->with('info', 'Please set up your company profile first.');
+        }
+
+        $activeSubscription = CompanySubscription::where('company_id', $userCompany->id)
+            ->where('status', 'active')
+            ->first();
 
         if (!$activeSubscription) {
-            return redirect()->route('plans.select')->with('info', 'Please select a plan and complete the payment to continue.');
+            return redirect()->route('plans.select')
+                ->with('info', 'Please select a plan and complete the payment to continue.');
         }
 
         $document = new Document;
@@ -43,7 +51,7 @@ class DashboardController extends Controller
         $totalCompanies = CompanyAccount::count();
         $totalUsers = User::count();
         $totalDocuments = Document::count();
-        $activeSubscriptions = Subscriptions::where('status', 'active')->count();
+        $activeSubscriptions = CompanySubscription::where('status', 'active')->count();
         
         $recentActivities = CompanyAccount::latest()->take(5)->get()->map(function($company) {
             return (object)[

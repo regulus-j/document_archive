@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SubscriptionPayment extends Model
 {
+    // Add the correct table name:
+    protected $table = 'subscription_payments';
+
     protected $fillable = [
         'company_subscription_id',
         'payment_date',
@@ -14,15 +17,11 @@ class SubscriptionPayment extends Model
         'payment_method',
         'status',
         'transaction_reference',
-        'payment_date',
+        'notes',
     ];
 
-    protected $casts = [
-        'payment_date' => 'datetime',
-        'amount' => 'decimal:2',
-    ];
-
-    public function subscription()
+    // Example relationship: a payment belongs to a subscription
+    public function subscription(): BelongsTo
     {
         return $this->belongsTo(CompanySubscription::class, 'company_subscription_id');
     }
