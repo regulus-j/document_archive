@@ -22,98 +22,23 @@
                         </div>
                     </div>
 
-                    <!-- Payment Form -->
-                    <form action="{{ route('payments.store', ['plan' => $plan->id, 'billing' => $billing]) }}"
-                        method="POST">
-                        @csrf
-
-                        <!-- Payment Method Selection -->
-                        <div class="mb-6">
-                            <label for="payment_method" class="block text-sm font-medium text-gray-700">Payment
-                                Method</label>
-                            <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                <!-- Credit Card -->
-                                <label
-                                    class="relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none">
-                                    <input type="radio" name="payment_method" value="credit_card" class="sr-only"
-                                        aria-labelledby="payment-method-0-label">
-                                    <div class="flex flex-1">
-                                        <div class="flex flex-col">
-                                            <span id="payment-method-0-label"
-                                                class="block text-sm font-medium text-gray-900">Credit Card</span>
-                                            <span class="mt-1 flex items-center text-sm text-gray-500">Pay with credit
-                                                card</span>
-                                        </div>
-                                    </div>
-                                    <div class="pointer-events-none absolute -inset-px rounded-lg border-2"
-                                        aria-hidden="true"></div>
-                                </label>
-
-                                <!-- GCash -->
-                                <label
-                                    class="relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none">
-                                    <input type="radio" name="payment_method" value="gcash" class="sr-only"
-                                        aria-labelledby="payment-method-1-label">
-                                    <div class="flex flex-1">
-                                        <div class="flex flex-col">
-                                            <span id="payment-method-1-label"
-                                                class="block text-sm font-medium text-gray-900">GCash</span>
-                                            <span class="mt-1 flex items-center text-sm text-gray-500">Pay with
-                                                GCash</span>
-                                        </div>
-                                    </div>
-                                    <div class="pointer-events-none absolute -inset-px rounded-lg border-2"
-                                        aria-hidden="true"></div>
-                                </label>
-
-                                <!-- Bank Transfer -->
-                                <label
-                                    class="relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none">
-                                    <input type="radio" name="payment_method" value="bank_transfer" class="sr-only"
-                                        aria-labelledby="payment-method-2-label">
-                                    <div class="flex flex-1">
-                                        <div class="flex flex-col">
-                                            <span id="payment-method-2-label"
-                                                class="block text-sm font-medium text-gray-900">Bank Transfer</span>
-                                            <span class="mt-1 flex items-center text-sm text-gray-500">Pay via bank
-                                                transfer</span>
-                                        </div>
-                                    </div>
-                                    <div class="pointer-events-none absolute -inset-px rounded-lg border-2"
-                                        aria-hidden="true"></div>
-                                </label>
-
-                                <!-- PayPal -->
-                                <label
-                                    class="relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none">
-                                    <input type="radio" name="payment_method" value="paypal" class="sr-only"
-                                        aria-labelledby="payment-method-3-label">
-                                    <div class="flex flex-1">
-                                        <div class="flex flex-col">
-                                            <span id="payment-method-3-label"
-                                                class="block text-sm font-medium text-gray-900">PayPal</span>
-                                            <span class="mt-1 flex items-center text-sm text-gray-500">Pay with
-                                                PayPal</span>
-                                        </div>
-                                    </div>
-                                    <div class="pointer-events-none absolute -inset-px rounded-lg border-2"
-                                        aria-hidden="true"></div>
-                                </label>
-                            </div>
-
-                            @error('payment_method')
-                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        <!-- Submit Button -->
+                    @if($paymentLink)
                         <div class="mt-6">
-                            <button type="submit"
-                                class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                                Pay ₱{{ number_format($price, 2) }}
-                            </button>
+                            <a href="{{ $paymentLink }}" 
+                               class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                Proceed to Payment
+                            </a>
+                            <p class="mt-2 text-sm text-gray-600 text-center">
+                                You will be redirected to our secure payment gateway
+                            </p>
                         </div>
-                    </form>
+                    @else
+                        <div class="p-4 rounded-md bg-red-50">
+                            <p class="text-sm text-red-600">
+                                Unable to generate payment link. Please try again later or contact support.
+                            </p>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>

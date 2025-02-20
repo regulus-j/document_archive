@@ -24,6 +24,11 @@ class CompanyAccount extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function employees()
+    {
+        return $this->belongsToMany(User::class, 'company_users', 'company_id', 'user_id');
+    }
+
 
     public function offices()
     {

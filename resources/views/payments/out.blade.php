@@ -67,7 +67,7 @@
             const referenceNumber = "{{ $paymentData['attributes']['reference_number'] ?? '' }}";
             
             if (!referenceNumber) return;
-    
+        
             const checkStatus = async () => {
                 try {
                     const url = "{{ route('payment.check-status', ['reference' => ':reference']) }}".replace(':reference', referenceNumber);
@@ -87,21 +87,22 @@
                     const data = await response.json();
                     console.log('Payment status:', data.status);
                     
-                    if (data.status === 'paid') {
-                        window.location.href = "{{ route('payment.success') }}";
+                    if (data.status === 'paid' && data.redirect) {
+                        window.location.href = data.redirect;
                         return;
                     }
                     
+                    // Continue polling if payment is still pending
                     setTimeout(checkStatus, 5000);
                 } catch (error) {
                     console.error('Error checking payment status:', error);
-                    setTimeout(checkStatus, 5000); // Continue polling even if there's an error
+                    setTimeout(checkStatus, 5000);
                 }
             };
-    
+        
             checkStatus();
         }
-    
+        
         document.addEventListener('DOMContentLoaded', pollPaymentStatus);
     </script>
     @endpush

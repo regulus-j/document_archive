@@ -37,11 +37,15 @@ class UserController extends Controller
             ->with('i', ($request->input('page', 1) - 1) * 5);
     }
 
-    public function showRegistered()
+    public function showRegistered(): View
     {
-        // Sample data fetch: adapt to your actual tables and relationships
-        $users = User::paginate(10);
-        return view('admin.users.registered', compact('users'));
+        $users = User::with(['companies.subscriptions.plan'])
+            ->paginate(10); 
+
+        $roles = Role::all();
+
+        return view('admin.users-index', compact('users', 'roles'))
+            ->with('i', (request()->input('page', 1) - 1) * 10);
     }
 
     /**
@@ -156,8 +160,9 @@ class UserController extends Controller
         $userRoles = $user->roles->pluck('name', 'name')->all();
         $offices = Office::pluck('name', 'id')->all();
         $userOffices = $user->offices->pluck('id')->all();
+        $userCompany = CompanyAccount::all();
 
-        return view('users.edit', compact('user', 'roles', 'userRoles', 'offices', 'userOffices'));
+        return view('users.edit', compact('user', 'roles', 'userRoles', 'offices', 'userOffices', 'userCompany'));
     }
 
     /**
@@ -174,6 +179,7 @@ class UserController extends Controller
             'roles.*' => 'exists:roles,name',
             'offices' => 'required|array',
             'offices.*' => 'exists:offices,id',
+            'companies' => 'required|exists:company_accounts,id'
         ]);
 
         $input = $request->all();
@@ -192,6 +198,11 @@ class UserController extends Controller
 
         // Sync offices
         $user->offices()->sync($request->input('offices'));
+
+        // Update company association
+        CompanyUser::where('user_id', $user->id)->update([
+            'company_id' => $request->companies
+        ]);
 
         return redirect()->route('users.index')
             ->with('success', 'User updated successfully');
