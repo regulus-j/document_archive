@@ -10,6 +10,10 @@ class PlanController extends Controller
     public function index()
     {
         $plans = Plan::where('is_active', 1)->get();
+
+        if (auth()->check() && auth()->user()->isAdmin()) {
+            return view('admin.plans-index', compact('plans'));
+        }
         return view('plans.index', compact('plans'));
     }
 

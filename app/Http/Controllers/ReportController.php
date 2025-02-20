@@ -15,6 +15,7 @@ use Illuminate\Support\Str;
 use PhpOffice\PhpWord\IOFactory;
 use PhpOffice\PhpWord\PhpWord;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\View\View;
 
 class ReportController extends Controller
 {
@@ -100,24 +101,47 @@ class ReportController extends Controller
         $userId = $request->input('user_id');
         $officeId = $request->input('office_id');
     
-        $averageTimeToReceive = DocumentWorkflow::selectRaw('AVG(TIMESTAMPDIFF(MINUTE, created_at, received_at)) as avg_time')
-            ->whereBetween('created_at', [$startDate, $endDate])
+        // Ensure only one of userId or officeId is set
+        if ($userId && $officeId) {
+            return redirect()->back()->with('error', 'Please select either a user or an office, not both.');
+        }
+    
+        $averageTimeToReceive = DocumentWorkflow::selectRaw('AVG(TIMESTAMPDIFF(MINUTE, document_workflows.created_at, document_workflows.received_at)) as avg_time')
+            ->whereBetween('document_workflows.created_at', [$startDate, $endDate])
             ->when($userId, fn($q) => $q->where('recipient_id', $userId))
-            ->when($officeId, fn($q) => $q->whereHas('recipientOffice', fn($o) => $o->where('office_id', $officeId)))
+            ->when($officeId, fn($q) =>
+                $q->whereHas('recipient.offices', fn($o) =>
+                    $o->where('offices.id', $officeId)
+                )
+            )
             ->value('avg_time');
     
-        $averageTimeToReview = DocumentWorkflow::selectRaw('AVG(TIMESTAMPDIFF(MINUTE, received_at, updated_at)) as avg_time')
-            ->whereBetween('created_at', [$startDate, $endDate])
+        $averageTimeToReview = DocumentWorkflow::selectRaw('AVG(TIMESTAMPDIFF(MINUTE, document_workflows.received_at, document_workflows.updated_at)) as avg_time')
+            ->whereBetween('document_workflows.created_at', [$startDate, $endDate])
             ->when($userId, fn($q) => $q->where('recipient_id', $userId))
-            ->when($officeId, fn($q) => $q->whereHas('recipientOffice', fn($o) => $o->where('office_id', $officeId)))
+            ->when($officeId, fn($q) =>
+                $q->whereHas('recipient.offices', fn($o) =>
+                    $o->where('offices.id', $officeId)
+                )
+            )
             ->value('avg_time');
     
         $averageDocsForwarded = DocumentWorkflow::whereBetween('created_at', [$startDate, $endDate])
             ->when($userId, fn($q) => $q->where('sender_id', $userId))
+            ->when($officeId, fn($q) =>
+                $q->whereHas('sender.offices', fn($o) =>
+                    $o->where('offices.id', $officeId)
+                )
+            )
             ->count();
     
         $documentsUploaded = Document::whereBetween('created_at', [$startDate, $endDate])
-            ->when($userId, fn($q) => $q->where('user_id', $userId)) 
+            ->when($userId, fn($q) => $q->where('uploader', $userId)) // Use 'uploader' instead of 'user_id'
+            ->when($officeId, fn($q) =>
+                $q->whereHas('user.offices', fn($o) =>
+                    $o->where('offices.id', $officeId)
+                )
+            )
             ->count();
             
         // Get collections for dropdowns
@@ -151,6 +175,13 @@ class ReportController extends Controller
         $reportType = $request->input('report_type');
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
+        $userId = $request->input('user_id');
+        $officeId = $request->input('office_id');
+
+        // Ensure only one of userId or officeId is set
+        if ($userId && $officeId) {
+            return redirect()->back()->with('error', 'Please select either a user or an office, not both.');
+        }
 
         // Initialize data to avoid undefined variable error
         $data = collect();
@@ -158,10 +189,24 @@ class ReportController extends Controller
         // Generate report based on type
         switch ($reportType) {
             case 'audit_history':
-                $data = DocumentAudit::whereBetween('created_at', [$startDate, $endDate])->get();
+                $data = DocumentAudit::whereBetween('created_at', [$startDate, $endDate])
+                    ->when($userId, fn($q) => $q->where('user_id', $userId))
+                    ->when($officeId, fn($q) =>
+                        $q->whereHas('user.offices', fn($o) =>
+                            $o->where('offices.id', $officeId)
+                        )
+                    )
+                    ->get();
                 break;
             case 'company_performance':
-                $data = DocumentWorkflow::whereBetween('created_at', [$startDate, $endDate])->get();
+                $data = DocumentWorkflow::whereBetween('created_at', [$startDate, $endDate])
+                    ->when($userId, fn($q) => $q->where('recipient_id', $userId))
+                    ->when($officeId, fn($q) =>
+                        $q->whereHas('recipient.offices', fn($o) =>
+                            $o->where('offices.id', $officeId)
+                        )
+                    )
+                    ->get();
                 break;
             default:
                 return redirect()->back()->with('error', 'Invalid report type selected.');

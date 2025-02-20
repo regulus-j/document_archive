@@ -1,7 +1,4 @@
-<x-app-layout>
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <!-- ... (keep the header and filters as they are) -->
+@extends('layouts.app')
 
 @section('content')
 <div class="bg-gray-100 min-h-screen py-12">
@@ -83,11 +80,21 @@
                                                 clip-rule="evenodd" />
                                         </svg>
                                     </div>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+                                </div>
+                                <div class="relative rounded-md shadow-sm">
+                                    <input type="date" name="end_date"
+                                        class="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md"
+                                        placeholder="{{ __('To') }}">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <svg class="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd"
+                                                d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
+                                                clip-rule="evenodd" />
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
                         <div>
                             <button type="submit"
@@ -153,4 +160,5 @@
             </div>
         </div>
     </div>
-</x-app-layout>
+</div>
+@endsection

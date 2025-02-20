@@ -8,6 +8,18 @@ use Illuminate\Support\Facades\DB;
 
 class SubscriptionController extends Controller
 {
+    public function index()
+    {
+        $subscriptions = CompanySubscription::with(['company', 'plan'])->get();
+        return response()->json($subscriptions);
+    }
+
+    public function indexAdmin()
+    {
+        $subscriptions = CompanySubscription::with(['company', 'plan'])->get();
+        return view('admin.subscriptions-index', compact('subscriptions'));
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([

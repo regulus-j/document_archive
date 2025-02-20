@@ -11,6 +11,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\PlanController;
 use App\Http\Controllers\PlanSelectionController;
 use App\Http\Controllers\SubscriptionController;
+use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\AddressController;
 use Illuminate\Support\Facades\Route;
@@ -66,10 +67,12 @@ Route::middleware(['auth'])->group(function () {
 
 //--------------------------------------------------------------------------------------------------------------------
 
-Route::middleware('auth')->group(function () {
-    Route::get('/admin/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
-
+Route::prefix('admin')->middleware(['auth'])->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
+    Route::get('/subscriptions', [SubscriptionController::class, 'index'])->name('subscriptions.index');
     Route::get('/users/registered', [UserController::class, 'showRegistered'])->name('users.registered');
+    Route::get('/plans', [PlanController::class, 'index'])->name('admin.plans.index');
+    Route::get('/subscriptions', [SubscriptionController::class, 'indexAdmin'])->name('admin.subscriptions.index');
 });
 
 Route::middleware('auth')->group(function () {
@@ -169,17 +172,20 @@ Route::middleware('auth')->group(function () {
     Route::get('/plans', [PlanController::class, 'index'])->name('plans.index');
     Route::post('/plans/{plan}/subscribe', [PlanController::class, 'subscribe'])->name('plans.subscribe');
 
+    Route::get('/plans/{plan}', [PlanController::class, 'show'])->name('plans.show');
+    Route::get('/plans/{plan}/edit', [PlanController::class, 'edit'])->name('plans.edit');
+    Route::put('/plans/{plan}', [PlanController::class, 'update'])->name('plans.update');
+    Route::delete('/plans/{plan}', [PlanController::class, 'destroy'])->name('plans.destroy');
+
     Route::post('/subscriptions', [SubscriptionController::class, 'store']);
     Route::patch('/subscriptions/{subscription}', [SubscriptionController::class, 'update']);
     Route::post('/subscriptions/{subscription}/cancel', [SubscriptionController::class, 'cancel']);
     Route::post('/subscriptions/{subscription}/activate', [SubscriptionController::class, 'activate']);
 
-    Route::get('/pay', [PaymentController::class, 'linkCreate'])->name('payment.generate');
+    Route::get('/pay/{plan}/{billing?}', [PaymentController::class, 'linkCreate'])->name('payment.generate');
     Route::get('/check-payment-status/{reference}', function ($reference) {
-        $controller = app(PaymentController::class);
-        return response()->json([
-            'status' => $controller->checkPaymentStatus($reference)
-        ]);
+        $controller = app(\App\Http\Controllers\PaymentController::class);
+        return response()->json($controller->checkPaymentStatus($reference));
     })->name('payment.check-status')->middleware('web');
     Route::get('/payment/success', [PaymentController::class, 'success'])->name('payment.success');
 
