@@ -25,4 +25,15 @@ class DocumentAudit extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public static function logDocumentAction($documentId, $userId, $action, $status, $details = null)
+    {
+        return self::create([
+            'document_id' => $documentId,
+            'user_id'     => $userId,
+            'action'      => $action,
+            'status'      => $status,
+            'details'     => $details,
+        ]);
+    }
 }

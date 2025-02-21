@@ -48,6 +48,23 @@
                         </x-nav-link>
                         @else
 
+                        @if(auth()->user()->can('user-list'))
+                        <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.index')"
+                            class="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 {{ request()->routeIs('admin.registered') ? 'text-blue-600 border-b-2 border-blue-600' : '' }}">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                            {{ __('Users') }}
+                        </x-nav-link>
+
+                        <x-nav-link :href="route('office.index')" :active="request()->routeIs('office.index')"
+                            class="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 {{ request()->routeIs('admin.registered') ? 'text-blue-600 border-b-2 border-blue-600' : '' }}">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10V21h18V10l-9-7-9 7z" />
+                            </svg>
+                            {{ __('Office') }}
+                        </x-nav-link>
+
+                        @endif
+
                         @can('role-list')
                         <x-nav-link :href="route('roles.index')" :active="request()->routeIs('roles.index')"
                             class="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 {{ request()->routeIs('roles.index') ? 'text-blue-600 border-b-2 border-blue-600' : '' }}">
@@ -57,11 +74,35 @@
                         @endcan
 
                         @can('document-list')
-                        <x-nav-link :href="route('documents.index')" :active="request()->routeIs('documents.index')"
-                            class="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 {{ request()->routeIs('documents.index') ? 'text-blue-600 border-b-2 border-blue-600' : '' }}">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                            {{ __('Documents') }}
-                        </x-nav-link>
+                        <div x-data="{ open: false }" class="relative">
+                            <button @click="open = !open" 
+                                class="flex items-center px-3 py-2 rounded-md text-sm font-medium 
+                                {{ request()->routeIs('documents.*') ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}
+                                focus:outline-none">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                {{ __('Documents') }}
+                                <svg class="ml-1 w-4 h-4" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                                </svg>
+                            </button>
+                                <div x-show="open" @click.away="open = false" 
+                                class="absolute z-50 left-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none">
+                                <a href="{{ route('documents.index') }}" 
+                                    class="block px-4 py-2 text-sm {{ request()->routeIs('documents.index') ? 'text-blue-600 bg-blue-50' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600' }}" 
+                                    role="menuitem">{{ __('View') }}</a>
+                                <a href="{{ route('documents.archive') }}" 
+                                    class="block px-4 py-2 text-sm {{ request()->routeIs('documents.archive') ? 'text-blue-600 bg-blue-50' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600' }}" 
+                                    role="menuitem">{{ __('Archives') }}</a>
+                                <a href="{{ route('documents.create') }}" 
+                                    class="block px-4 py-2 text-sm {{ request()->routeIs('documents.create') ? 'text-blue-600 bg-blue-50' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600' }}" 
+                                    role="menuitem">{{ __('Upload') }}</a>
+                                <a href="{{ route('documents.workflows') }}" 
+                                    class="block px-4 py-2 text-sm {{ request()->routeIs('documents.workflows') ? 'text-blue-600 bg-blue-50' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600' }}" 
+                                    role="menuitem">{{ __('Received') }}</a>
+                            </div>
+                        </div>
                         @endcan
 
                         <x-nav-link :href="route('reports.index')" :active="request()->routeIs('reports.index')"
@@ -95,10 +136,11 @@
                             </x-dropdown-link>
 
                             {{-- Add condtion if company_onwer == auth()->id --}}
+                            @if(!(auth()->user()->isAdmin()))
                             <x-dropdown-link :href="route('companies.userManaged', auth()->id())" class="hover:bg-blue-50 hover:text-blue-600">
                                 {{ __('Company') }}
                             </x-dropdown-link>
-
+                            @endif
                             <x-dropdown-link :href="route('plans.index', auth()->id())" class="hover:bg-blue-50 hover:text-blue-600">
                                 {{ __('Plans & Subscription') }}
                             </x-dropdown-link>
@@ -156,11 +198,18 @@
             @endcan
             
             @can('document-list')
-            <x-responsive-nav-link :href="route('documents.index')" :active="request()->routeIs('documents.index')"
-                class="flex items-center {{ request()->routeIs('documents.index') ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                {{ __('Documents') }}
-            </x-responsive-nav-link>
+            <div x-data="{ open: false }" class="relative">
+                <button @click="open = !open" class="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 focus:outline-none">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    {{ __('Documents') }}
+                    <svg class="ml-1 w-4 h-4" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                </button>
+                <div x-show="open" @click.away="open = false" class="absolute z-999 left-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button" tabindex="-1">
+                    <a href="{{ route('documents.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600" role="menuitem">{{ __('View') }}</a>
+                    <a href="{{ route('documents.archive') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600" role="menuitem">{{ __('Archives') }}</a>
+                    <a href="{{ route('documents.create') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600" role="menuitem">{{ __('Upload') }}</a>
+                    <a href="{{ route('documents.workflows') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600" role="menuitem">{{ __('Received') }}</a>                                </div>
+            </div>
             @endcan
             
             <x-responsive-nav-link :href="route('reports.index')" :active="request()->routeIs('reports.index')"
