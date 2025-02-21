@@ -14,6 +14,23 @@ class CompanyController extends Controller
     {
         // Get all companies.
         $companies = CompanyAccount::all();
+
+        if (auth()->user()->isAdmin()) {
+            $companies = CompanyAccount::with(['subscriptions.plan', 'user'])
+                ->get()
+                ->map(function ($company) {
+                    $subscription = $company->subscriptions->first();
+                    return [
+                        'id' => $company->id,
+                        'name' => $company->company_name,
+                        'owner' => $company->user->first_name . ' ' . $company->user->last_name,
+                        'status' => $subscription ? $subscription->status : 'No subscription',
+                        'plan' => $subscription ? $subscription->plan->plan_name : 'No plan'
+                    ];
+                });
+            return view('admin.companies-index', compact('companies'));
+        }
+
         return view('companies.index', compact('companies'));
     }
 
@@ -65,6 +82,8 @@ class CompanyController extends Controller
         {
            $users = User::paginate(10);
         }
+
+        $users = $company->employees()->paginate(10);
         // Show the form for editing the specified company.
         return view('companies.edit', compact('company', 'users'));
     }

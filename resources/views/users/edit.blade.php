@@ -91,6 +91,23 @@
                 <x-input-error :messages="$errors->get('roles')" class="mt-2" />
             </div>
 
+            @if(auth()->user()->isAdmin())
+            <div class="space-y-2">
+                <x-input-label for="companies" :value="__('Company')" class="text-sm font-medium text-gray-700" />
+                <input type="text" id="search-company" class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-[#4285F4] focus:border-transparent transition-all mb-2"
+                    placeholder="Search a company">
+                <select name="companies" id="companies" class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-[#4285F4] focus:border-transparent transition-all"
+                    multiple>
+                    @foreach ($userCompany as $company)
+                        <option value="{{ $company->id }}">{{ $company->company_name }}</option>
+                    @endforeach
+                </select>
+                <x-input-error :messages="$errors->get('companies')" class="text-sm" />
+            </div>
+            @else
+            <input type="hidden" name="companies" value="{{auth()->user()->company()->first()->id}}" src="" alt="">
+            @endif
+
             <!-- Offices -->
             <div>
                 <x-input-label for="offices" :value="__('Offices')" class="block text-sm font-medium text-gray-700" />

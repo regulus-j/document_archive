@@ -105,8 +105,8 @@
                             placeholder="Search an office">
                         <select name="offices[]" id="offices" class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-[#4285F4] focus:border-transparent transition-all"
                             multiple>
-                            @foreach ($offices as $value => $label)
-                                <option value="{{ $value }}">{{ $label }}</option>
+                            @foreach ($offices as $office)
+                                <option value="{{ $office->id }}">{{ $office->name }}</option>
                             @endforeach
                         </select>
                         <x-input-error :messages="$errors->get('offices')" class="text-sm" />

@@ -10,6 +10,7 @@ class DocumentWorkflow extends Model
     protected $table = 'document_workflows';
 
     protected $fillable = [
+        'tracking_number',
         'document_id',
         'sender_id',
         'recipient_id',
@@ -33,6 +34,12 @@ class DocumentWorkflow extends Model
         return $this->belongsTo(User::class, 'recipient_id');
     }
 
+    public function receive()
+    {
+        $this->status = 'received';
+        $this->save();
+    }
+
     public function approve()
     {
         $this->status = 'approved';
@@ -42,6 +49,12 @@ class DocumentWorkflow extends Model
     public function reject()
     {
         $this->status = 'rejected';
+        $this->save();
+    }
+
+    public function changeStatus($action)
+    {
+        $this->status = $action;
         $this->save();
     }
 
