@@ -27,6 +27,10 @@ class PermissionTableSeeder extends Seeder
            'document-receive',
            'document-terminal',
            'audit-list',
+           'user-list',
+           'user-create',
+           'user-delete',
+           'user-edit',
         ];
         
         foreach ($permissions as $permission) {

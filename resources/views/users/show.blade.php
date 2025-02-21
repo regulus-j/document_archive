@@ -18,7 +18,8 @@
         <div class="p-6 space-y-6">
             <div class="flex flex-col space-y-2">
                 <span class="text-sm font-medium text-gray-500">{{ __('Name') }}</span>
-                <span class="text-lg font-semibold text-gray-900">{{ $user->name }}</span>
+                <span class="text-lg font-semibold text-gray-900">{{ $user->first_name . ' ' . $user->last_name
+                 }}</span>
             </div>
             <div class="flex flex-col space-y-2">
                 <span class="text-sm font-medium text-gray-500">{{ __('Email') }}</span>

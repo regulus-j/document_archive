@@ -3,6 +3,7 @@
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\DocumentWorkflowController;
 use App\Http\Controllers\OfficeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
@@ -123,11 +124,26 @@ Route::middleware('auth')->group(function () {
         Route::delete('/attachments/{id}', [DocumentController::class, 'deleteAttachment'])->name('attachments.delete');
         Route::get('/forward/{document}', [DocumentController::class, 'forwardDocument'])->name('documents.forward');
 
-        Route::get('/workflows', [DocumentController::class, 'workflowManagement'])->name('documents.workflows');
-        Route::get('/workflows/{workflow}/receive', [DocumentController::class, 'receiveWorkflow'])->name('documents.receive');
-        Route::get('/workflows/{workflow}', [DocumentController::class, 'approveWorkflow'])->name('documents.approveWorkflow');
-        Route::get('/workflows/{workflow}/reject', [DocumentController::class, 'rejectWorkflow'])->name('documents.rejectWorkflow');
-        Route::get('/workflows/{workflow}/review', [DocumentController::class, 'reviewDocument'])->name('documents.review');
+        Route::get('/workflows', [DocumentWorkflowController::class, 'workflowManagement'])
+        ->name('documents.workflows');
+    
+    Route::get('/workflows/{workflow}/receive', [DocumentWorkflowController::class, 'receiveWorkflow'])
+        ->name('documents.receive');
+    
+    Route::get('/workflows/{workflow}', [DocumentWorkflowController::class, 'approveWorkflow'])
+        ->name('documents.approveWorkflow');
+    
+    Route::get('/workflows/{workflow}/reject', [DocumentWorkflowController::class, 'rejectWorkflow'])
+        ->name('documents.rejectWorkflow');
+    
+    Route::get('/workflows/{workflow}/review', [DocumentWorkflowController::class, 'reviewDocument'])
+        ->name('documents.review');
+    
+    Route::post('/workflows/review/submit/{workflow}', [DocumentWorkflowController::class, 'reviewSubmit'])
+        ->name('document.review.submit');
+
+    Route::post('/{document}/forward', [DocumentWorkflowController::class, 'forwardDocumentSubmit'])
+        ->name('documents.forward.submit');
 
         // Parameterized routes
         Route::get('/{document}/show', [DocumentController::class, 'show'])->name('documents.show');
@@ -138,11 +154,12 @@ Route::middleware('auth')->group(function () {
         Route::delete('/{document}/delete-attachment', [DocumentController::class, 'deleteAttachment'])->name('documents.attachments.destroy');
 
         // Update status route
-        Route::get('/{document}/status', [DocumentController::class, 'confirmReleased'])->name('documents.confirmrelease');
-        Route::get('/{document}/{status}', [DocumentController::class, 'changeStatus'])->name('documents.changeStatus');
+        // Route::get('/{document}/status', [DocumentController::class, 'confirmReleased'])->name('documents.confirmrelease');
+        // Route::get('/{document}/{status}', [DocumentController::class, 'changeStatus'])->name('documents.changeStatus');
 
-        Route::put('/{document}/{status}', [DocumentController::class, 'changeStatus'])->name('documents.updateStatus');
+        // Route::put('/{document}/{status}', [DocumentController::class, 'changeStatus'])->name('documents.updateStatus');
 
+        Route::post('/search/tr', [DocumentController::class, 'searchByTr'])->name('trackingNumber-search');
         Route::post('/search', [DocumentController::class, 'search'])->name('documents.search');
         Route::get('/{id}/download', [DocumentController::class, 'downloadFile'])->name('documents.download');
     });
@@ -170,6 +187,7 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::get('/plans', [PlanController::class, 'index'])->name('plans.index');
+    Route::get('plans/create', [PlanController::class, 'create'])->name('plans.create');
     Route::post('/plans/{plan}/subscribe', [PlanController::class, 'subscribe'])->name('plans.subscribe');
 
     Route::get('/plans/{plan}', [PlanController::class, 'show'])->name('plans.show');

@@ -25,11 +25,11 @@ class UserController extends Controller
     public function index(Request $request): View
     {
         $company = CompanyAccount::where('user_id', auth()->id())->first();
-        $users = $company ? $company->employees()->paginate(5) : collect();
+        $users = $company->employees()->paginate(5);
 
         $roles = Role::all();
 
-        if (auth()->user()->hasRole('Admin')) {
+        if (auth()->user()->isAdmin()) {
             return $this->showRegistered();
         }
 
@@ -83,7 +83,8 @@ class UserController extends Controller
     {
         $userCompany = CompanyAccount::where('user_id', auth()->id())->get();
         $roles = Role::pluck('name', 'name')->all();
-        $offices = Office::pluck('name', 'id')->all();
+        $company = auth()->user()->companies()->first();
+        $offices = Office::where('company_id', $company->id)->get();
 
         return view('users.create', compact('roles', 'offices', 'userCompany'));
     }

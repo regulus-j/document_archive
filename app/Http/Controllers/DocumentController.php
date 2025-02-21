@@ -226,6 +226,19 @@ class DocumentController extends Controller
         return view('documents.forward', compact('document', 'offices', 'users'));
     }
 
+    public function searchByTr(Request $request)
+    {
+        $request->validate([
+            'tracking_number' => 'required|string|max:255',
+        ]);
+
+        $document = DocumentTrackingNumber::where('tracking_number', $request->tracking_number)
+            ->with('document')
+            ->firstOrFail()
+            ->document;
+
+        return view('documents.show', compact('document'));
+    }
     /**
      * Search for documents using text input or image upload.
      */
@@ -304,7 +317,7 @@ class DocumentController extends Controller
         $company = CompanyAccount::where('user_id', auth()->id())->first();
 
         $users = $company ? $company->employees()->paginate(10) : collect();
-        $offices = $company ? $company->offices()->paginate(10) : collect();;
+        $offices = Office::all();
 
         $categories = DocumentCategory::all()->pluck('category', 'id');
 
@@ -756,127 +769,5 @@ class DocumentController extends Controller
             ->paginate(15);
 
         return view('documents.audit', compact('auditLogs'));
-    }
-
-    //workflow logic
-    public function createWorkflow(Request $request): RedirectResponse
-    {
-        $request->validate([
-            'document_id' => 'required|exists:documents,id',
-            'sender_id' => 'required|exists:users,id',
-            'recipient_id' => 'required|exists:users,id',
-            'step_order' => 'required|integer',
-        ]);
-
-        try {
-            $workflow = DocumentWorkflow::create($request->only([
-                'document_id', 'sender_id', 'recipient_id', 'step_order',
-            ]));
-
-            // You can log creation (e.g., using DocumentAudit)
-            $this->logDocumentAction($workflow->document, 'workflow', 'pending', 'Document workflow created');
-
-            return redirect()->back()->with('success', 'Document workflow created successfully');
-        } catch (Exception $e) {
-            return redirect()->back()->with('error', 'Error creating document workflow: '.$e->getMessage());
-        }
-    }
-
-    public function forwardDocumentSubmit(Request $request, $id){
-        $document = Document::findOrFail($id);
-
-        // Validate that at least one recipient is selected in each batch.
-        $request->validate([
-            'recipient_batch' => 'required|array',
-            'step_order' => 'required|array',
-            'remarks' => 'nullable|array',
-        ]);
-
-        // Update document status to forwarded.
-        $document->status()->update(['status' => 'forwarded']);
-
-        // Log the forwarding action.
-        $this->logDocumentAction($document, 'forwarded', 'forwarded', 'Document forwarded');
-
-        // Process each batch of recipients.
-        foreach ($request->recipient_batch as $batchIndex => $recipients) {
-            // Skip if no recipient selected in this batch.
-            if (empty($recipients)) {
-                continue;
-            }
-            // For each recipient in the current batch, create a workflow record.
-            foreach ($recipients as $recipientId) {
-                \App\Models\DocumentWorkflow::create([
-                    'document_id' => $document->id,
-                    'sender_id' => auth()->id(),
-                    'recipient_id' => $recipientId,
-                    'step_order' => $request->step_order[$batchIndex],
-                    'remarks' => $request->remarks[$batchIndex] ?? null,
-                    'status' => 'pending'
-                ]);
-            }
-        }
-
-        return redirect()->route('documents.index')
-            ->with('success', 'Document forwarded successfully');
-    }
-
-    public function approveWorkflow($id): RedirectResponse
-    {
-        $workflow = DocumentWorkflow::findOrFail($id);
-        $workflow->approve();
-        $this->logDocumentAction($workflow->document, 'workflow', 'approved', 'Document workflow approved');
-
-        return redirect()->back()->with('success', 'Document workflow approved');
-    }
-
-    public function rejectWorkflow($id): RedirectResponse
-    {
-        $workflow = DocumentWorkflow::findOrFail($id);
-        $workflow->reject();
-        $this->logDocumentAction($workflow->document, 'workflow', 'rejected', 'Document workflow rejected');
-
-        // Example: Route document back to original sender or add additional logic
-        // You may update the document status or trigger another workflow step here
-
-        return redirect()->back()->with('success', 'Document workflow rejected');
-    }
-
-    //helper functions
-    private function storeFile($file, $company_id)
-    {
-        Storage::disk('local')->put(date('mYd, '), 'Contents');
-    }
-
-    //workflow management
-    public function workflowManagement()
-    {
-        $workflows = DocumentWorkflow::with(['document', 'sender', 'recipient'])
-            ->where('recipient_id', auth()->id())
-            ->whereNotExists(function ($query) {
-                $query->select('*')
-                      ->from('document_workflows as dw')
-                      ->whereColumn('dw.document_id', 'document_workflows.document_id')
-                      ->whereColumn('dw.step_order', 'document_workflows.step_order')
-                      ->whereIn('dw.status', ['approved', 'rejected']);
-            })
-            ->orderBy('created_at', 'desc')
-            ->paginate(15);
-    
-        return view('documents.workflow', compact('workflows'));
-    }
-
-    public function receiveWorkflow($id){
-        $workflow = DocumentWorkflow::findOrFail($id);
-
-        $workflow->receive();
-    }
-
-    public function reviewDocument($id)
-    {
-        $workflow = DocumentWorkflow::findOrFail($id);
-        $document = $workflow->document;
-
-        return view('documents.review', compact('workflow', 'document'));
     }
 }

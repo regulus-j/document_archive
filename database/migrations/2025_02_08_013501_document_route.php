@@ -14,6 +14,7 @@ return new class extends Migration
         //
         Schema::create('document_workflows', function (Blueprint $table) {
             $table->id();
+            $table->string('tracking_number');
             $table->unsignedBigInteger('document_id'); // The document being routed
             $table->unsignedBigInteger('sender_id');     // Who forwarded the document
             $table->unsignedBigInteger('recipient_id');  // Who is supposed to take action

@@ -64,7 +64,7 @@ class OfficeController extends Controller
     public function edit(Office $office)
     {
         $office = Office::with('parentOffice')->find($office->id);
-        $offices = Office::where('id', '!=', $office->id)->get();  // Exclude current office
+        $offices = Office::all();
         
         return view('offices.edit', compact('office', 'offices'));
     }

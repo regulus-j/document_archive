@@ -49,15 +49,20 @@
             </div>
 
             <div class="bg-white shadow-lg rounded-lg p-6">
-                <h3 class="text-2xl font-bold text-gray-900 mb-6">Document Management</h3>
-                <form action="#" method="POST" class="space-y-4">
+                <h3 class="text-2xl font-bold text-gray-900 mb-6">Quick Actions</h3>
+                <form action="{{ route('trackingNumber-search') }}" method="POST" class="space-y-4">
                     @csrf
                     <div>
                         <label for="action" class="block text-sm font-medium text-gray-700 mb-1">Select Action</label>
                         <select id="action" name="action"
                             class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
                             <option value="">Select an action</option>
-                            @foreach ([['value' => 'track', 'label' => 'Track', 'icon' => 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'], ['value' => 'add', 'label' => 'Add', 'icon' => 'M12 6v6m0 0v6m0-6h6m-6 0H6'], ['value' => 'receive', 'label' => 'Receive', 'icon' => 'M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4'], ['value' => 'release', 'label' => 'Release', 'icon' => 'M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12'], ['value' => 'terminal', 'label' => 'Tag as Terminal', 'icon' => 'M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z'],] as $action)
+                            @foreach ([ 
+                                ['value' => 'find', 'label' => 'Find', 'icon' => 'M10.5 3a7.5 7.5 0 015.916 12.5l4.243 4.242-1.414 1.414-4.242-4.243A7.5 7.5 0 1110.5 3z'], 
+                                ['value' => 'receive', 'label' => 'Receive', 'icon' => 'M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4'], 
+                                ['value' => 'acccept', 'label' => 'Acccept', 'icon' => 'M5 13l4 4L19 7'], 
+                                ['value' => 'reject', 'label' => 'Reject', 'icon' => 'M6 18L18 6M6 6l12 12'], 
+                            ] as $action)
                                 <option value="{{ $action['value'] }}">
                                     {{ $action['label'] }}
                                 </option>
