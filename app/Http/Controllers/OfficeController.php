@@ -13,11 +13,15 @@ class OfficeController extends Controller
     public function index()
     {
         $company = auth()->user()->companies()->first();
-        $offices = Office::where('company_id', $company->id)->get();
 
+        if (!$company) {
+            return redirect()->route('companies.create')
+                ->with('error', 'Please create a company first.');
+        }
+
+        $offices = Office::where('company_id', $company->id)->get();
         return view('offices.index', compact('offices'));
     }
-
     /**
      * Show the form for creating a new resource.
      */
@@ -28,7 +32,7 @@ class OfficeController extends Controller
 
         return view('offices.create', compact('offices', 'companies'));
     }
-    
+
     public function store(Request $request)
     {
         $request->validate([
@@ -37,13 +41,13 @@ class OfficeController extends Controller
             'company_id' => 'required|exists:company_accounts,id',
 
         ]);
-    
+
         $office = Office::create([
             'company_id' => $request->company_id,
             'name' => $request->name,
             'parent_office_id' => $request->parent_office_id,
         ]);
-    
+
         return redirect()->route('office.index')
             ->with('success', 'Office created successfully.');
     }
@@ -64,8 +68,8 @@ class OfficeController extends Controller
     public function edit(Office $office)
     {
         $office = Office::with('parentOffice')->find($office->id);
-        $offices = Office::all();
-        
+        $offices = Office::where('id', '!=', $office->id)->get();  // Exclude current office
+
         return view('offices.edit', compact('office', 'offices'));
     }
     /**
@@ -106,7 +110,7 @@ class OfficeController extends Controller
             if ($office->sentTransactions()->count() > 0 || $office->receivedTransactions()->count() > 0) {
                 return back()->with('error', 'Cannot delete office associated with documents.');
             }
-            
+
             $office->delete();
             return redirect()->route('offices.index')->with('success', 'Office deleted successfully.');
         } catch (\Exception $e) {
@@ -114,5 +118,5 @@ class OfficeController extends Controller
         }
     }
 
-    
+
 }
