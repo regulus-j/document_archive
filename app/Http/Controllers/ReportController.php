@@ -14,8 +14,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use PhpOffice\PhpWord\IOFactory;
 use PhpOffice\PhpWord\PhpWord;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\View\View;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ReportController extends Controller
 {
@@ -100,14 +100,9 @@ class ReportController extends Controller
         $endDate = $request->input('end_date') ?: now()->format('Y-m-d');
         $userId = $request->input('user_id');
         $officeId = $request->input('office_id');
-    
-        // Ensure only one of userId or officeId is set
-        if ($userId && $officeId) {
-            return redirect()->back()->with('error', 'Please select either a user or an office, not both.');
-        }
-    
-        $averageTimeToReceive = DocumentWorkflow::selectRaw('AVG(TIMESTAMPDIFF(MINUTE, document_workflows.created_at, document_workflows.received_at)) as avg_time')
-            ->whereBetween('document_workflows.created_at', [$startDate, $endDate])
+
+        $averageTimeToReceive = DocumentWorkflow::selectRaw('AVG(TIMESTAMPDIFF(MINUTE, created_at, received_at)) as avg_time')
+            ->whereBetween('created_at', [$startDate, $endDate])
             ->when($userId, fn($q) => $q->where('recipient_id', $userId))
             ->when($officeId, fn($q) =>
                 $q->whereHas('recipient.offices', fn($o) =>
@@ -115,9 +110,9 @@ class ReportController extends Controller
                 )
             )
             ->value('avg_time');
-    
-        $averageTimeToReview = DocumentWorkflow::selectRaw('AVG(TIMESTAMPDIFF(MINUTE, document_workflows.received_at, document_workflows.updated_at)) as avg_time')
-            ->whereBetween('document_workflows.created_at', [$startDate, $endDate])
+
+        $averageTimeToReview = DocumentWorkflow::selectRaw('AVG(TIMESTAMPDIFF(MINUTE, received_at, updated_at)) as avg_time')
+            ->whereBetween('created_at', [$startDate, $endDate])
             ->when($userId, fn($q) => $q->where('recipient_id', $userId))
             ->when($officeId, fn($q) =>
                 $q->whereHas('recipient.offices', fn($o) =>
@@ -125,7 +120,7 @@ class ReportController extends Controller
                 )
             )
             ->value('avg_time');
-    
+
         $averageDocsForwarded = DocumentWorkflow::whereBetween('created_at', [$startDate, $endDate])
             ->when($userId, fn($q) => $q->where('sender_id', $userId))
             ->when($officeId, fn($q) =>
@@ -134,22 +129,21 @@ class ReportController extends Controller
                 )
             )
             ->count();
-    
+
         $documentsUploaded = Document::whereBetween('created_at', [$startDate, $endDate])
-            ->when($userId, fn($q) => $q->where('uploader', $userId)) // Use 'uploader' instead of 'user_id'
-            ->when($officeId, fn($q) =>
-                $q->whereHas('user.offices', fn($o) =>
-                    $o->where('offices.id', $officeId)
-                )
-            )
+            ->when($userId, fn($q) => $q->where('user_id', $userId))
             ->count();
-            
+
         // Get collections for dropdowns
         $company = CompanyAccount::where('user_id', auth()->id())->first();
+        if (!$company) {
+            \Log::warning('No company found for user: ' . auth()->id());
+            // Handle the case where no company exists
+        }
 
         $users = $company ? $company->employees()->paginate(5) : collect();
-        $offices = Office::where('company_id', $company->id)->get();
-    
+        $offices = $company ? Office::where('company_id', $company->id)->get() : collect();
+
         return view('reports.analytics', compact(
             'averageTimeToReceive',
             'averageTimeToReview',
@@ -216,7 +210,7 @@ class ReportController extends Controller
         return view('reports.index', compact('data', 'reportType', 'startDate', 'endDate'));
     }
 
-        public function create()
+    public function create()
     {
         return view('reports.create');
     }
