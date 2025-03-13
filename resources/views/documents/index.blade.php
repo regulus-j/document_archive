@@ -203,7 +203,7 @@
                                     Uploaded</th>
                                 <th
                                     class="bg-gray-100 sticky top-0 border-b border-gray-200 px-6 py-3 text-gray-600 font-bold tracking-wider uppercase text-xs relative group cursor-help">
-                                    Days Lapsed
+                                    Last Update
                                     <div class="absolute hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2 -left-1/2 transform -translate-x-1/2 mt-1 z-10 w-40 text-center">
                                         Days passed since previous update
                                     </div>
@@ -237,7 +237,7 @@
                                         {{ $document->created_at->format('M d, Y H:i') }}
                                     </td>
                                     <td class="border-dashed border-t border-gray-200 px-6 py-4">
-                                        {{ date_diff(new DateTime($document->updated_at), new DateTime(now()))->format('%Hh %Im %Ss') }}
+                                        {{ date_diff(new DateTime($document->updated_at), new DateTime(now()))->format('%Dd %Hh %Im') }}
                                     </td>
                                     <td class="border-dashed border-t border-gray-200 px-6 py-4">
                                         <div class="flex items-center space-x-2">

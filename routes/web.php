@@ -10,6 +10,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\PlanController;
+use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\PlanSelectionController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\CompanyController;
@@ -94,7 +95,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [CompanyController::class, 'index'])->name('companies.index');
         Route::get('/create', [CompanyController::class, 'create'])->name('companies.create');
         Route::post('/', [CompanyController::class, 'store'])->name('companies.store');
-        Route::get('/{company}',  [CompanyController::class, 'show'])->name('companies.show');
+        Route::get('/{company}', [CompanyController::class, 'show'])->name('companies.show');
         Route::get('/{company}/edit', [CompanyController::class, 'edit'])->name('companies.edit');
         Route::put('/{company}', [CompanyController::class, 'update'])->name('companies.update');
         Route::delete('/{company}', [CompanyController::class, 'destroy'])->name('companies.destroy');
@@ -172,6 +173,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/{office}/edit', [OfficeController::class, 'edit'])->name('office.edit');
         Route::put('/{office}', [OfficeController::class, 'update'])->name('office.update');
         Route::delete('/{office}', [OfficeController::class, 'destroy'])->name('office.destroy');
+    });
+
+    Route::middleware(['auth', 'has.company'])->group(function () {
+        Route::resource('offices', OfficeController::class);
     });
 
     Route::prefix('reports')->group(function () {
