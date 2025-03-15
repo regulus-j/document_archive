@@ -13,7 +13,6 @@ use App\Http\Controllers\PlanController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\PlanSelectionController;
 use App\Http\Controllers\SubscriptionController;
-use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\AddressController;
 use Illuminate\Support\Facades\Route;
@@ -125,31 +124,32 @@ Route::middleware('auth')->group(function () {
         Route::delete('/attachments/{id}', [DocumentController::class, 'deleteAttachment'])->name('attachments.delete');
         Route::get('/forward/{document}', [DocumentController::class, 'forwardDocument'])->name('documents.forward');
 
-        Route::get('/workflows', [DocumentWorkflowController::class, 'workflowManagement'])
-        ->name('documents.workflows');
-    
-    Route::get('/workflows/{workflow}/receive', [DocumentWorkflowController::class, 'receiveWorkflow'])
-        ->name('documents.receive');
-    
-    Route::get('/workflows/{workflow}', [DocumentWorkflowController::class, 'approveWorkflow'])
-        ->name('documents.approveWorkflow');
-    
-    Route::get('/workflows/{workflow}/reject', [DocumentWorkflowController::class, 'rejectWorkflow'])
-        ->name('documents.rejectWorkflow');
-    
-    Route::get('/workflows/{workflow}/review', [DocumentWorkflowController::class, 'reviewDocument'])
-        ->name('documents.review');
-    
-    Route::post('/workflows/review/submit/{workflow}', [DocumentWorkflowController::class, 'reviewSubmit'])
-        ->name('document.review.submit');
+        Route::prefix('workflows')->group(function () {
+            Route::get('/', [DocumentWorkflowController::class, 'workflowManagement'])
+                ->name('documents.workflows');
+            
+            Route::get('/{workflow}/receive', [DocumentWorkflowController::class, 'receiveWorkflow'])
+                ->name('documents.receive');
+            
+            Route::get('/{workflow}/approve', [DocumentWorkflowController::class, 'approveWorkflow'])
+                ->name('documents.approveWorkflow');
+            
+            Route::get('/{workflow}/reject', [DocumentWorkflowController::class, 'rejectWorkflow'])
+                ->name('documents.rejectWorkflow');
+            
+            Route::get('/{workflow}/review', [DocumentWorkflowController::class, 'reviewDocument'])
+                ->name('documents.review');
+            
+            Route::post('/review/submit/{workflow}', [DocumentWorkflowController::class, 'reviewSubmit'])
+                ->name('documents.review.submit');
+        });
 
-    Route::post('/{document}/forward', [DocumentWorkflowController::class, 'forwardDocumentSubmit'])
-        ->name('documents.forward.submit');
+        Route::post('/{document}/forward', [DocumentWorkflowController::class, 'forwardDocumentSubmit'])
+            ->name('documents.forward.submit');
 
         // Parameterized routes
         Route::get('/{document}/show', [DocumentController::class, 'show'])->name('documents.show');
         Route::get('/{document}/edit', [DocumentController::class, 'edit'])->name('documents.edit');
-        Route::post('/{document}/forward', [DocumentController::class, 'forwardDocumentSubmit'])->name('documents.forward.submit');
         Route::put('/{document}', [DocumentController::class, 'update'])->name('documents.update');
         Route::delete('/{document}/delete', [DocumentController::class, 'destroy'])->name('documents.destroy');
         Route::delete('/{document}/delete-attachment', [DocumentController::class, 'deleteAttachment'])->name('documents.attachments.destroy');

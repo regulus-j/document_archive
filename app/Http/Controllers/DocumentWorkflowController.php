@@ -46,7 +46,15 @@ class DocumentWorkflowController extends Controller
         ]);
 
         $document->status()->update(['status' => 'forwarded']);
-        DocumentAudit::logDocumentAction($document, 'forwarded', 'forwarded', 'Document forwarded');
+        
+        // Fix: Pass document ID instead of document object
+        DocumentAudit::logDocumentAction(
+            $document->id, 
+            auth()->id(),
+            'forward',
+            'forwarded',
+            'Document forwarded'
+        );
 
         foreach ($request->recipient_batch as $batchIndex => $recipients) {
             if (empty($recipients)) {
@@ -72,7 +80,15 @@ class DocumentWorkflowController extends Controller
     {
         $workflow = DocumentWorkflow::findOrFail($id);
         $workflow->approve();
-        DocumentAudit::logDocumentAction($workflow->document, 'workflow', 'approved', 'Document workflow approved');
+        
+        // Fix: Pass document ID instead of document object
+        DocumentAudit::logDocumentAction(
+            $workflow->document_id,
+            auth()->id(),
+            'workflow',
+            'approved',
+            'Document workflow approved'
+        );
 
         return redirect()->back()->with('success', 'Document workflow approved');
     }
@@ -81,7 +97,15 @@ class DocumentWorkflowController extends Controller
     {
         $workflow = DocumentWorkflow::findOrFail($id);
         $workflow->reject();
-        DocumentAudit::logDocumentAction($workflow->document, 'workflow', 'rejected', 'Document workflow rejected');
+        
+        // Fix: Pass document ID instead of document object
+        DocumentAudit::logDocumentAction(
+            $workflow->document_id,
+            auth()->id(),
+            'workflow',
+            'rejected',
+            'Document workflow rejected'
+        );
 
         return redirect()->back()->with('success', 'Document workflow rejected');
     }
@@ -144,12 +168,27 @@ class DocumentWorkflowController extends Controller
 
         if ($validated['action'] === 'approve') {
             $workflow->approve();
-            DocumentAudit::logDocumentAction($workflow->document, 'workflow', 'approved', 'Document workflow approved during review');
+            // Fix: Pass document ID instead of document object
+            DocumentAudit::logDocumentAction(
+                $workflow->document_id,
+                auth()->id(),
+                'review',
+                'approved',
+                'Document workflow approved during review' . ($validated['remark'] ? ": {$validated['remark']}" : '')
+            );
         } else {
             $workflow->reject();
+            // Fix: Pass document ID instead of document object
+            DocumentAudit::logDocumentAction(
+                $workflow->document_id,
+                auth()->id(),
+                'review',
+                'rejected',
+                'Document workflow rejected during review' . ($validated['remark'] ? ": {$validated['remark']}" : '')
+            );
         }
 
-        return redirect()->route('documents.show', $workflow->document->id)
+        return redirect()->route('documents.show', $workflow->document_id)
             ->with('success', 'Review submitted successfully');
     }
 
