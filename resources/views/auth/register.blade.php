@@ -1,5 +1,52 @@
+<!-- register.blade.php -->
 <x-guest-layout>
-    <form method="POST" action="{{ route('register') }}">
+    <div class="text-center mb-8">
+        <div class="flex justify-center mb-6">
+            <div class="w-16 h-16 flex items-center justify-center text-blue-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
+            </div>
+        </div>
+        <h1 class="text-2xl font-semibold mb-2">DocArchive</h1>
+        <p class="text-gray-500 text-sm">
+            Create your account to get started
+        </p>
+    </div>
+
+    <!-- Breadcrumbs -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between relative">
+            <div class="w-full absolute top-1/2 h-0.5 bg-gray-200 -z-10"></div>
+            <div class="flex items-center justify-between w-full">
+                <div class="flex flex-col items-center">
+                    <div id="step1-indicator"
+                        class="w-10 h-10 rounded-full bg-blue-500 text-white flex items-center justify-center mb-2">1
+                    </div>
+                    <span class="text-sm font-medium">Personal</span>
+                </div>
+                <div class="flex flex-col items-center">
+                    <div id="step2-indicator"
+                        class="w-10 h-10 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center mb-2">2
+                    </div>
+                    <span class="text-sm font-medium">Company</span>
+                </div>
+                <div class="flex flex-col items-center">
+                    <div id="step3-indicator"
+                        class="w-10 h-10 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center mb-2">3
+                    </div>
+                    <span class="text-sm font-medium">Address</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form method="POST" action="{{ route('register') }}" id="registrationForm">
         @csrf
 
         @if(isset($plan))
@@ -10,129 +57,230 @@
             </div>
         @endif
 
-        <!-- Existing form fields -->
-        <div class="">
-            <div>
-                <x-input-label for="first_name" :value="__('First Name')" />
-                <x-text-input id="first_name" class="block mt-1 w-full" type="text" name="first_name"
-                    :value="old('first_name')" required autofocus autocomplete="first_name" />
-                <x-input-error :messages="$errors->get('first_name')" class="mt-2" />
-            </div>
+        <!-- Step 1: Personal Information -->
+        <div id="step1" class="step-content">
+            <h2 class="text-xl font-semibold mb-4">Personal Information</h2>
+            <div class="space-y-4">
+                <div>
+                    <x-input-label for="first_name" :value="__('First Name')" class="text-gray-700" />
+                    <x-text-input id="first_name"
+                        class="mt-2 block w-full p-3 rounded-md border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-150"
+                        type="text" name="first_name" :value="old('first_name')" required autofocus
+                        autocomplete="first_name" />
+                    <x-input-error :messages="$errors->get('first_name')" class="mt-2" />
+                </div>
 
-            <div class="mt-4">
-                <x-input-label for="middle_name" :value="__('Middle Name')" />
-                <x-text-input id="middle_name" class="block mt-1 w-full" type="text" name="middle_name"
-                    :value="old('middle_name')" autocomplete="middle_name" />
-                <x-input-error :messages="$errors->get('middle_name')" class="mt-2" />
-            </div>
+                <div>
+                    <x-input-label for="middle_name" :value="__('Middle Name')" class="text-gray-700" />
+                    <x-text-input id="middle_name"
+                        class="mt-2 block w-full p-3 rounded-md border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-150"
+                        type="text" name="middle_name" :value="old('middle_name')" autocomplete="middle_name" />
+                    <x-input-error :messages="$errors->get('middle_name')" class="mt-2" />
+                </div>
 
-            <div class="mt-4">
-                <x-input-label for="last_name" :value="__('Last Name')" />
-                <x-text-input id="last_name" class="block mt-1 w-full" type="text" name="last_name"
-                    :value="old('last_name')" required autocomplete="last_name" />
-                <x-input-error :messages="$errors->get('last_name')" class="mt-2" />
-            </div>
-        </div>
+                <div>
+                    <x-input-label for="last_name" :value="__('Last Name')" class="text-gray-700" />
+                    <x-text-input id="last_name"
+                        class="mt-2 block w-full p-3 rounded-md border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-150"
+                        type="text" name="last_name" :value="old('last_name')" required autocomplete="last_name" />
+                    <x-input-error :messages="$errors->get('last_name')" class="mt-2" />
+                </div>
 
-        <!-- Email Address -->
-        <div class="mt-4">
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required
-                autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
-        </div>
+                <div>
+                    <x-input-label for="email" :value="__('Email')" class="text-gray-700" />
+                    <x-text-input id="email"
+                        class="mt-2 block w-full p-3 rounded-md border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-150"
+                        type="email" name="email" :value="old('email')" required autocomplete="username" />
+                    <x-input-error :messages="$errors->get('email')" class="mt-2" />
+                </div>
 
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
+                <div>
+                    <x-input-label for="password" :value="__('Password')" class="text-gray-700" />
+                    <x-text-input id="password"
+                        class="mt-2 block w-full p-3 rounded-md border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-150"
+                        type="password" name="password" required autocomplete="new-password" />
+                    <x-input-error :messages="$errors->get('password')" class="mt-2" />
+                </div>
 
-            <x-text-input id="password" class="block mt-1 w-full" type="password" name="password" required
-                autocomplete="new-password" />
-
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
-        </div>
-
-        <!-- Confirm Password -->
-        <div class="mt-4">
-            <x-input-label for="password_confirmation" :value="__('Confirm Password')" />
-
-            <x-text-input id="password_confirmation" class="block mt-1 w-full" type="password"
-                name="password_confirmation" required autocomplete="new-password" />
-
-            <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
-        </div>
-
-        <!-- Company Details -->
-        <div class="mt-4">
-            <h2 class="text-lg font-semibold">Company Information</h2>
-            <div class="mt-2">
-                <x-input-label for="company_name" :value="__('Company Name')" />
-                <x-text-input id="company_name" class="block mt-1 w-full" type="text" name="company_name" :value="old('company_name')" required />
-                <x-input-error :messages="$errors->get('company_name')" class="mt-2" />
-            </div>
-
-            <div class="mt-4">
-                <x-input-label for="registered_name" :value="__('Registered Name')" />
-                <x-text-input id="registered_name" class="block mt-1 w-full" type="text" name="registered_name" :value="old('registered_name')" required />
-                <x-input-error :messages="$errors->get('registered_name')" class="mt-2" />
-            </div>
-
-            <div class="mt-4">
-                <x-input-label for="company_email" :value="__('Company Email')" />
-                <x-text-input id="company_email" class="block mt-1 w-full" type="email" name="company_email" :value="old('company_email')" required />
-                <x-input-error :messages="$errors->get('company_email')" class="mt-2" />
-            </div>
-
-            <div class="mt-4">
-                <x-input-label for="company_phone" :value="__('Company Phone')" />
-                <x-text-input id="company_phone" class="block mt-1 w-full" type="text" name="company_phone" :value="old('company_phone')" required />
-                <x-input-error :messages="$errors->get('company_phone')" class="mt-2" />
+                <div>
+                    <x-input-label for="password_confirmation" :value="__('Confirm Password')" class="text-gray-700" />
+                    <x-text-input id="password_confirmation"
+                        class="mt-2 block w-full p-3 rounded-md border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-150"
+                        type="password" name="password_confirmation" required autocomplete="new-password" />
+                    <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
+                </div>
             </div>
         </div>
 
-        <!-- Company Address -->
-        <div class="mt-4">
-            <h2 class="text-lg font-semibold">Company Address</h2>
-            <div class="mt-2">
-                <x-input-label for="address" :value="__('Street Address')" />
-                <x-text-input id="address" class="block mt-1 w-full" type="text" name="address" :value="old('address')" required />
-                <x-input-error :messages="$errors->get('address')" class="mt-2" />
-            </div>
+        <!-- Step 2: Company Information -->
+        <div id="step2" class="step-content hidden">
+            <h2 class="text-xl font-semibold mb-4">Company Information</h2>
+            <div class="space-y-4">
+                <div>
+                    <x-input-label for="company_name" :value="__('Company Name')" class="text-gray-700" />
+                    <x-text-input id="company_name"
+                        class="mt-2 block w-full p-3 rounded-md border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-150"
+                        type="text" name="company_name" :value="old('company_name')" required />
+                    <x-input-error :messages="$errors->get('company_name')" class="mt-2" />
+                </div>
 
-            <div class="mt-4">
-                <x-input-label for="city" :value="__('City')" />
-                <x-text-input id="city" class="block mt-1 w-full" type="text" name="city" :value="old('city')" required />
-                <x-input-error :messages="$errors->get('city')" class="mt-2" />
-            </div>
+                <div>
+                    <x-input-label for="registered_name" :value="__('Registered Name')" class="text-gray-700" />
+                    <x-text-input id="registered_name"
+                        class="mt-2 block w-full p-3 rounded-md border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-150"
+                        type="text" name="registered_name" :value="old('registered_name')" required />
+                    <x-input-error :messages="$errors->get('registered_name')" class="mt-2" />
+                </div>
 
-            <div class="mt-4">
-                <x-input-label for="state" :value="__('State')" />
-                <x-text-input id="state" class="block mt-1 w-full" type="text" name="state" :value="old('state')" required />
-                <x-input-error :messages="$errors->get('state')" class="mt-2" />
-            </div>
+                <div>
+                    <x-input-label for="company_email" :value="__('Company Email')" class="text-gray-700" />
+                    <x-text-input id="company_email"
+                        class="mt-2 block w-full p-3 rounded-md border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-150"
+                        type="email" name="company_email" :value="old('company_email')" required />
+                    <x-input-error :messages="$errors->get('company_email')" class="mt-2" />
+                </div>
 
-            <div class="mt-4">
-                <x-input-label for="zip_code" :value="__('ZIP Code')" />
-                <x-text-input id="zip_code" class="block mt-1 w-full" type="text" name="zip_code" :value="old('zip_code')" required />
-                <x-input-error :messages="$errors->get('zip_code')" class="mt-2" />
-            </div>
-
-            <div class="mt-4">
-                <x-input-label for="country" :value="__('Country')" />
-                <x-text-input id="country" class="block mt-1 w-full" type="text" name="country" :value="old('country')" required />
-                <x-input-error :messages="$errors->get('country')" class="mt-2" />
+                <div>
+                    <x-input-label for="company_phone" :value="__('Company Phone')" class="text-gray-700" />
+                    <x-text-input id="company_phone"
+                        class="mt-2 block w-full p-3 rounded-md border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-150"
+                        type="text" name="company_phone" :value="old('company_phone')" required />
+                    <x-input-error :messages="$errors->get('company_phone')" class="mt-2" />
+                </div>
             </div>
         </div>
 
-        <div class="flex items-center justify-end mt-4">
-            <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                href="{{ route('login') }}">
+        <!-- Step 3: Company Address -->
+        <div id="step3" class="step-content hidden">
+            <h2 class="text-xl font-semibold mb-4">Company Address</h2>
+            <div class="space-y-4">
+                <div>
+                    <x-input-label for="address" :value="__('Street Address')" class="text-gray-700" />
+                    <x-text-input id="address"
+                        class="mt-2 block w-full p-3 rounded-md border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-150"
+                        type="text" name="address" :value="old('address')" required />
+                    <x-input-error :messages="$errors->get('address')" class="mt-2" />
+                </div>
+
+                <div>
+                    <x-input-label for="city" :value="__('City')" class="text-gray-700" />
+                    <x-text-input id="city"
+                        class="mt-2 block w-full p-3 rounded-md border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-150"
+                        type="text" name="city" :value="old('city')" required />
+                    <x-input-error :messages="$errors->get('city')" class="mt-2" />
+                </div>
+
+                <div>
+                    <x-input-label for="state" :value="__('State')" class="text-gray-700" />
+                    <x-text-input id="state"
+                        class="mt-2 block w-full p-3 rounded-md border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-150"
+                        type="text" name="state" :value="old('state')" required />
+                    <x-input-error :messages="$errors->get('state')" class="mt-2" />
+                </div>
+
+                <div>
+                    <x-input-label for="zip_code" :value="__('ZIP Code')" class="text-gray-700" />
+                    <x-text-input id="zip_code"
+                        class="mt-2 block w-full p-3 rounded-md border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-150"
+                        type="text" name="zip_code" :value="old('zip_code')" required />
+                    <x-input-error :messages="$errors->get('zip_code')" class="mt-2" />
+                </div>
+
+                <div>
+                    <x-input-label for="country" :value="__('Country')" class="text-gray-700" />
+                    <x-text-input id="country"
+                        class="mt-2 block w-full p-3 rounded-md border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-150"
+                        type="text" name="country" :value="old('country')" required />
+                    <x-input-error :messages="$errors->get('country')" class="mt-2" />
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="flex items-center justify-between mt-6">
+            <button type="button" id="prevBtn"
+                class="hidden py-3 px-6 bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 transition duration-150">
+                Previous
+            </button>
+            <a class="text-sm text-blue-500 hover:text-blue-600" href="{{ route('login') }}">
                 {{ __('Already registered?') }}
             </a>
-
-            <x-primary-button class="ms-4">
-                {{ __('Register') }}
-            </x-primary-button>
+            <div>
+                <button type="button" id="nextBtn"
+                    class="py-3 px-6 bg-blue-500 text-white rounded-full hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150">
+                    Next
+                </button>
+                <button type="submit" id="submitBtn"
+                    class="hidden py-3 px-6 bg-blue-500 text-white rounded-full hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150">
+                    Register
+                </button>
+            </div>
         </div>
     </form>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            let currentStep = 1;
+            const totalSteps = 3;
+            const nextBtn = document.getElementById('nextBtn');
+            const prevBtn = document.getElementById('prevBtn');
+            const submitBtn = document.getElementById('submitBtn');
+
+            // Show the specified step
+            function showStep(step) {
+                // Hide all steps
+                document.querySelectorAll('.step-content').forEach(el => {
+                    el.classList.add('hidden');
+                });
+
+                // Show current step
+                document.getElementById(`step${step}`).classList.remove('hidden');
+
+                // Update breadcrumb indicators
+                for (let i = 1; i <= totalSteps; i++) {
+                    const indicator = document.getElementById(`step${i}-indicator`);
+                    if (i < step) {
+                        // Completed step
+                        indicator.classList.remove('bg-gray-200', 'text-gray-600', 'bg-blue-500');
+                        indicator.classList.add('bg-green-500', 'text-white');
+                        indicator.innerHTML = '✓';
+                    } else if (i === step) {
+                        // Current step
+                        indicator.classList.remove('bg-gray-200', 'text-gray-600', 'bg-green-500');
+                        indicator.classList.add('bg-blue-500', 'text-white');
+                        indicator.innerHTML = i;
+                    } else {
+                        // Future step
+                        indicator.classList.remove('bg-blue-500', 'text-white', 'bg-green-500');
+                        indicator.classList.add('bg-gray-200', 'text-gray-600');
+                        indicator.innerHTML = i;
+                    }
+                }
+
+                // Update buttons
+                prevBtn.classList.toggle('hidden', step === 1);
+                nextBtn.classList.toggle('hidden', step === totalSteps);
+                submitBtn.classList.toggle('hidden', step !== totalSteps);
+            }
+
+            // Handle next button click
+            nextBtn.addEventListener('click', function () {
+                if (currentStep < totalSteps) {
+                    currentStep++;
+                    showStep(currentStep);
+                }
+            });
+
+            // Handle previous button click
+            prevBtn.addEventListener('click', function () {
+                if (currentStep > 1) {
+                    currentStep--;
+                    showStep(currentStep);
+                }
+            });
+
+            // Initialize the form
+            showStep(1);
+        });
+    </script>
 </x-guest-layout>
