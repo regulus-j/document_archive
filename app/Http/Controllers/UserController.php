@@ -25,7 +25,7 @@ class UserController extends Controller
     public function index(Request $request): View
     {
         $company = CompanyAccount::where('user_id', auth()->id())->first();
-        $users = $company->employees()->paginate(5);
+        $users = $company ? $company->employees()->paginate(5) : collect();
 
         $roles = Role::all();
 

@@ -42,13 +42,30 @@
                             </td>
                             <td class="px-6 py-4 text-sm text-gray-700">{{ $workflow->status }}</td>
                             <td class="px-6 py-4 text-sm">
-                                @if($workflow->status === 'pending')
-                                    <a href="{{ route('documents.receive', $workflow->id) }}"
-                                        class="text-green-500 hover:underline">Receive</a>
+                                @if($workflow->sender_id != auth()->id())
+                                    {{-- Only show receive/review options if user is not the sender --}}
+                                    @if($workflow->status === 'pending')
+                                        <a href="{{ route('documents.receive', $workflow->id) }}"
+                                                class="text-green-500 hover:underline mr-2">Receive</a>
+                                    @endif
+                                    
+                                    @if($workflow->status === 'received')
+                                        <a href="{{ route('documents.review', $workflow->id) }}"
+                                            class="text-green-500 hover:underline mr-2">Review</a>
+                                    @endif
+                                @else
+                                    {{-- Sender can only view document details --}}
+                                    <span class="text-gray-500 italic">Forwarded by you</span>
                                 @endif
-                                @if($workflow->status=== 'received')
-                                <a href="{{ route('documents.review', $workflow->id) }}"
-                                   class="text-green-500 hover:underline">Review</a>
+                                
+                                {{-- Everyone can view document details --}}
+                                <a href="{{ route('documents.show', $workflow->document_id) }}"
+                                    class="text-blue-500 hover:underline ml-2">View</a>
+                                
+                                {{-- Only senders can edit their documents --}}
+                                @if($workflow->sender_id == auth()->id())
+                                    <a href="{{ route('documents.edit', $workflow->document_id) }}"
+                                        class="text-yellow-500 hover:underline ml-2">Edit</a>
                                 @endif
                             </td>
                         </tr>

@@ -27,13 +27,7 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated([
-            'first_name',
-            'middle_name',
-            'last_name',
-            'email',
-            'password' => 'required|same:password_confirmation|string|min:8',
-        ]));
+        $request->user()->fill($request->validated());
 
         // $register->password ?? $register->user()->update('password_set', '1');
 
