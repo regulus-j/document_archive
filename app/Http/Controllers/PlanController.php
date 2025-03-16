@@ -7,11 +7,22 @@ use Illuminate\Http\Request;
 
 class PlanController extends Controller
 {
+
     public function index()
     {
-        $plans = Plan::where('is_active', 1)->get();
-        return view('plans.index', compact('plans'));
+        $user = auth()->user();
+        $plans = Plan::where('is_active', 1)->paginate(6); // Fetch active plans
+    
+        // Check if companyAccount exists before accessing subscriptions
+        $subscription = $user->companyAccount ? $user->companyAccount->subscriptions->first() : null;
+    
+        return view('plans.index', compact('plans', 'subscription'));
     }
+    
+    
+
+    
+    
 
     public function register(Plan $plan)
     {

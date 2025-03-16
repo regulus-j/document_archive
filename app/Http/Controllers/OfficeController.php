@@ -2,121 +2,164 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CompanyAccount;  // ✅ Ensure this is the correct model
 use App\Models\Office;
 use Illuminate\Http\Request;
+use App\Models\User;
 
 class OfficeController extends Controller
 {
     /**
-     * Display a listing of the resource with parent office name if exists.
+     * Display a listing of the resource.
      */
     public function index()
     {
-        $company = auth()->user()->companies()->first();
+        $companyId = auth()->user()->company_id;
 
-        if (!$company) {
-            return redirect()->route('companies.create')
-                ->with('error', 'Please create a company first.');
-        }
+        // Fetch only offices that belong to this company
+        $offices = Office::where('company_id', $companyId)->get();
 
-        $offices = Office::where('company_id', $company->id)->get();
         return view('offices.index', compact('offices'));
     }
+
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
-    {
-        $offices = Office::all()->pluck('name', 'id');
-        $companies = auth()->user()->companies()->pluck('company_name', 'id');
+   
+public function create()
+{
+    $user = auth()->user();
+    $adminCompanyId = $user->company_id;
 
-        return view('offices.create', compact('offices', 'companies'));
-    }
+    // Fetch only offices under the same company
+    $offices = Office::where('company_id', $adminCompanyId)->pluck('name', 'id');
 
-    public function store(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'parent_office_id' => 'nullable|exists:offices,id',
-            'company_id' => 'required|exists:company_accounts,id',
+    // Fetch users who belong to the same company
+    $users = User::where('company_id', $adminCompanyId)->get();
 
-        ]);
+    // Fetch companies only if the admin is not tied to one
+    $companies = $adminCompanyId ? null : CompanyAccount::pluck('name', 'id');
 
-        $office = Office::create([
-            'company_id' => $request->company_id,
-            'name' => $request->name,
-            'parent_office_id' => $request->parent_office_id,
-        ]);
-
-        return redirect()->route('office.index')
-            ->with('success', 'Office created successfully.');
-    }
+    return view('offices.create', compact('offices', 'companies', 'adminCompanyId', 'users'));
+}
 
     /**
-     * Display the specified resource.
+     * Store a newly created office in the database.
+     */
+    public function store(Request $request)
+{
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'parent_office_id' => 'nullable|exists:offices,id',
+        'company_id' => 'required|exists:company_accounts,id',
+        'user_id' => 'nullable|exists:users,id', // ✅ Validate user_id if selected
+    ]);
+
+    // Create the new office
+    $office = Office::create([
+        'name' => $request->name,
+        'parent_office_id' => $request->parent_office_id,
+        'company_id' => auth()->user()->company_id, // Associate with the logged-in user's company
+    ]);
+
+    // Assign user to office
+    if ($request->user_id) {
+        $user = User::find($request->user_id);
+        if ($user) {
+            $user->office_id = $office->id;
+            $user->save();
+        }
+    }
+
+    return redirect()->route('offices.index')->with('success', 'Office created successfully!');
+}
+
+ 
+
+ 
+
+
+
+
+    /**
+     * Show the specified office.
      */
     public function show(Office $office)
     {
-        //
-        $office = Office::with('parentOffice')->find($office->id);
+        if ($office->company_id != auth()->user()->company_id) {
+            return redirect()->route('offices.index')->with('error', 'Unauthorized access.');
+        }
+
         return view('offices.show', compact('office'));
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Show the form for editing the specified office.
      */
     public function edit(Office $office)
     {
-        $office = Office::with('parentOffice')->find($office->id);
-        $offices = Office::where('id', '!=', $office->id)->get();  // Exclude current office
+        if ($office->company_id != auth()->user()->company_id) {
+            return redirect()->route('offices.index')->with('error', 'Unauthorized access.');
+        }
+
+        $offices = Office::where('company_id', auth()->user()->company_id)
+                         ->where('id', '!=', $office->id)
+                         ->pluck('name', 'id');
 
         return view('offices.edit', compact('office', 'offices'));
     }
+
     /**
-     * Update the specified resource in storage.
+     * Update the specified office in storage.
      */
     public function update(Request $request, Office $office)
     {
-        //
+        if ($office->company_id != auth()->user()->company_id) {
+            return redirect()->route('offices.index')->with('error', 'Unauthorized access.');
+        }
+
         $request->validate([
             'name' => 'required|string|max:255',
             'parent_office_id' => 'nullable|exists:offices,id',
         ]);
 
-        try {
-            $office->update([
-                'name' => $request->name,
-                'parent_office_id' => $request->parent_office_id,
-            ]);
+        $office->update([
+            'name' => $request->name,
+            'parent_office_id' => $request->parent_office_id,
+        ]);
 
-            return redirect()->route('office.index')->with('success', 'Office updated successfully.');
-        } catch (\Exception $e) {
-            return back()->with('error', 'Error updating office');
-        }
+        return redirect()->route('offices.index')->with('success', 'Office updated successfully.');
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Remove the specified office.
      */
     public function destroy(Office $office)
     {
-        try {
-            if ($office->childOffices()->count() > 0) {
-                return back()->with('error', 'Cannot delete office with child offices.');
-            }
-            if ($office->users()->count() > 0) {
-                return back()->with('error', 'Cannot delete office with associated users.');
-            }
-            if ($office->sentTransactions()->count() > 0 || $office->receivedTransactions()->count() > 0) {
-                return back()->with('error', 'Cannot delete office associated with documents.');
-            }
-
-            $office->delete();
-            return redirect()->route('offices.index')->with('success', 'Office deleted successfully.');
-        } catch (\Exception $e) {
-            return back()->with('error', 'Error deleting office: ' . $e->getMessage());
+        if ($office->company_id != auth()->user()->company_id) {
+            return redirect()->route('offices.index')->with('error', 'Unauthorized access.');
         }
+
+        if ($office->childOffices()->exists()) {
+            return back()->with('error', 'Cannot delete an office with child offices.');
+        }
+        if ($office->users()->exists()) {
+            return back()->with('error', 'Cannot delete an office with users.');
+        }
+        if ($office->sentTransactions()->exists() || $office->receivedTransactions()->exists()) {
+            return back()->with('error', 'Cannot delete an office with associated transactions.');
+        }
+
+        $office->delete();
+
+        return redirect()->route('offices.index')->with('success', 'Office deleted successfully.');
     }
 
+//     public function hasCompany($id)
+// {
+//     $office = Office::with('company')->findOrFail($id);
+    
+//     return view('offices.show', compact('office'));
+// }
 
 }

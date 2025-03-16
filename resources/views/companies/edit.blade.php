@@ -1,133 +1,113 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">Edit Company</div>
+<div class="container mx-auto p-6">
+    <div class="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow">
+        <h2 class="text-2xl font-semibold text-center mb-6">Edit Company</h2>
+        
+        <form method="POST" action="{{ route('companies.update', $company->id) }}">
+            @csrf
+            @method('PUT')
 
-                <div class="card-body">
-                    <form method="POST" action="{{ route('companies.update', $company->id) }}">
-                        @csrf
-                        @method('PUT')
-
-                        <div class="form-group row mb-3">
-                            <label for="company_name" class="col-md-4 col-form-label text-md-right">Company Name</label>
-                            <div class="col-md-6">
-                                <input id="company_name" type="text" class="form-control @error('company_name') is-invalid @enderror" 
-                                    name="company_name" value="{{ old('company_name', $company->company_name) }}" required>
-                                @error('company_name')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <div class="form-group row mb-3">
-                            <label for="registered_name" class="col-md-4 col-form-label text-md-right">Registered Name</label>
-                            <div class="col-md-6">
-                                <input id="registered_name" type="text" class="form-control @error('registered_name') is-invalid @enderror" 
-                                    name="registered_name" value="{{ old('registered_name', $company->registered_name) }}" required>
-                                @error('registered_name')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <div class="form-group row mb-3">
-                            <label for="company_email" class="col-md-4 col-form-label text-md-right">Company Email</label>
-                            <div class="col-md-6">
-                                <input id="company_email" type="email" class="form-control @error('company_email') is-invalid @enderror" 
-                                    name="company_email" value="{{ old('company_email', $company->company_email) }}" required>
-                                @error('company_email')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <div class="form-group row mb-3">
-                            <label for="company_phone" class="col-md-4 col-form-label text-md-right">Company Phone</label>
-                            <div class="col-md-6">
-                                <input id="company_phone" type="text" class="form-control @error('company_phone') is-invalid @enderror" 
-                                    name="company_phone" value="{{ old('company_phone', $company->company_phone) }}" required>
-                                @error('company_phone')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <div class="form-group row mb-3">
-                            <label class="col-md-4 col-form-label text-md-right">Select User</label>
-                            <div class="col-md-6">
-                                @foreach($users as $user)
-                                    <div class="form-check" id="owner-list">
-                                        <input class="form-check-input" type="radio" 
-                                            name="user_id" 
-                                            id="user_{{ $user->id }}" 
-                                            value="{{ $user->id }}"
-                                            {{ old('user_id', $company->user_id) == $user->id ? 'checked' : '' }}>
-                                        <label class="form-check-label" for="user_{{ $user->id }}">
-                                            {{ $user->first_name . ' ' . $user->last_name }}
-                                            <br>
-                                            {{ $user->email }}
-                                        </label>
-                                    </div>
-                                @endforeach
-                                <div class="mb-2">
-                                    <input type="text" id="ownerSearch" class="form-control" placeholder="Search users...">
-                                </div>
-
-                                @push('scripts')
-                                <script>
-                                    document.addEventListener('DOMContentLoaded', function() {
-                                        document.getElementById('ownerSearch').addEventListener('keyup', function() {
-                                            const searchText = this.value.toLowerCase();
-                                            const radioButtons = document.querySelectorAll('#owner-list .form-check');
-
-                                            radioButtons.forEach(function(item) {
-                                                const label = item.querySelector('.form-check-label');
-                                                const text = label.textContent.toLowerCase();
-                                                
-                                                item.style.display = text.includes(searchText) ? '' : 'none';
-                                            });
-                                        });
-                                    });
-                                </script>
-                                @endpush
-                                <div class="mt-2">
-                                    {{ $users->links() }}
-                                </div>
-
-                                @error('user_id')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <div class="form-group row mb-0">
-                            <div class="col-md-6 offset-md-4">
-                                <button type="submit" class="btn btn-primary">
-                                    Update Company
-                                </button>
-                                <a href="{{ route('companies.index') }}" class="btn btn-secondary">
-                                    Cancel
-                                </a>
-                            </div>
-                        </div>
-                    </form>
+            <!-- Company Details -->
+            <div class="grid gap-4">
+                <div>
+                    <label class="block font-medium">Company Name</label>
+                    <input type="text" name="company_name" value="{{ $company->company_name }}" class="w-full p-2 border rounded" required>
+                </div>
+                <div>
+                    <label class="block font-medium">Registered Name</label>
+                    <input type="text" name="registered_name" value="{{ $company->registered_name }}" class="w-full p-2 border rounded" required>
+                </div>
+                <div>
+                    <label class="block font-medium">Company Email</label>
+                    <input type="email" name="company_email" value="{{ $company->company_email }}" class="w-full p-2 border rounded" required>
+                </div>
+                <div>
+                    <label class="block font-medium">Company Phone</label>
+                    <input type="text" name="company_phone" value="{{ $company->company_phone }}" class="w-full p-2 border rounded" required>
                 </div>
             </div>
+           <!-- Company Address -->
+<div class="mt-4">
+    <h3 class="font-medium">Company Address</h3>
+    <div class="grid grid-cols-2 gap-4 mt-2">
+        <div>
+            <label class="block font-medium">State</label>
+            <input type="text" name="state" value="{{ old('state', $company->address->state ?? '') }}" class="w-full p-2 border rounded" required>
+        </div>
+        <div>
+            <label class="block font-medium">City</label>
+            <input type="text" name="city" value="{{ old('city', $company->address->city ?? '') }}" class="w-full p-2 border rounded" required>
+        </div>
+        <div>
+            <label class="block font-medium">ZIP Code</label>
+            <input type="text" name="zip_code" value="{{ old('zip_code', $company->address->zip_code ?? '') }}" class="w-full p-2 border rounded" required>
+        </div>
+        <div>
+            <label class="block font-medium">Country</label>
+            <input type="text" name="country" value="{{ old('country', $company->address->country ?? '') }}" class="w-full p-2 border rounded" required>
         </div>
     </div>
 </div>
+
+            <!-- Users in Company -->
+            <div class="mt-6">
+                <h3 class="font-medium">Users in Company</h3>
+                <input type="text" id="userSearch" placeholder="Search users..." class="w-full p-2 border rounded mt-2">
+                <div id="userList" class="mt-2 max-h-40 overflow-y-auto border p-2 rounded">
+                    @foreach($users as $user)
+                        <div class="flex justify-between items-center border-b py-2">
+                            <span>{{ $user->first_name }} {{ $user->last_name }} ({{ $user->email }})</span>
+                            <button type="button" class="text-red-500" onclick="removeUser({{ $user->id }})">Remove</button>
+                        </div>
+                    @endforeach
+                </div>
+                
+                <!-- Add User Section -->
+                <select name="new_user_id" class="w-full p-2 border rounded mt-2">
+                    <option value="">-- Select User to Add --</option>
+                    @foreach($allUsers as $user)
+                        <option value="{{ $user->id }}">{{ $user->first_name }} {{ $user->last_name }} ({{ $user->email }})</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div>
+    <label class="block font-medium">Company Admin</label>
+    <select name="company_admin_id" class="w-full p-2 border rounded">
+        @foreach($users as $user)
+            <option value="{{ $user->id }}" {{ $company->company_admin_id == $user->id ? 'selected' : '' }}>
+                {{ $user->first_name }} {{ $user->last_name }} ({{ $user->email }})
+            </option>
+        @endforeach
+    </select>
+</div>
+
+
+            <!-- Submit Buttons -->
+            <div class="mt-6 flex gap-4">
+                <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded">Update Company</button>
+                <a href="{{ route('companies.index') }}" class="bg-gray-300 px-4 py-2 rounded">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.getElementById('userSearch').addEventListener('keyup', function() {
+        let searchText = this.value.toLowerCase();
+        let users = document.querySelectorAll('#userList div');
+
+        users.forEach(function(user) {
+            let text = user.textContent.toLowerCase();
+            user.style.display = text.includes(searchText) ? '' : 'none';
+        });
+    });
+
+    function removeUser(userId) {
+        // Implement AJAX call to remove user from company
+        alert('Removing user ID ' + userId);
+    }
+</script>
 @endsection

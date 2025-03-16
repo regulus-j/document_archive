@@ -3,10 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class DocumentWorkflow extends Model
 {
-    //
+    use SoftDeletes; // Enables soft deletes
+
     protected $table = 'document_workflows';
 
     protected $fillable = [
@@ -18,6 +20,13 @@ class DocumentWorkflow extends Model
         'remarks',
     ];
 
+    protected $attributes = [
+        'status' => 'pending', // Default status
+    ];
+
+    /**
+     * Relationships
+     */
     public function document()
     {
         return $this->belongsTo(Document::class, 'document_id');
@@ -33,20 +42,43 @@ class DocumentWorkflow extends Model
         return $this->belongsTo(User::class, 'recipient_id');
     }
 
+    /**
+     * Approve the workflow step
+     */
     public function approve()
     {
-        $this->status = 'approved';
-        $this->save();
+        $this->update(['status' => 'approved']);
     }
 
+    /**
+     * Reject the workflow step
+     */
     public function reject()
     {
-        $this->status = 'rejected';
-        $this->save();
+        $this->update(['status' => 'rejected']);
     }
 
+    /**
+     * Scope for pending workflows
+     */
+    public function scopePending($query)
+    {
+        return $query->where('status', 'pending');
+    }
+
+    /**
+     * Check if workflow is pending
+     */
     public function isPending()
     {
         return $this->status === 'pending';
+    }
+
+    /**
+     * Check if workflow is approved
+     */
+    public function isApproved()
+    {
+        return $this->status === 'approved';
     }
 }

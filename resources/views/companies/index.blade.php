@@ -4,6 +4,11 @@
 <div class="bg-gray-100 min-h-screen py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h1 class="text-3xl font-bold text-gray-900 mb-6">Your Managed Companies</h1>
+            @if (session('success'))
+            <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6" role="alert">
+                {{ session('success') }}
+            </div>
+        @endif
 
         <div class="bg-white shadow-xl rounded-lg overflow-hidden">
             <div class="p-6 border-b border-gray-200">
@@ -49,6 +54,10 @@
                             </th>
                             <th scope="col"
                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Address
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Actions
                             </th>
                         </tr>
@@ -60,16 +69,27 @@
                                     {{ $loop->iteration }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    <div>{{ $company->company_name }}</div>
-                                    <div class="text-xs text-gray-400">{{ $company->registered_name }}</div>
+                                    {{ $company->company_name }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    <div>{{ $company->company_email }}</div>
-                                    <div class="text-xs text-gray-400">{{ $company->company_phone }}</div>
+                                    {{ $company->company_email }}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <td class="px-6 py-4 text-sm text-gray-500">
+                                    @if($company->address)
+                                        {{ $company->address->address }}<br>
+                                        {{ $company->address->city }}, {{ $company->address->state }}<br>
+                                        {{ $company->address->country }} {{ $company->address->zip_code }}
+                                    @else
+                                        No address provided
+                                    @endif
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                                    <a href="{{ route('companies.show', $company->id) }}"
+                                        class="text-green-600 hover:text-green-900 transition-colors duration-300 mr-2">
+                                        View
+                                    </a>
                                     <a href="{{ route('companies.edit', $company->id) }}"
-                                        class="text-indigo-600 hover:text-indigo-900 mr-2 transition-colors duration-300">
+                                        class="text-indigo-600 hover:text-indigo-900 transition-colors duration-300 mr-2">
                                         Edit
                                     </a>
                                     <form action="{{ route('companies.destroy', $company->id) }}" method="POST" class="inline">
@@ -85,7 +105,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="4" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
+                                <td colspan="5" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
                                     No companies found
                                 </td>
                             </tr>

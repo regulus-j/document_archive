@@ -17,7 +17,7 @@ class CreateAdminUserSeeder extends Seeder
      */
     public function run()
     {
-        // Create the admin user
+        // Create the superadmin user
         $user = User::firstOrCreate(
             ['email' => 'admin@example.com'],
             [
@@ -28,18 +28,10 @@ class CreateAdminUserSeeder extends Seeder
             ]
         );
 
-        // Check if the 'Admin' role already exists
-        $role = Role::firstOrCreate(['name' => 'Admin']);
+        // Create the superadmin role if it doesn't exist
+        $role = Role::firstOrCreate(['name' => 'superadmin']);
 
-        $admin = Admin::firstOrCreate([
-            'user_id' => $user->id,
-        ]);
-
-        // Assign the 'Admin' role to the user
+        // Assign the superadmin role to the user
         $user->assignRole($role);
-
-        // Optionally, add permissions to the 'Admin' role
-        $permissions = Permission::all();
-        $role->syncPermissions($permissions);
     }
 }

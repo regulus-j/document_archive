@@ -37,7 +37,7 @@ class DocumentController extends Controller
      */
     public function index(): View
     {
-        if (auth()->user()->hasRole('Admin')) {
+        if (auth()->user()->hasRole('admin')) {
             $documents = Document::with(['user', 'status', 'transaction.fromOffice', 'transaction.toOffice'])
                 ->latest()
                 ->paginate(5);
@@ -82,9 +82,18 @@ class DocumentController extends Controller
         return view('documents.index', compact('documents', 'auditLogs', 'highestRecipients'));
     }
 
+   
+    public function workflows()
+    {
+        $workflows = DocumentWorkflow::with('document', 'recipient')->paginate(10);
+        return view('documents.workflows', compact('workflows'));
+    }
+
+
+
     public function showArchive(): View
     {
-        if (auth()->user()->hasRole('Admin')) {
+        if (auth()->user()->hasRole('admin')) {
             $documents = Document::with(['user', 'status', 'transaction.fromOffice', 'transaction.toOffice'])->latest()->paginate(5);
         } else {
             $userOfficeIds = auth()->user()->offices->pluck('id')->toArray();
@@ -242,7 +251,7 @@ class DocumentController extends Controller
 
             $query = Document::with(['user', 'status', 'transaction.fromOffice', 'transaction.toOffice']);
 
-            if (!auth()->user()->hasRole('Admin')) {
+            if (!auth()->user()->hasRole('admin')) {
                 $userOfficeIds = auth()->user()->offices->pluck('id')->toArray();
                 $query->whereHas('user.offices', function ($q) use ($userOfficeIds) {
                     $q->whereIn('offices.id', $userOfficeIds);
@@ -872,6 +881,7 @@ class DocumentController extends Controller
         $workflow->receive();
     }
 
+
     public function reviewDocument($id)
     {
         $workflow = DocumentWorkflow::findOrFail($id);
@@ -880,3 +890,6 @@ class DocumentController extends Controller
         return view('documents.review', compact('workflow', 'document'));
     }
 }
+    
+
+
