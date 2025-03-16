@@ -155,9 +155,10 @@
                 </table>
 
                 <!-- Pagination -->
-                <div class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
-                    {{ $subscriptions->links() }}
+                <div class="mt-6 flex justify-center">
+                {{ $plans->links() }} <!-- ✅ Now works because $plans is paginated -->
                 </div>
+
             </div>
         </div>
     </div>

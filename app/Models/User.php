@@ -63,15 +63,24 @@ class User extends Authenticatable
         return $this->belongsToMany(Office::class);
     }
 
+    public function office()
+{
+    return $this->belongsTo(Office::class, 'office_id'); // Assuming office_id exists in users table
+}
+
+
     public function getFullNameAttribute(): string
     {
         return "{$this->first_name} {$this->middle_name} {$this->last_name}";
     }
 
-    public function company(): HasOne
-    {
-        return $this->hasOne(CompanyAccount::class);
-    }
+    
+
+    public function company()
+{
+    return $this->belongsTo(Company::class, 'company_id');
+}
+
 
     public function companySubscriptions()
     {
@@ -92,4 +101,5 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Plan::class);
     }
+
 }

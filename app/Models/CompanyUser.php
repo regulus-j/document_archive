@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CompanyUser extends Model
 {
@@ -13,12 +14,18 @@ class CompanyUser extends Model
         'company_id',
     ];
 
-    public function user()
+    /**
+     * Get the user that belongs to the company user.
+     */
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function company()
+    /**
+     * Get the company that belongs to the company user.
+     */
+    public function company(): BelongsTo
     {
         return $this->belongsTo(CompanyAccount::class);
     }

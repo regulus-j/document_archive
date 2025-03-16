@@ -2,20 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Mail\UserInvite;
 use App\Models\Office;
 use App\Models\User;
 use App\Models\CompanyAccount;
-use App\Models\Plan;
-use App\Models\CompanyUser;
+use App\Models\Company;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Str;
-use Illuminate\View\View;
 use Spatie\Permission\Models\Role;
+use Illuminate\View\View;
 
 class UserController extends Controller
 {
@@ -24,24 +19,9 @@ class UserController extends Controller
      */
     public function index(Request $request): View
     {
-        $company = CompanyAccount::where('user_id', auth()->id())->first();
-        $users = $company ? $company->employees()->paginate(5) : collect();
-
-        $roles = Role::all();
-
-        if (auth()->user()->hasRole('Admin')) {
-            return $this->showRegistered();
-        }
-
-        return view('users.index', compact('users', 'roles'))
-            ->with('i', ($request->input('page', 1) - 1) * 5);
-    }
-
-    public function showRegistered()
-    {
-        // Sample data fetch: adapt to your actual tables and relationships
-        $users = User::paginate(10);
-        return view('admin.users.registered', compact('users'));
+        $users = User::with('company')->paginate(10); // Fetch users with pagination
+        $roles = Role::all(); // Fetch all roles
+        return view('users.index', compact('users', 'roles'));
     }
 
     /**
@@ -62,7 +42,7 @@ class UserController extends Controller
 
         if ($request->filled('role')) {
             $query->whereHas('roles', function ($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->role . '%');
+                $q->where('id', $request->role);
             });
         }
 
@@ -71,35 +51,40 @@ class UserController extends Controller
         return view('users.index', compact('users', 'roles'))
             ->with('i', ($request->input('page', 1) - 1) * 5);
     }
-
+    public function __construct()
+    {
+        $this->middleware('auth'); // Ensures user is authenticated
+    
+        // Restrict user management to admins only
+        $this->middleware('role:admin|superadmin')->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
+    }
+    
     /**
      * Show the form for creating a new user.
      */
     public function create(): View
     {
-        $userCompany = CompanyAccount::where('user_id', auth()->id())->get();
-        $roles = Role::pluck('name', 'name')->all();
-        $offices = Office::pluck('name', 'id')->all();
+        $roles = Role::all(); // Fetch all roles
+        $userCompany = CompanyAccount::all(); // Fetch all companies
+        $offices = Office::all(); // Fetch all offices
 
-        return view('users.create', compact('roles', 'offices', 'userCompany'));
+        return view('users.create', compact('roles', 'userCompany', 'offices'));
     }
+    
 
     /**
      * Store a newly created user in storage.
      */
     public function store(Request $request): RedirectResponse
     {
-        $temp_pass = Str::random(12);
-
         $request->validate([
             'first_name' => 'required|string|max:255',
-            'middle_name' => 'required|string|max:255',
+            'middle_name' => 'nullable|string|max:255',
             'last_name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'offices' => 'required|array',
-            'offices.*' => 'exists:offices,id',
-            'roles' => 'required',
-            'companies' => 'required|exists:company_accounts,id'
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8|confirmed',
+            'roles' => 'required|array',
+            'roles.*' => 'exists:roles,id',  // Validate using role IDs
         ]);
 
         $user = User::create([
@@ -107,30 +92,11 @@ class UserController extends Controller
             'middle_name' => $request->middle_name,
             'last_name' => $request->last_name,
             'email' => $request->email,
-            'password' => bcrypt($temp_pass),
+            'password' => bcrypt($request->password),
         ]);
 
-        // Attach multiple offices
-        $user->offices()->attach($request->offices);
-
-        $user->assignRole($request->input('roles'));
-
-        $roleNames = $user->roles->pluck('name')->implode(', ');
-
-        Mail::to($user->email)->send(new UserInvite(
-            $user->first_name,
-            $user->email,
-            $temp_pass,
-            $roleNames,
-            route('login')
-        ));
-
-        $temp_pass = null;
-
-        CompanyUser::create([
-            'company_id' => $request->companies,
-            'user_id'     => $user->id,
-        ]);
+        // Assign roles using sync (expects role IDs)
+        $user->roles()->sync($request->roles);
 
         return redirect()->route('users.index')
             ->with('success', 'User created successfully');
@@ -141,9 +107,8 @@ class UserController extends Controller
      */
     public function show($id): View
     {
-        $user = User::find($id);
-
-        return view('users.show', compact('user'));
+        $company = Company::with('users')->findOrFail($id);
+        return view('users.show', compact('company'));
     }
 
     /**
@@ -151,47 +116,39 @@ class UserController extends Controller
      */
     public function edit($id): View
     {
-        $user = User::find($id);
-        $roles = Role::pluck('name', 'name')->all();
-        $userRoles = $user->roles->pluck('name', 'name')->all();
-        $offices = Office::pluck('name', 'id')->all();
-        $userOffices = $user->offices->pluck('id')->all();
+        $user = User::findOrFail($id);
+        $roles = Role::all(); // Fetch all roles
+        $userRoles = $user->roles->pluck('id')->toArray(); // Fetch user's roles as IDs
+        $userCompany = CompanyAccount::all(); // Fetch all companies
+        $offices = Office::all(); // Fetch all offices
 
-        return view('users.edit', compact('user', 'roles', 'userRoles', 'offices', 'userOffices'));
+        return view('users.edit', compact('user', 'roles', 'userRoles', 'userCompany', 'offices'));
     }
 
     /**
      * Update the specified user in storage.
      */
-    public function update(Request $request, $id): RedirectResponse
+    public function update(Request $request, User $user): RedirectResponse
     {
         $request->validate([
             'first_name' => 'required|string|max:255',
-            'middle_name' => 'required|string|max:255',
+            'middle_name' => 'nullable|string|max:255',
             'last_name' => 'required|string|max:255',
-            'email' => "required|email|unique:users,email,{$id}",
+            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'password' => 'nullable|string|min:8|confirmed',
             'roles' => 'required|array',
-            'roles.*' => 'exists:roles,name',
-            'offices' => 'required|array',
-            'offices.*' => 'exists:offices,id',
+            'roles.*' => 'exists:roles,id', // Validate using role IDs
         ]);
 
-        $input = $request->all();
-        if (!empty($input['password'])) {
-            $input['password'] = Hash::make($input['password']);
-        } else {
-            $input = Arr::except($input, ['password']);
-        }
+        $user->update([
+            'first_name' => $request->first_name,
+            'middle_name' => $request->middle_name,
+            'last_name' => $request->last_name,
+            'email' => $request->email,
+            'password' => $request->password ? bcrypt($request->password) : $user->password,
+        ]);
 
-        $user = User::find($id);
-        $user->update($input);
-
-        // Sync roles
-        $roleIds = Role::whereIn('name', $request->input('roles'))->pluck('id')->toArray();
-        $user->roles()->sync($roleIds);
-
-        // Sync offices
-        $user->offices()->sync($request->input('offices'));
+        $user->roles()->sync($request->roles);
 
         return redirect()->route('users.index')
             ->with('success', 'User updated successfully');

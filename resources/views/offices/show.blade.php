@@ -7,7 +7,7 @@
         <h2 class="text-3xl font-bold text-gray-900 mb-4 sm:mb-0">
             <i class="fas fa-building text-[#4285F4] mr-2"></i>{{ __('Office Details') }}
         </h2>
-        <a href="{{ route('office.index') }}"
+        <a href="{{ route('offices.index') }}"
             class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition ease-in-out duration-150">
             <i class="fas fa-arrow-left mr-2"></i>{{ __('Back to Offices') }}
         </a>
@@ -30,7 +30,7 @@
                     <p class="text-gray-600">{{ __('Updated At') }}: {{ $office->updated_at->format('d M Y, H:i') }}</p>
                 </div>
                 <div class="mt-4 sm:mt-0">
-                    <a href="{{ route('office.edit', $office->id) }}"
+                    <a href="{{ route('offices.edit', $office->id) }}"
                         class="inline-flex items-center px-4 py-2 bg-[#4285F4] border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-[#4285F4]/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#4285F4] transition ease-in-out duration-150">
                         <i class="fas fa-edit mr-2"></i>{{ __('Edit') }}
                     </a>

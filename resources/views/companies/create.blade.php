@@ -1,100 +1,105 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="min-h-screen bg-gradient-to-b from-gray-100 to-gray-200 py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-4xl mx-auto">
-        <div class="bg-white shadow-xl rounded-lg overflow-hidden">
-            <div class="p-6 sm:p-10">
-                <div class="flex flex-col sm:flex-row justify-between items-center mb-8">
-                    <h1 class="text-3xl font-extrabold text-gray-900 mb-4 sm:mb-0">
-                        Create New Company
-                    </h1>
-                    <a href="{{ route('companies.index') }}"
-                        class="inline-flex items-center px-4 py-2 bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-300 active:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition ease-in-out duration-150">
-                        <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                        </svg>
-                        Back to List
-                    </a>
+<div class="container mx-auto my-8 px-4 sm:px-6 lg:px-8">
+    <div class="bg-white shadow-lg rounded-xl p-8 max-w-4xl mx-auto">
+        <h1 class="text-2xl font-semibold text-gray-900">{{ __('Create New Company') }}</h1>
+
+        <!-- Validation Errors -->
+        @if(session('errors'))
+    <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6" role="alert">
+        <p class="font-bold">{{ __('Whoops! Something went wrong.') }}</p>
+        <ul class="mt-3 list-disc list-inside text-sm">
+            @foreach (session('errors')->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
+
+
+        <!-- Form -->
+        <form method="POST" action="{{ route('companies.store') }}" class="space-y-8">
+            @csrf
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Company Name -->
+            <div class="space-y-2">
+            <label for="company_name" class="text-sm font-medium text-gray-700">Company Name</label>
+            <input id="company_name" class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-[#4285F4]"
+            type="text" name="company_name" value="{{ old('company_name') }}" required>
+            </div>
+
+            <!-- Registered Name -->
+            <div class="space-y-2">
+            <label for="registered_name" class="text-sm font-medium text-gray-700">Registered Name</label>
+            <input id="registered_name" class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-[#4285F4]"
+            type="text" name="registered_name" value="{{ old('registered_name') }}" required>
+            </div>
+
+            <!-- Company Email -->
+            <div class="space-y-2">
+            <label for="company_email" class="text-sm font-medium text-gray-700">Company Email</label>
+            <input id="company_email" class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-[#4285F4]"
+            type="email" name="company_email" value="{{ old('company_email') }}" required>
+            </div>
+
+            <!-- Company Phone -->
+            <div class="space-y-2">
+            <label for="company_phone" class="text-sm font-medium text-gray-700">Company Phone</label>
+            <input id="company_phone" class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-[#4285F4]"
+            type="text" name="company_phone" value="{{ old('company_phone') }}" required>
+            </div>
+
+
+                <!-- Address -->
+                <div class="space-y-2">
+                    <x-input-label for="address" :value="__('Address')" class="text-sm font-medium text-gray-700" />
+                    <x-text-input id="address" class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-[#4285F4] focus:border-transparent transition-all"
+                        type="text" name="address" :value="old('address')" required autocomplete="address" />
+                    <x-input-error :messages="$errors->get('address')" class="text-sm" />
                 </div>
 
-                @if ($errors->any())
-                    <div class="rounded-md bg-red-50 p-4 mb-6">
-                        <div class="flex">
-                            <div class="flex-shrink-0">
-                                <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                                </svg>
-                            </div>
-                            <div class="ml-3">
-                                <h3 class="text-sm font-medium text-red-800">There were some problems with your input.</h3>
-                                <div class="mt-2 text-sm text-red-700">
-                                    <ul class="list-disc list-inside">
-                                        @foreach ($errors->all() as $error)
-                                            <li>{{ $error }}</li>
-                                        @endforeach
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                @endif
+                <!-- City -->
+                <div class="space-y-2">
+                    <x-input-label for="city" :value="__('City')" class="text-sm font-medium text-gray-700" />
+                    <x-text-input id="city" class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-[#4285F4] focus:border-transparent transition-all"
+                        type="text" name="city" :value="old('city')" required autocomplete="city" />
+                    <x-input-error :messages="$errors->get('city')" class="text-sm" />
+                </div>
 
-                <form action="{{ route('companies.store') }}" method="POST" class="space-y-6">
-                    @csrf
+                <!-- State -->
+                <div class="space-y-2">
+                    <x-input-label for="state" :value="__('State')" class="text-sm font-medium text-gray-700" />
+                    <x-text-input id="state" class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-[#4285F4] focus:border-transparent transition-all"
+                        type="text" name="state" :value="old('state')" required autocomplete="state" />
+                    <x-input-error :messages="$errors->get('state')" class="text-sm" />
+                </div>
 
-                    <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
-                        <input type="hidden" name="user_id" value="{{ Auth::id() }}">
-                        <input type="hidden" name="part" value='1'>
+                <!-- Zip Code -->
+                <div class="space-y-2">
+                    <x-input-label for="zip_code" :value="__('Zip Code')" class="text-sm font-medium text-gray-700" />
+                    <x-text-input id="zip_code" class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-[#4285F4] focus:border-transparent transition-all"
+                        type="text" name="zip_code" :value="old('zip_code')" required autocomplete="zip_code" />
+                    <x-input-error :messages="$errors->get('zip_code')" class="text-sm" />
+                </div>
 
-                        <div class="sm:col-span-2">
-                            <label for="company_name" class="block text-sm font-medium text-gray-700">Company Name</label>
-                            <input type="text" name="company_name" id="company_name" value="{{ old('company_name') }}"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                                required>
-                        </div>
-
-                        <div class="sm:col-span-2">
-                            <label for="registered_name" class="block text-sm font-medium text-gray-700">Registered Name</label>
-                            <input type="text" name="registered_name" id="registered_name" value="{{ old('registered_name') }}"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                                required>
-                        </div>
-
-                        <div>
-                            <label for="company_email" class="block text-sm font-medium text-gray-700">Company Email</label>
-                            <input type="email" name="company_email" id="company_email" value="{{ old('company_email') }}"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                                required>
-                        </div>
-
-                        <div>
-                            <label for="company_phone" class="block text-sm font-medium text-gray-700">Company Phone</label>
-                            <input type="text" name="company_phone" id="company_phone" value="{{ old('company_phone') }}"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                                required>
-                        </div>
-                    </div>
-
-                    <div class="pt-5">
-                        <div class="flex justify-end">
-                            <button type="submit"
-                                class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white {{ session('success') ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700' }} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                                {{ session('success') ? 'disabled' : '' }}>
-                                Create Company
-                            </button>
-                        </div>
-                    </div>
-
-                    @if(session('success'))
-                    <h1 class="text-3xl font-extrabold text-gray-900 mb-4 sm:mb-0">
-                        New Company Address
-                    </h1>
-                        @include('companies.partials.input_address')
-                    @endif
-                </form>
+                <!-- Country -->
+                <div class="space-y-2">
+                    <x-input-label for="country" :value="__('Country')" class="text-sm font-medium text-gray-700" />
+                    <x-text-input id="country" class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-[#4285F4] focus:border-transparent transition-all"
+                        type="text" name="country" :value="old('country')" required autocomplete="country" />
+                    <x-input-error :messages="$errors->get('country')" class="text-sm" />
+                </div>
             </div>
-        </div>
+
+            <!-- Submit Button -->
+            <div class="flex justify-end pt-4">
+                <x-primary-button class="px-6 py-3 bg-[#4285F4] hover:bg-[#4285F4]/90 transition-colors duration-200">
+                    <i class="fas fa-save mr-2"></i>{{ __('Create Company') }}
+                </x-primary-button>
+            </div>
+        </form>
     </div>
 </div>
 @endsection

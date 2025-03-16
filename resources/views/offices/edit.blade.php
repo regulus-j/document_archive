@@ -8,7 +8,7 @@
             <h2 class="text-3xl font-bold text-gray-900">
                 <i class="fas fa-edit text-[#4285F4] mr-2"></i>{{ __('Edit Office') }}
             </h2>
-            <a href="{{ route('office.index') }}"
+            <a href="{{ route('offices.index') }}"
                 class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition ease-in-out duration-150">
                 <i class="fas fa-arrow-left mr-2"></i>{{ __('Back to Offices') }}
             </a>
@@ -17,7 +17,7 @@
         <!-- Form Card -->
         <div class="bg-white shadow-md rounded-lg overflow-hidden">
             <div class="p-6 space-y-6">
-                <form action="{{ route('office.update', $office->id) }}" method="POST">
+                <form action="{{ route('offices.update', $office->id) }}" method="POST">
                     @csrf
                     @method('PUT')
 
@@ -57,7 +57,7 @@
 
                     <!-- Action Buttons -->
                     <div class="flex justify-end space-x-4 mt-6">
-                        <a href="{{ route('office.index') }}"
+                        <a href="{{ route('offices.index') }}"
                             class="inline-flex items-center px-4 py-2 bg-gray-300 border border-transparent rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition ease-in-out duration-150">
                             {{ __('Cancel') }}
                         </a>

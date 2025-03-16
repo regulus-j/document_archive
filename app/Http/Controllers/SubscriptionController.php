@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers;
 
+
+use App\Models\Subscriptions;
+use App\Models\Plan;
+
 use App\Models\CompanySubscription;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -55,5 +59,19 @@ class SubscriptionController extends Controller
 
         return response()->json(['message' => 'Subscription activated successfully']);
     }
+
+    public function index()
+{
+    $user = auth()->user();
+
+    // Ensure user has a companyAccount before accessing subscriptions
+    $subscriptions = optional($user->companyAccount)->subscriptions ?? collect();
+
+    $plans = Plan::paginate(10); // Fetch plans with pagination
+
+    return view('subscriptions.index', compact('subscriptions', 'plans'));
+}
+
+
 }
 

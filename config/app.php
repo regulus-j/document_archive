@@ -151,11 +151,12 @@ return [
         Illuminate\Translation\TranslationServiceProvider::class,
         Illuminate\Validation\ValidationServiceProvider::class,
         Illuminate\View\ViewServiceProvider::class,
+        
 
         /*
          * Package Service Providers...
          */
-        Barryvdh\DomPDF\ServiceProvider::class,
+     
 
         /*
          * Application Service Providers...
@@ -209,7 +210,7 @@ return [
         'View' => Illuminate\Support\Facades\View::class,
 
         // Add the PDF alias
-        'PDF' => Barryvdh\DomPDF\Facade\Pdf::class,
+        // 'PDF' => Barryvdh\DomPDF\Facade\Pdf::class,
 
     ],
 

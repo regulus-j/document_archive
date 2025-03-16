@@ -150,6 +150,13 @@
                     <p class="mt-6 text-center text-sm text-gray-500">Ideal for Businesses</p>
                 </div>
             </div>
+
+            <!-- Continue to Free Trial Button -->
+            <div class="mt-8 text-center">
+                <a href="{{ route('dashboard') }}" class="inline-block bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600">
+                    Continue to Free Trial
+                </a>
+            </div>
         </div>
     </div>
 </x-app-layout>

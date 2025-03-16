@@ -9,15 +9,16 @@ class CompanyAddress extends Model
 {
     protected $fillable = [
         'company_id',
-        'address',
+        'street',
         'city',
         'state',
+        'zip_code',
         'country',
-        'zip_code'
     ];
 
-    public function company()
+    // Define the inverse relationship
+    public function companyAccount()
     {
-        return $this->belongsTo(CompanyAccount::class, 'company_id');
+        return $this->belongsTo(CompanyAccount::class);
     }
 }

@@ -2,22 +2,46 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
+use App\Models\User;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // Define roles
+        $roles = ['superadmin', 'admin', 'user'];
 
-        User::factory()->create([
-            // 'name' => 'Test User',
-            // 'email' => 'test@example.com',
-        ]);
+        foreach ($roles as $role) {
+            Role::firstOrCreate(['name' => $role]);
+        }
+
+        // Define permissions
+        $permissions = [
+            'manage users',
+            'manage documents',
+            'view dashboard',
+        ];
+
+        foreach ($permissions as $permission) {
+            Permission::firstOrCreate(['name' => $permission]);
+        }
+
+        // Assign permissions to roles
+        Role::where('name', 'superadmin')->first()->givePermissionTo(Permission::all());
+        Role::where('name', 'admin')->first()->givePermissionTo(['manage users', 'view dashboard']);
+        Role::where('name', 'user')->first()->givePermissionTo(['view dashboard']);
+
+        // Create a Super Admin user
+        if (!User::where('email', 'superadmin@example.com')->exists()) {
+            $superAdmin = User::create([
+                'name' => 'Super Admin',
+                'email' => 'superadmin@example.com',
+                'password' => bcrypt('password123'),
+            ]);
+            $superAdmin->assignRole('superadmin');
+        }
     }
 }
