@@ -45,7 +45,7 @@
                 <h1 class="text-5xl font-bold mb-6">WELCOME BACK</h1>
                 <div class="w-16 h-1 bg-white mx-auto mb-6"></div>
                 <p class="text-sm opacity-80 mb-8">
-                    Access your secure document repository with ease. DocArchive provides efficient storage,
+                    Access your secure document repository with ease. DocTrack provides efficient storage,
                     organization, and retrieval of all your important documents. Your digital archive is just a login
                     away.
                 </p>

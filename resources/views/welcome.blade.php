@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DocArchive - Document Tracking & Archiving System</title>
+    <title>DocTrack - Document Tracking & Archiving System</title>
     <link rel="icon" href="{{ asset('images/logo.svg') }}">
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     @vite('resources/css/app.css')
@@ -349,7 +349,7 @@
     <section class="py-16 bg-blue-800 text-white">
         <div class="container mx-auto px-6 text-center">
             <h2 class="text-3xl font-bold mb-4">Ready to streamline your document management?</h2>
-            <p class="text-blue-100 mb-8 max-w-2xl mx-auto">Join thousands of organizations that trust DocArchive for their document tracking and archiving needs.</p>
+            <p class="text-blue-100 mb-8 max-w-2xl mx-auto">Join thousands of organizations that trust DocTrack for their document tracking and archiving needs.</p>
             <a href="{{ route('register') }}" class="inline-block bg-white text-blue-800 px-8 py-3 rounded-md font-medium hover:bg-blue-50 transition-colors shadow-lg">
                 Get Started Today
             </a>
@@ -402,7 +402,7 @@
                 </div>
             </div>
             <div class="pt-8 mt-8 border-t border-blue-800 text-center text-blue-300">
-                <p>&copy; {{ date('Y') }} DocArchive. All rights reserved.</p>
+                <p>&copy; {{ date('Y') }} DocTrack. All rights reserved.</p>
             </div>
         </div>
     </footer>
