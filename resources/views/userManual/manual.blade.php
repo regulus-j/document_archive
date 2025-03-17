@@ -11,13 +11,12 @@
 <body class="bg-gray-50 text-gray-900">
     <div x-data="{ activeTab: 'introduction' }" class="min-h-screen">
         <!-- Header -->
-        <header class="bg-gradient-to-r from-blue-700 to-indigo-800 text-black py-8 px-4 shadow-lg">
+        <header class="bg-gradient-to-r from-blue-700 to-indigo-800 text-white py-8 px-4 shadow-lg">
             <div class="container mx-auto max-w-6xl">
                 <h1 class="text-4xl font-bold tracking-tight mb-2 text-center">Document Tracking and Archiving System</h1>
-                <p class="text-blue-100 text-center text-lg">User Manual</p>
+                <p class="text-blue-100 text-center text-lg">User Manual - Version 1.0</p>
             </div>
         </header>
-
         <!-- Navigation -->
         <div class="sticky top-0 bg-white shadow-md z-10 border-b border-gray-200">
             <div class="container mx-auto max-w-6xl px-4 py-2 overflow-x-auto">
