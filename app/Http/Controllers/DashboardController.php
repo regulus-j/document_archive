@@ -54,6 +54,8 @@ class DashboardController extends Controller
             $query->where('status', 'pending');
         })->count();
         $todayDocuments = Document::whereDate('created_at', today())->count();
+        $countPendingDocs = $pendingDocuments;
+        $countRecentDocs = $recentDocuments->count();
     
         // **🚀 Correct Role Check for Admin**
         if ($user->hasRole('Admin') && $userCompany) {
@@ -63,13 +65,19 @@ class DashboardController extends Controller
                 'recentDocuments',
                 'pendingDocuments',
                 'todayDocuments',
-                'activeSubscription'
+                'activeSubscription',
+                'countPendingDocs',
+                'countRecentDocs',
             ));
         } else {
             return view('dashboard-office-user', compact(
                 'totalDocuments',
                 'recentDocuments',
-                'pendingDocuments'
+                'pendingDocuments',
+                'todayDocuments',
+                'activeSubscription',
+                'countPendingDocs',
+                'countRecentDocs',
             ));
         }
     }
