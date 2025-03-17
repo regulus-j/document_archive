@@ -17,7 +17,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\AddressController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TrialController;
-
+use App\Http\Controllers\UserManualController;
 Route::get('/', function () {
     return view('welcome');
 });
@@ -76,7 +76,7 @@ Route::prefix('admin')->middleware(['auth'])->group(function () {
     Route::get('/plans', [PlanController::class, 'index'])->name('admin.plans.index');
     Route::get('/subscriptions', [SubscriptionController::class, 'indexAdmin'])->name('admin.subscriptions.index');
     Route::get('/trial', [TrialController::class, 'start'])->name('trial.start');
-
+    Route::get('/user-manual', [UserManualController::class, 'show'])->name('userManual.manual');
 });
 
 Route::middleware('auth')->group(function () {

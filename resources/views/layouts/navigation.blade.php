@@ -5,7 +5,7 @@
                 <div class="flex-shrink-0">
                     <a href="{{ route('dashboard') }}" class="flex items-center">
                         <x-application-logo class="block h-8 w-auto text-blue-600" />
-                        <span class="ml-2 text-gray-900 text-lg font-semibold">DocArchive</span>
+                        <span class="ml-2 text-gray-900 text-lg font-semibold">DocTrack</span>
                     </a>
                 </div>
                 <div class="hidden md:block">
@@ -140,6 +140,11 @@
                             <x-dropdown-link :href="route('companies.userManaged', auth()->id())" class="hover:bg-blue-50 hover:text-blue-600">
                                 {{ __('Company') }}
                             </x-dropdown-link>
+                            <x-dropdown-link :href="route('userManual.manual', auth()->id())" class="hover:bg-blue-50 hover:text-blue-600">
+                                {{ __('Manual') }}
+                            </x-dropdown-link>
+
+
                             @endif
                             <x-dropdown-link :href="route('plans.index', auth()->id())" class="hover:bg-blue-50 hover:text-blue-600">
                                 {{ __('Plans & Subscription') }}
