@@ -43,7 +43,14 @@ class DashboardController extends Controller
         })->count();
         $todayDocuments = Document::whereDate('created_at', today())->count();
 
-        return view('dashboard', compact('recentTransactions', 'totalDocuments', 'recentDocuments', 'pendingDocuments', 'todayDocuments', 'activeSubscription'));
+        if (auth()->user()->hasRole('admin'))
+        {
+            return view('dashboard', compact('recentTransactions', 'totalDocuments', 'recentDocuments', 'pendingDocuments', 'todayDocuments', 'activeSubscription'));
+        }
+        else
+        {
+            return view('dashboard-office-user', compact('recentTransactions', 'totalDocuments', 'recentDocuments', 'pendingDocuments', 'todayDocuments', 'activeSubscription'));
+        }
     }
 
     private function superAdminDashboard(): View
