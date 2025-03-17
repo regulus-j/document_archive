@@ -36,7 +36,7 @@ class CompanyAccount extends Model
     }
 
     //company address
-    public function addresses(): HasMany
+    public function address(): HasMany
     {
         return $this->hasMany(CompanyAddress::class, 'company_id');
     }
