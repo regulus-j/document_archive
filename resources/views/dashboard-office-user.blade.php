@@ -25,8 +25,8 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 @foreach ([ 
                     ['title' => 'Documents Received', 'value' => $totalDocuments, 'icon' => 'M3 10h11M9 21V3m0 18v-8m-6 8h6m6-18h6m-6 0v18m0-18v8m6-8v8'], 
-                    ['title' => 'Pending Documents', 'value' => $recentDocuments, 'icon' => 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6'], 
-                    ['title' => 'Processed Documents', 'value' => $pendingDocuments, 'icon' => 'M5 13l4 4L19 7'], 
+                    ['title' => 'Pending Documents', 'value' => $countPendingDocs, 'icon' => 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6'], 
+                    ['title' => 'Processed Documents', 'value' => $countRecentDocs, 'icon' => 'M5 13l4 4L19 7'], 
                 ] as $stat)
                     <div class="bg-white shadow-sm rounded-lg">
                         <div class="p-6 border-b border-gray-200 flex items-center">
