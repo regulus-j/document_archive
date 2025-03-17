@@ -18,6 +18,7 @@ use App\Http\Controllers\AddressController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TrialController;
 use App\Http\Controllers\UserManualController;
+use App\Http\Controllers\UserManagedController;
 Route::get('/', function () {
     return view('welcome');
 });
@@ -92,7 +93,16 @@ Route::middleware('auth')->group(function () {
         Route::delete('/{user}', [UserController::class, 'destroy'])->name('users.destroy');
         Route::post('/search', [UserController::class, 'search'])->name('users.search');
     });
+    
+     
+    Route::get('/companies/manage/{id}', [UserManagedController::class, 'index'])->name('companies.userManaged');
 
+    Route::put('/companies/update-logo/{id}', [UserManagedController::class, 'updateLogo'])->name('companies.updateLogo');
+
+    Route::put('/companies/update-name/{id}', [UserManagedController::class, 'updateName'])->name('companies.updateName');
+
+    Route::put('/companies/update-theme/{id}', [UserManagedController::class, 'updateTheme'])->name('companies.updateTheme');
+       
     Route::prefix('companies')->group(function () {
         Route::get('/', [CompanyController::class, 'index'])->name('companies.index');
         Route::get('/create', [CompanyController::class, 'create'])->name('companies.create');
@@ -102,7 +112,7 @@ Route::middleware('auth')->group(function () {
         Route::put('/{company}', [CompanyController::class, 'update'])->name('companies.update');
         Route::delete('/{company}', [CompanyController::class, 'destroy'])->name('companies.destroy');
 
-        Route::get('/managed/{user}', [CompanyController::class, 'userCompanies'])->name('companies.userManaged');
+ 
 
         Route::prefix('{company}/addresses')->group(function () {
             Route::get('/', [CompanyController::class, 'addresses'])->name('companies.addresses.index');
@@ -111,7 +121,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/{address}/edit', [CompanyController::class, 'editAddress'])->name('companies.addresses.edit');
             Route::put('/{address}', [CompanyController::class, 'updateAddress'])->name('companies.addresses.update');
             Route::delete('/{address}', [CompanyController::class, 'destroyAddress'])->name('companies.addresses.destroy');
-        });
+     });
     });
 
     Route::prefix('documents')->group(function () {
