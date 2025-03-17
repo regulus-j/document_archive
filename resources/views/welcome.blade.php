@@ -126,7 +126,7 @@
                         <a href="#" class="inline-block border border-white text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">Learn More</a>
                     </div>
                     <div class="flex-grow">
-                        <img src="{{ asset('images/search.jpg') }}" alt="Document Tracking" class="w-full h-full object-cover">
+                        <img src="{{ asset('images/DocuTracking.png') }}" alt="Document Tracking" class="w-full h-full object-cover">
                     </div>
                 </div>
                 
