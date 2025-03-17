@@ -6,6 +6,8 @@ use App\Models\Document;
 use App\Models\User;    
 use App\Models\CompanyAccount;
 use App\Models\CompanySubscription;
+use App\Models\DocumentWorkflow;
+use App\Models\Office;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\DB;
 
@@ -46,16 +48,36 @@ class DashboardController extends Controller
         }
     
         // Fetch dashboard data
+        $incomingDocuments = \App\Models\DocumentWorkflow::where('recipient_id', $user->id)
+            ->whereIn('status', ['pending','appeal_requested'])
+            ->count();
+        $countCompanyUsers = $userCompany->employees()->count();
         $document = new Document;
         $recentTransactions = $document->transactions()->latest()->paginate(5);
-        $totalDocuments = Document::count();
+        $totalDocuments = Document::whereIn(
+            'uploader',
+            $userCompany->employees->pluck('id')->push($user->id)->unique()
+        )->count();
         $recentDocuments = Document::with('user', 'office', 'categories')->latest()->take(5)->get();
-        $pendingDocuments = Document::whereHas('status', function ($query) {
-            $query->where('status', 'pending');
-        })->count();
+        $pendingDocuments = DocumentWorkflow::where('status', 'pending')
+            ->whereIn('document_id', function($query) use ($userCompany, $user) {
+            $query->select('id')
+                ->from('documents')
+                ->whereIn('uploader', $userCompany->employees->pluck('id')->push($user->id)->unique());
+            })
+            ->count();
         $todayDocuments = Document::whereDate('created_at', today())->count();
         $countPendingDocs = $pendingDocuments;
         $countRecentDocs = $recentDocuments->count();
+        $countOffices = Office::where('company_id', $userCompany->id)->count();
+        $processedDocuments = \App\Models\DocumentWorkflow::where('recipient_id', $user->id)
+            ->whereIn('status', ['approved', 'rejected'])
+            ->whereNotIn('document_id', function($query) use ($user) {
+            $query->select('document_id')
+                ->from('document_workflows')
+                ->where('sender_id', $user->id);
+            })
+            ->count();
     
         // **🚀 Correct Role Check for Admin**
         if ($user->hasRole('Admin') && $userCompany) {
@@ -68,6 +90,9 @@ class DashboardController extends Controller
                 'activeSubscription',
                 'countPendingDocs',
                 'countRecentDocs',
+                'countCompanyUsers',
+                'incomingDocuments',
+                'countOffices',
             ));
         } else {
             return view('dashboard-office-user', compact(
@@ -78,6 +103,9 @@ class DashboardController extends Controller
                 'activeSubscription',
                 'countPendingDocs',
                 'countRecentDocs',
+                'countCompanyUsers',
+                'incomingDocuments',
+                'countOffices',
             ));
         }
     }

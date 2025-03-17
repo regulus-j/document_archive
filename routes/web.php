@@ -204,14 +204,15 @@ Route::middleware('auth')->group(function () {
         Route::post('/generate', [ReportController::class, 'generate'])->name('reports.generate');
     });
 
-    Route::get('/plans', [PlanController::class, 'index'])->name('plans.index');
-    Route::get('plans/create', [PlanController::class, 'create'])->name('plans.create');
-    Route::post('/plans/{plan}/subscribe', [PlanController::class, 'subscribe'])->name('plans.subscribe');
-
-    Route::get('/plans/{plan}', [PlanController::class, 'show'])->name('plans.show');
-    Route::get('/plans/{plan}/edit', [PlanController::class, 'edit'])->name('plans.edit');
-    Route::put('/plans/{plan}', [PlanController::class, 'update'])->name('plans.update');
-    Route::delete('/plans/{plan}', [PlanController::class, 'destroy'])->name('plans.destroy');
+    Route::middleware(['auth'])->group(function () {
+        Route::get('/plans', [PlanController::class, 'index'])->name('plans.index');
+        Route::get('/plans/create', [PlanController::class, 'create'])->name('plans.create');
+        Route::post('/plans', [PlanController::class, 'store'])->name('plans.store'); // Correct route for storing a plan
+        Route::get('/plans/{plan}', [PlanController::class, 'show'])->name('plans.show');
+        Route::get('/plans/{plan}/edit', [PlanController::class, 'edit'])->name('plans.edit');
+        Route::put('/plans/{plan}', [PlanController::class, 'update'])->name('plans.update');
+        Route::delete('/plans/{plan}', [PlanController::class, 'destroy'])->name('plans.destroy');
+    });
 
     Route::post('/subscriptions', [SubscriptionController::class, 'store']);
     Route::patch('/subscriptions/{subscription}', [SubscriptionController::class, 'update']);
