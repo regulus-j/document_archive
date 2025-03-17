@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>DocArchive - Document Archiving System</title>
+    <title>DocTrack - Document Tracking & Archiving System</title>
     <link rel="icon" href="{{ asset('images/logo.svg') }}">
 
     <!-- Fonts -->
@@ -38,7 +38,7 @@
 
             <div class="relative z-10 max-w-md text-center">
                 <div class="mb-20">
-                    <p class="text-sm uppercase tracking-wider mb-2">DOCARCHIVE</p>
+                    <p class="text-sm uppercase tracking-wider mb-2">DOCTRACK</p>
                 </div>
 
                 <p class="text-lg mb-2">Nice to see you again</p>
