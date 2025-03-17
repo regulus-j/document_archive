@@ -13,7 +13,7 @@
                 </svg>
             </div>
         </div>
-        <h1 class="text-2xl font-semibold mb-2">DocArchive</h1>
+        <h1 class="text-2xl font-semibold mb-2">DocTrack</h1>
         <p class="text-gray-500 text-sm">
             Please enter your credentials to access your account
         </p>

@@ -96,7 +96,7 @@
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                                 </svg>
                             </div>
-                            <span class="ml-3 text-gray-600">Up to 20 users</span>
+                            <span class="ml-3 text-gray-600">Up to 15 users</span>
                         </li>
                     </ul>
 
@@ -146,7 +146,18 @@
                     <p class="mt-6 text-center text-sm text-gray-500">Ideal for Businesses</p>
                 </div>
             </div>
+             <!-- Start Free Trial Button -->
+            <div class="mt-12 flex justify-center">
+                <a href="{{ route('trial.start') }}"
+                class="mt-8 flex items-center justify-center px-4 py-3 text-sm font-semibold text-white bg-blue-500 rounded-md hover:bg-blue-600">
+                    Start Free Trial
+                    <svg class="w-4 h-4 ml-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                </svg>
+                </a>
+            </div> 
         </div>
     </div>
 </x-app-layout>
 
+           
