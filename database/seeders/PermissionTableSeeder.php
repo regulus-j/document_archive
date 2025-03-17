@@ -25,7 +25,6 @@ class PermissionTableSeeder extends Seeder
            'document-delete',
            'document-release',
            'document-receive',
-           'document-terminal',
            'audit-list',
            'user-list',
            'user-create',
