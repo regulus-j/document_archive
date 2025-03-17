@@ -130,35 +130,38 @@
                                 </button>
                             </x-slot>
 
-                        <x-slot name="content">
-                            <x-dropdown-link :href="route('profile.edit')" class="hover:bg-blue-50 hover:text-blue-600">
-                                {{ __('Profile') }}
-                            </x-dropdown-link>
+                            <x-slot name="content">
+    <!-- Profile link is always shown -->
+    <x-dropdown-link :href="route('profile.edit')" class="hover:bg-blue-50 hover:text-blue-600">
+        {{ __('Profile') }}
+    </x-dropdown-link>
 
-                            {{-- Add condtion if company_onwer == auth()->id --}}
-                            @if(!(auth()->user()->isAdmin()))
-                            <x-dropdown-link :href="route('companies.userManaged', auth()->id())" class="hover:bg-blue-50 hover:text-blue-600">
-                                {{ __('Company') }}
-                            </x-dropdown-link>
-                            <x-dropdown-link :href="route('userManual.manual', auth()->id())" class="hover:bg-blue-50 hover:text-blue-600">
-                                {{ __('Manual') }}
-                            </x-dropdown-link>
+                @if(auth()->user()->hasRole('Admin')) 
+                    <!-- Admin sees Company & Plans -->
+                    <x-dropdown-link :href="route('companies.userManaged', auth()->id())" class="hover:bg-blue-50 hover:text-blue-600">
+                        {{ __('Company') }}
+                    </x-dropdown-link>
+                    <x-dropdown-link :href="route('plans.index', auth()->id())" class="hover:bg-blue-50 hover:text-blue-600">
+                        {{ __('Plans & Subscription') }}
+                    </x-dropdown-link>
+                @endif
 
+                <!-- Manual link is shown to all users -->
+                <x-dropdown-link :href="route('userManual.manual', auth()->id())" class="hover:bg-blue-50 hover:text-blue-600">
+                    {{ __('Manual') }}
+                </x-dropdown-link>
 
-                            @endif
-                            <x-dropdown-link :href="route('plans.index', auth()->id())" class="hover:bg-blue-50 hover:text-blue-600">
-                                {{ __('Plans & Subscription') }}
-                            </x-dropdown-link>
+                <!-- Logout button is always available -->
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <x-dropdown-link :href="route('logout')"
+                        onclick="event.preventDefault(); this.closest('form').submit();"
+                        class="hover:bg-blue-50 hover:text-blue-600">
+                        {{ __('Log Out') }}
+                    </x-dropdown-link>
+                </form>
+            </x-slot>
 
-                                <form method="POST" action="{{ route('logout') }}">
-                                    @csrf
-                                    <x-dropdown-link :href="route('logout')"
-                                        onclick="event.preventDefault(); this.closest('form').submit();"
-                                        class="hover:bg-blue-50 hover:text-blue-600">
-                                        {{ __('Log Out') }}
-                                    </x-dropdown-link>
-                                </form>
-                            </x-slot>
                         </x-dropdown>
                     </div>
                 </div>
