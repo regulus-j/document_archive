@@ -6,9 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
-    <title>{{ config('app.name', 'DocArchive') }}</title>
+    <title>{{ config('app.name', 'DocTrack') }}</title>
 
-    <title>DocArchive - Document Archiving System</title>
+    <title>DocTrack - Document Tracking & Archiving System</title>
     <link rel="icon" href="{{ asset('images/logo.svg') }}">
 
     <!-- Fonts -->
