@@ -117,6 +117,23 @@
                                     @endforeach
                                 </select>
                             </div>
+                            <div>
+                            <label for="office_id" class="block text-sm font-medium text-gray-700">Select Office</label>
+                            <select name="office_id" id="office_id" class="form-select mt-1 block w-full">
+                                @foreach ($offices as $office)
+                                    <option value="{{ $office->id }}">{{ $office->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <select name="recipients[]" id="recipients" multiple class="form-select mt-1 block w-full">
+                            @if(isset($users) && $users->count())
+                                @foreach ($users as $user)
+                                    <option value="{{ $user->id }}">{{ $user->first_name }} {{ $user->last_name }}</option>
+                                @endforeach
+                            @else
+                                <option value="">No users available</option>
+                            @endif
+                        </select>
 
                             <div class="sm:col-span-2">
                                 <label for="upload" class="block text-sm font-medium text-gray-700 mb-2">Upload Main
@@ -224,6 +241,22 @@
                 }
             });
         });
+
+        document.getElementById('office_id').addEventListener('change', function () {
+    const officeId = this.value;
+    fetch(`/api/users?office_id=${officeId}`)
+        .then(response => response.json())
+        .then(data => {
+            const recipientsSelect = document.getElementById('recipients');
+            recipientsSelect.innerHTML = ''; // Clear existing options
+            data.forEach(user => {
+                const option = document.createElement('option');
+                option.value = user.id;
+                option.textContent = user.name; // Assuming name is a property
+                recipientsSelect.appendChild(option);
+            });
+        });
+});
 
         // Main Document Upload Handler
         document.getElementById('main-document').addEventListener('change', function () {

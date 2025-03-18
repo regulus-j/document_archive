@@ -84,6 +84,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('roles', RoleController::class);
 
     Route::prefix('users')->group(function () {
+        Route::get('/api/users', [UserController::class, 'getUsersByOffice']);
         Route::get('/', [UserController::class, 'index'])->name('users.index');
         Route::get('/create', [UserController::class, 'create'])->name('users.create');
         Route::post('/', [UserController::class, 'store'])->name('users.store');
@@ -136,6 +137,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/complete', [DocumentController::class, 'showComplete'])->name('documents.complete');
         Route::delete('/attachments/{id}', [DocumentController::class, 'deleteAttachment'])->name('attachments.delete');
         Route::get('/forward/{document}', [DocumentController::class, 'forwardDocument'])->name('documents.forward');
+        Route::get('/documents/restore/{id}', [DocumentController::class, 'restore'])->name('documents.restore');
 
         Route::prefix('workflows')->group(function () {
             Route::get('/', [DocumentWorkflowController::class, 'workflowManagement'])
