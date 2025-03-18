@@ -78,4 +78,13 @@ class Document extends Model
     {
         return $this->hasMany(DocumentWorkflow::class, 'doc_id');
     }
+
+    public function originatingOffice()
+{
+    return $this->belongsTo(Office::class, 'from_office'); // Assuming 'from_office' is the foreign key
+}
+
+public function recipients() {
+    return $this->belongsToMany(User::class, 'document_recipients', 'document_id', 'recipient_id');
+}
 }

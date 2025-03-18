@@ -251,8 +251,11 @@
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         {{ $document->transaction?->fromOffice?->name ?? 'N/A' }}
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {{ isset($highestRecipients[$document->id]) ? $highestRecipients[$document->id]->implode(', ') : 'N/A' }}
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                         $document->originatingOffice?->name ?? 'N/A' }}
+                                        </td>
+                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {{ $document->recipients->pluck('name')->implode(', ') ?? 'N/A' }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         {{ $document->created_at->format('M d, Y H:i') }}

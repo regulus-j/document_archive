@@ -63,6 +63,9 @@ class User extends Authenticatable
         return $this->belongsToMany(Office::class);
     }
 
+
+
+
     public function getFullNameAttribute(): string
     {
         return "{$this->first_name} {$this->middle_name} {$this->last_name}";
