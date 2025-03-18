@@ -80,14 +80,18 @@ class UserController extends Controller
      * Show the form for creating a new user.
      */
     public function create(): View
-    {
-        $userCompany = CompanyAccount::where('user_id', auth()->id())->get();
-        $roles = Role::pluck('name', 'name')->all();
-        $company = auth()->user()->companies()->first();
-        $offices = Office::where('company_id', $company->id)->get();
+{
+    $userCompany = CompanyAccount::where('user_id', auth()->id())->get();
+    $roles = Role::pluck('name', 'name')->all();
+    $company = auth()->user()->companies()->first();
+    $offices = Office::where('company_id', $company->id)->get();
 
-        return view('users.create', compact('roles', 'offices', 'userCompany'));
-    }
+    // ✅ Fetch users that belong to the same company & offices
+    $users = User::whereIn('office_id', $offices->pluck('id'))->get();
+
+    return view('users.create', compact('roles', 'offices', 'userCompany', 'users'));
+}
+
 
     /**
      * Store a newly created user in storage.
@@ -214,4 +218,10 @@ class UserController extends Controller
         return redirect()->route('users.index')
             ->with('success', 'User updated successfully');
     }
+    public function getUsersByOffice(Request $request)
+{
+    $officeId = $request->query('office_id');
+    $users = User::where('office_id', $officeId)->get(); // Adjust based on your user model structure
+    return response()->json($users);
+}
 }
