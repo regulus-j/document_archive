@@ -44,17 +44,6 @@
                 <x-input-error :messages="$errors->get('first_name')" class="mt-2" />
             </div>
 
-            <!-- Middle Name -->
-            <div>
-                <x-input-label for="middle_name" :value="__('Middle Name')"
-                    class="block text-sm font-medium text-gray-700" />
-                <x-text-input id="middle_name"
-                    class="mt-1 block w-full rounded-md border-[#4285F4] shadow-sm focus:border-[#4285F4] focus:ring focus:ring-[#4285F4] focus:ring-opacity-50"
-                    type="text" name="middle_name" :value="old('middle_name', $user->middle_name)"
-                    autocomplete="additional-name" />
-                <x-input-error :messages="$errors->get('middle_name')" class="mt-2" />
-            </div>
-
             <!-- Last Name -->
             <div>
                 <x-input-label for="last_name" :value="__('Last Name')"
@@ -83,63 +72,46 @@
                         class="block w-full rounded-md border-[#4285F4] shadow-sm focus:border-[#4285F4] focus:ring focus:ring-[#4285F4] focus:ring-opacity-50"
                         multiple>
                         @foreach ($roles as $value => $label)
-                            <option value="{{ $value }}" {{ in_array($value, $userRoles) ? 'selected' : '' }}>{{ $label }}
-                            </option>
+                            <option value="{{ $value }}" {{ in_array($value, $userRoles) ? 'selected' : '' }}>{{ $label }}</option>
                         @endforeach
                     </select>
                 </div>
                 <x-input-error :messages="$errors->get('roles')" class="mt-2" />
             </div>
 
-            @if(auth()->user()->isAdmin())
-            <div class="space-y-2">
-                <x-input-label for="companies" :value="__('Company')" class="text-sm font-medium text-gray-700" />
-                <input type="text" id="search-company" class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-[#4285F4] focus:border-transparent transition-all mb-2"
-                    placeholder="Search a company">
-                <select name="companies" id="companies" class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-[#4285F4] focus:border-transparent transition-all"
-                    multiple>
-                    @foreach ($userCompany as $company)
-                        <option value="{{ $company->id }}">{{ $company->company_name }}</option>
-                    @endforeach
-                </select>
-                <x-input-error :messages="$errors->get('companies')" class="text-sm" />
-            </div>
-            @else
-            <input type="hidden" name="companies" value="{{auth()->user()->company()->first()->id}}" src="" alt="">
-            @endif
-
-            <!-- Offices -->
-            <div>
-                <x-input-label for="offices" :value="__('Offices')" class="block text-sm font-medium text-gray-700" />
-                <div class="mt-1 relative">
-                    <input type="text" id="search-office"
-                        class="block w-full rounded-md border-[#4285F4] shadow-sm focus:border-[#4285F4] focus:ring focus:ring-[#4285F4] focus:ring-opacity-50 mb-2"
-                        placeholder="Search an office">
-                    <select name="offices[]" id="offices"
-                        class="block w-full rounded-md border-[#4285F4] shadow-sm focus:border-[#4285F4] focus:ring focus:ring-[#4285F4] focus:ring-opacity-50"
-                        multiple>
-                        @foreach ($offices as $value => $label)
-                            <option value="{{ $value }}" {{ in_array($value, $userOffices) ? 'selected' : '' }}>{{ $label }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                <x-input-error :messages="$errors->get('offices')" class="mt-2" />
-            </div>
-
-            @if (auth()->user()->isAdmin() || auth()->user()->hasRole('admin'))
-                <!-- Companies -->
+            <!-- Companies -->
+            @if(auth()->user()->isAdmin() || auth()->user()->hasRole('Admin'))
                 <div class="space-y-2">
                     <x-input-label for="companies" :value="__('Company')" class="text-sm font-medium text-gray-700" />
                     <input type="text" id="search-company" class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-[#4285F4] focus:border-transparent transition-all mb-2"
                         placeholder="Search a company">
-                    <select name="companies" id="companies" class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-[#4285F4] focus:border-transparent transition-all"
+                    <select name="companies[]" id="companies" class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-[#4285F4] focus:border-transparent transition-all"
                         multiple>
                         @foreach ($userCompany as $company)
                             <option value="{{ $company->id }}">{{ $company->company_name }}</option>
                         @endforeach
                     </select>
                     <x-input-error :messages="$errors->get('companies')" class="text-sm" />
+                </div>
+            @endif
+
+            <!-- Offices -->
+            @if (!$user->hasRole('Admin'))
+                <div>
+                    <x-input-label for="offices" :value="__('Offices')" class="block text-sm font-medium text-gray-700" />
+                    <div class="mt-1 relative">
+                        <input type="text" id="search-office"
+                            class="block w-full rounded-md border-[#4285F4] shadow-sm focus:border-[#4285F4] focus:ring focus:ring-[#4285F4] focus:ring-opacity-50 mb-2"
+                            placeholder="Search an office">
+                        <select name="offices[]" id="offices"
+                            class="block w-full rounded-md border-[#4285F4] shadow-sm focus:border-[#4285F4] focus:ring focus:ring-[#4285F4] focus:ring-opacity-50"
+                            multiple>
+                            @foreach ($offices as $value => $label)
+                                <option value="{{ $value }}" {{ in_array($value, $userOffices) ? 'selected' : '' }}>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <x-input-error :messages="$errors->get('offices')" class="mt-2" />
                 </div>
             @endif
         </div>
@@ -170,27 +142,7 @@
 
             // Add event listener to search input
             searchOffice.addEventListener('input', filterOffices);
-
-            // Initialize select2 for multiple selects if available
-            if (typeof $ !== 'undefined' && $.fn.select2) {
-                $('#roles, #offices').select2({
-                    theme: 'classic',
-                    width: '100%'
-                });
-
-                // Integrate select2 with the search functionality
-                $('#offices').on('select2:open', function () {
-                    setTimeout(function () {
-                        $('.select2-search__field').on('input', function () {
-                            filterOffices();
-                        });
-                    }, 0);
-                });
-            } else {
-                console.warn('Select2 is not available. Falling back to native select elements.');
-            }
         });
     </script>
 @endpush
-
 @endsection
