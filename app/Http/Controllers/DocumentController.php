@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use PhpOffice\PhpWord\IOFactory;
 use Spatie\PdfToText\Pdf;
+use Illuminate\Support\Facades\Auth;
 
 class DocumentController extends Controller
 {
@@ -38,19 +39,22 @@ class DocumentController extends Controller
     public function index(): View
     {
         if (auth()->user()->hasRole('Admin')) {
-            $documents = Document::with(['user', 'status', 'transaction.fromOffice', 'transaction.toOffice'])
+            // Fetch documents with originating office and recipients for admin users
+            $documents = Document::with(['originatingOffice', 'recipients', 'status', 'transaction.fromOffice', 'transaction.toOffice'])
                 ->latest()
                 ->paginate(5);
         } else {
             $userOfficeIds = auth()->user()->offices->pluck('id')->toArray();
     
-            $documents = Document::with(['user', 'status', 'transaction.fromOffice', 'transaction.toOffice'])
+            // Fetch documents for non-admin users based on their offices
+            $documents = Document::with(['originatingOffice', 'recipients', 'status', 'transaction.fromOffice', 'transaction.toOffice'])
                 ->whereHas('user.offices', function ($query) use ($userOfficeIds) {
                     $query->whereIn('offices.id', $userOfficeIds);
                 })
                 ->latest()
                 ->paginate(5);
         }
+        
     
         $auditLogs = DocumentAudit::latest()->paginate(15);
     
@@ -107,10 +111,21 @@ class DocumentController extends Controller
 
     //Storing the document
     public function uploadController(Request $request){
+        \Log::info('User Offices:', Auth::user()->offices->toArray());
         \Log::info('uploadController called');
 
         $request->from_office = 1;
         $request->to_office = 2;
+        $officeId = $request->from_office; // Assuming you're getting the office ID from the request
+        $office = Office::find($officeId);
+    
+        if ($office) {
+            $users = $office->users; // This will give you the users associated with that office
+            // Now you can use the $users variable as needed, e.g., forwarding the document
+        } else {
+            // Handle the case where the office is not found
+            \Log::error('Office not found for ID: ' . $officeId);
+        }
 
         //upload to database
         $request->validate([

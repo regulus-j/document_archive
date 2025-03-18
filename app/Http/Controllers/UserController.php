@@ -169,54 +169,49 @@ class UserController extends Controller
     /**
      * Update the specified user in storage.
      */
-    public function update(Request $request, $id): RedirectResponse
-    {
-        $request->validate([
+    public function update(Request $request, $id) {
+        $user = User::findOrFail($id);
+    
+        // Prepare validation rules
+        $rules = [
             'first_name' => 'required|string|max:255',
-            'middle_name' => 'required|string|max:255',
+            'middle_name' => 'nullable|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => "required|email|unique:users,email,{$id}",
             'roles' => 'required|array',
-            'roles.*' => 'exists:roles,name',
-            'offices' => 'required|array',
-            'offices.*' => 'exists:offices,id',
             'companies' => 'required|exists:company_accounts,id'
-        ]);
-
+        ];
+    
+        // Conditionally require offices field
+        if (!$user->hasRole('Admin')) {
+            $rules['offices'] = 'required|array'; // Only require if not admin
+        }
+    
+        // Validate the request with the prepared rules
+        $request->validate($rules);
+    
+        // Update user details
         $input = $request->all();
         if (!empty($input['password'])) {
             $input['password'] = Hash::make($input['password']);
-        } else {
-            $input = Arr::except($input, ['password']);
         }
-
-        $user = User::find($id);
-        $user->update($input);
-
+    
         // Sync roles
         $roleIds = Role::whereIn('name', $request->input('roles'))->pluck('id')->toArray();
         $user->roles()->sync($roleIds);
-
-        // Sync offices
-        $user->offices()->sync($request->input('offices'));
-
+    
+        // Sync offices if not admin
+        if (!$user->hasRole('Admin')) {
+            $user->offices()->sync($request->input('offices'));
+        }
+    
         // Update company association
+        $companyId = $request->companies[0]; // Get the first selected company ID
         CompanyUser::where('user_id', $user->id)->update([
-            'company_id' => $request->companies
+            'company_id' => $companyId // Use the single company ID
         ]);
-
+    
         return redirect()->route('users.index')
             ->with('success', 'User updated successfully');
-    }
-
-    /**
-     * Remove the specified user from storage.
-     */
-    public function destroy($id): RedirectResponse
-    {
-        User::find($id)->delete();
-
-        return redirect()->route('users.index')
-            ->with('success', 'User deleted successfully');
     }
 }
