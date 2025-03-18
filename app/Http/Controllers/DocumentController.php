@@ -87,27 +87,28 @@ class DocumentController extends Controller
     }
 
     public function showArchive(): View
-    {
-        if (auth()->user()->hasRole('Admin')) {
-            $documents = Document::with(['user', 'status', 'transaction.fromOffice', 'transaction.toOffice'])->latest()->paginate(5);
-        } else {
-            $userOfficeIds = auth()->user()->offices->pluck('id')->toArray();
+{
+    $paginationCount = 5; // Define a constant for pagination count
 
-            $documents = Document::with(['user', 'status', 'transaction.fromOffice', 'transaction.toOffice'])
-                ->whereHas('user.offices', function ($query) use ($userOfficeIds) {
-                    $query->whereIn('offices.id', $userOfficeIds);
-                })
-                ->latest()
-                ->paginate(5);
-        }
+    if (auth()->user()->hasRole('Admin')) {
+        $documents = Document::with(['user', 'status', 'transaction.fromOffice', 'transaction.toOffice'])
+                             ->latest()
+                             ->paginate($paginationCount);
+    } else {
+        $userOfficeIds = auth()->user()->offices->pluck('id')->toArray();
 
-        $auditLogs = DocumentAudit::paginate(15);
-
-        return view('documents.archive', array_merge([
-            'documents' => $documents,
-            'i' => (request()->input('page', 1) - 1) * 5,
-        ], compact('auditLogs')));
+        $documents = Document::with(['user', 'status', 'transaction.fromOffice', 'transaction.toOffice'])
+            ->whereHas('user.offices', function ($query) use ($userOfficeIds) {
+                $query->whereIn('offices.id', $userOfficeIds);
+            })
+            ->latest()
+            ->paginate($paginationCount);
     }
+
+    $auditLogs = DocumentAudit::paginate(15);
+
+    return view('documents.archive', compact('documents', 'auditLogs', 'paginationCount'));
+}
 
     //Storing the document
     public function uploadController(Request $request){
@@ -328,135 +329,114 @@ class DocumentController extends Controller
      * Show the form for creating a new document.
      */
     public function create(): View
-    {
-        $company = CompanyAccount::where('user_id', auth()->id())->first();
+{
+    $company = CompanyAccount::where('user_id', auth()->id())->first();
 
-        $users = $company ? $company->employees()->paginate(10) : collect();
-        $offices = Office::all();
+    // Initialize categories and offices
+    $categories = DocumentCategory::all()->pluck('category', 'id');
+    $offices = Office::all(); // Fetch all offices regardless of the company account
 
-        $categories = DocumentCategory::all()->pluck('category', 'id');
+    // Initialize users as an empty collection
+    $users = collect();
 
-        return view('documents.create', compact('offices', 'categories', 'users'));
+    // Check if the company account exists
+    if (!$company) {
+        return view('documents.create')->with('error', 'No company account found for this user.')
+                                       ->with('categories', $categories)
+                                       ->with('offices', $offices);
     }
 
-    /**
-     * Store a newly created document in storage.
-     */
-    public function store(Request $request): RedirectResponse
-    {
-        // Validate the request
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required',
-            'classification' => 'required|string',
-            // 'from_office' => 'required|exists:offices,id',
-            // 'to_office' => 'required|exists:offices,id',
-            'remarks' => 'nullable|string|max:250',
-            'upload' => 'required|file|mimes:jpeg,png,jpg,gif,pdf,docx|max:10240', // 10MB max
-            'attachements.*' => 'file|mimes:jpeg,png,jpg,gif,pdf,docx|max:10240',
+    $users = $company->employees()->get(); // Fetch all users from the company
+    \Log::info('Fetched users:', $users->toArray());
+
+    return view('documents.create', compact('offices', 'categories', 'users'));
+}
+/**
+ * Store a newly created document in storage.
+ */
+public function store(Request $request): RedirectResponse
+{
+    // Validate the request
+    $request->validate([
+        'title' => 'required|string|max:255',
+        'description' => 'required',
+        'classification' => 'required|string',
+        'from_office' => 'required|exists:offices,id', // Ensure from_office is validated
+        'to_office' => 'required|exists:offices,id', // Ensure to_office is validated
+        'remarks' => 'nullable|string|max:250',
+        'upload' => 'required|file|mimes:jpeg,png,jpg,gif,pdf,docx|max:10240', // 10MB max
+        'attachments.*' => 'file|mimes:jpeg,png,jpg,gif,pdf,docx|max:10240',
+        'recipients' => 'required|array', // Validate recipients
+        'office_id' => 'required|exists:offices,id', // Validate office selection
+    ]);
+
+    try {
+        // Handle file upload
+        $file = $request->file('upload');
+        $fileName = time() . '_' . $file->getClientOriginalName();
+        $filePath = $file->storeAs('documents', $fileName, 'public');
+
+        // Create document record
+        $document = Document::create([
+            'title' => $request->title,
+            'uploader' => auth()->id(),
+            'description' => $request->description,
+            'path' => $filePath,
+            'remarks' => $request->remarks ?? null,
+            'from_office' => $request->from_office, // Set originating office
+            'to_office' => $request->to_office, // Set destination office
         ]);
 
-        try {
-            // Handle file upload
-            $file = $request->file('upload');
-            $fileName = time() . '_' . $file->getClientOriginalName();
-            $filePath = $file->storeAs('documents', $fileName, 'public');
-            // $fullPath = Storage::path('public/' . $filePath);
+        // Attach categories
+        $document->categories()->attach([$request->classification]);
 
-            // Extract content based on file type
-            // $content = '';
-            // In the store method, replace the OCR section with:
-            // if ($this->isImage($file)) {
-            //     // Configure Tesseract with proper path
-            //     $command = '"' . env('TESSERACT_PATH', 'C:\Program Files\Tesseract-OCR\tesseract.exe') . '" "' . $fullPath . '" stdout';
-            //     $content = shell_exec($command);
+        // Set document status
+        $document->status()->create([
+            'status' => 'pending',
+        ]);
 
-            //     if (empty($content)) {
-            //         \Log::warning('OCR produced no output for file: ' . $fileName);
-            //         $content = ''; // Fallback to empty content
-            //     }
+        // Handle additional attachments if any
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $attachment) {
+                \Log::info('Processing attachment: ' . $attachment->getClientOriginalName());
+                
+                $attachmentName = time() . '_' . $attachment->getClientOriginalName();
+                $attachmentPath = $attachment->storeAs('attachments', $attachmentName, 'public');
 
-            //     // Log the command and output for debugging
-            //     \Log::info('OCR Command: ' . $command);
-            //     \Log::info('OCR Output: ' . ($content ?? 'No output'));
-            // }
-
-            // Create document record
-
-            $document = Document::create([
-                'title' => $request->title,
-                'uploader' => auth()->id(),
-                'description' => $request->description,
-                'path' => $filePath,
-                'remarks' => $request->remarks ?? null,
-            ]);
-
-            $document->categories()->attach([$request->classification]);
-
-            $document->status()->create([
-                'status' => 'pending',
-            ]);
-            $tracking_number = $this->generateTrackingNumber($request->from_office, $request->classification);
-
-            // Create tracking number record
-            DocumentTrackingNumber::create([
-                'doc_id' => $document->id,
-                'tracking_number' => $tracking_number,
-            ]);
-
-            DocumentTransaction::create([
-                'doc_id' => $document->id,
-                'from_office' => $request->from_office,
-                'to_office' => $request->to_office,
-            ]);
-
-            // Handle additional attachments if any
-
-            if ($request->hasFile('attachments')) {
-
-                foreach ($request->file('attachments') as $attachment) {
-
-                    $attachmentName = time() . '_' . $attachment->getClientOriginalName();
-
-                    $attachmentPath = $attachment->storeAs('attachments', $attachmentName, 'public');
-
-                    DocumentAttachment::create([
-
-                        'document_id' => $document->id,
-
-                        'filename' => $attachmentName,
-
-                        'path' => $attachmentPath,
-
-                    ]);
-                }
+                DocumentAttachment::create([
+                    'document_id' => $document->id,
+                    'filename' => $attachmentName,
+                    'path' => $attachmentPath,
+                ]);
             }
-
-            // Log document creation
-            $this->logDocumentAction($document, 'created', 'pending', 'Document uploaded');
-
-            $data = $this->generateTrackingSlip($document->id, auth()->id(), $tracking_number);
-
-            return redirect()->route('documents.index')
-                ->with('data', $data)
-                ->with('success', 'Document uploaded successfully');
-
-        } catch (Exception $e) {
-            \Log::error('Document processing error: ' . $e->getMessage());
-
-            return redirect()->back()
-                ->with('error', 'Error processing document: ' . $e->getMessage())
-                ->withInput();
+        } else {
+            \Log::info('No attachments found in the request.');
         }
+
+        // Log document creation
+        $this->logDocumentAction($document, 'created', 'pending', 'Document uploaded');
+
+        $data = $this->generateTrackingSlip($document->id, auth()->id(), $tracking_number);
+
+        return redirect()->route('documents.index')
+            ->with('data', $data)
+            ->with('success', 'Document uploaded successfully');
+    } catch (Exception $e) {
+        \Log::error('Document processing error: ' . $e->getMessage());
+
+        return redirect()->back()
+            ->with('error', 'Error processing document: ' . $e->getMessage())
+            ->withInput();
     }
+}
 
-    private function isImage($file): bool
-    {
-        $mimeType = $file->getMimeType();
+private function isImage($file): bool
+{
+    $mimeType = $file->getMimeType();
+    return in_array($mimeType, ['image/jpeg', 'image/png', 'image/gif']);
+}
 
-        return strpos($mimeType, 'image/') === 0;
-    }
-
+// Other methods...
     private function extractPdfContent(string $path): string
     {
         try {
@@ -785,4 +765,13 @@ class DocumentController extends Controller
 
         return view('documents.audit', compact('auditLogs'));
     }
+
+    public function restore($id)
+{
+    $document = Document::findOrFail($id);
+    $document->status = 'active'; // or whatever your active status is
+    $document->save();
+
+    return redirect()->route('documents.archive')->with('success', 'Document restored successfully.');
+}
 }
