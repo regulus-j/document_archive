@@ -82,6 +82,7 @@
             </div>
             
             <!-- Start Free Trial Button -->
+            @if(auth()->user()->isAdmin())
             <div class="mt-12 flex justify-center">
                 <a href="{{ route('trial.start') }}"
                 class="px-6 py-3 text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-400 rounded-md hover:from-blue-700 hover:to-blue-500 shadow-lg transform transition hover:-translate-y-0.5">
@@ -90,7 +91,8 @@
                     <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
                 </svg>
                 </a>
-            </div> 
+            </div>
+            @endif
         </div>
     </div>
 </x-app-layout>
