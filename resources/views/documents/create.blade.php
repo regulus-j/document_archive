@@ -448,6 +448,28 @@ document.addEventListener('DOMContentLoaded', function () {
             addAttachmentBtn.classList.add('opacity-50', 'cursor-not-allowed');
         }
     });
+document.querySelector('form').addEventListener('submit', function (event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+    fetch(form.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            window.location.href = "{{ route('documents.index') }}";
+        } else {
+            return response.json().then(data => {
+                console.error('Upload error:', data);
+            });
+        }
+    })
+    .catch(error => console.error('Error:', error));
 });
 </script>
 @endsection

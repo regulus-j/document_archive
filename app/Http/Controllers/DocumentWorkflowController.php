@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
 use App\Models\DocumentWorkflow;
 use App\Models\Document;
 use App\Models\DocumentAttachment;
@@ -17,14 +18,17 @@ class DocumentWorkflowController extends Controller
     {
         $request->validate([
             'document_id' => 'required|exists:documents,id',
-            'sender_id'   => 'required|exists:users,id',
-            'recipient_id'=> 'required|exists:users,id',
-            'step_order'  => 'required|integer',
+            'sender_id' => 'required|exists:users,id',
+            'recipient_id' => 'required|exists:users,id',
+            'step_order' => 'required|integer',
         ]);
 
         try {
             $workflow = DocumentWorkflow::create($request->only([
-                'document_id', 'sender_id', 'recipient_id', 'step_order',
+                'document_id',
+                'sender_id',
+                'recipient_id',
+                'step_order',
             ]));
 
             DocumentAudit::logDocumentAction($workflow->document, 'workflow', 'pending', 'Document workflow created');
@@ -41,15 +45,15 @@ class DocumentWorkflowController extends Controller
 
         $request->validate([
             'recipient_batch' => 'required|array',
-            'step_order'      => 'required|array',
-            'remarks'         => 'nullable|array',
+            'step_order' => 'required|array',
+            'remarks' => 'nullable|array',
         ]);
 
         $document->status()->update(['status' => 'forwarded']);
-        
+
         // Fix: Pass document ID instead of document object
         DocumentAudit::logDocumentAction(
-            $document->id, 
+            $document->id,
             auth()->id(),
             'forward',
             'forwarded',
@@ -63,11 +67,11 @@ class DocumentWorkflowController extends Controller
             foreach ($recipients as $recipientId) {
                 DocumentWorkflow::create([
                     'document_id' => $document->id,
-                    'sender_id'   => auth()->id(),
-                    'recipient_id'=> $recipientId,
-                    'step_order'  => $request->step_order[$batchIndex],
-                    'remarks'     => $request->remarks[$batchIndex] ?? null,
-                    'status'      => 'pending'
+                    'sender_id' => auth()->id(),
+                    'recipient_id' => $recipientId,
+                    'step_order' => $request->step_order[$batchIndex],
+                    'remarks' => $request->remarks[$batchIndex] ?? null,
+                    'status' => 'pending'
                 ]);
             }
         }
@@ -80,7 +84,7 @@ class DocumentWorkflowController extends Controller
     {
         $workflow = DocumentWorkflow::findOrFail($id);
         $workflow->approve();
-        
+
         // Fix: Pass document ID instead of document object
         DocumentAudit::logDocumentAction(
             $workflow->document_id,
@@ -97,7 +101,7 @@ class DocumentWorkflowController extends Controller
     {
         $workflow = DocumentWorkflow::findOrFail($id);
         $workflow->reject();
-        
+
         // Fix: Pass document ID instead of document object
         DocumentAudit::logDocumentAction(
             $workflow->document_id,
@@ -143,10 +147,10 @@ class DocumentWorkflowController extends Controller
     public function reviewSubmit(Request $request)
     {
         $validated = $request->validate([
-            'workflow_id'   => 'required|exists:document_workflows,id',
-            'remark'        => 'nullable|string|max:1000',
+            'workflow_id' => 'required|exists:document_workflows,id',
+            'remark' => 'nullable|string|max:1000',
             'attachments.*' => 'nullable|file|mimes:jpeg,png,jpg,gif,pdf,docx|max:10240',
-            'action'        => 'required|in:approve,reject',
+            'action' => 'required|in:approve,reject',
         ]);
 
         $workflow = DocumentWorkflow::findOrFail($validated['workflow_id']);
@@ -155,10 +159,10 @@ class DocumentWorkflowController extends Controller
             foreach ($request->file('attachments') as $attachment) {
                 $attachmentName = time() . '_' . $attachment->getClientOriginalName();
                 $attachmentPath = $attachment->storeAs('attachments', $attachmentName, 'public');
-                \App\Models\DocumentAttachment::create([
+                DocumentAttachment::create([
                     'document_id' => $workflow->document->id,
-                    'filename'    => $attachmentName,
-                    'path'        => $attachmentPath,
+                    'filename' => $attachmentName,
+                    'path' => $attachmentPath,
                 ]);
             }
         }
@@ -196,14 +200,13 @@ class DocumentWorkflowController extends Controller
     {
         $workflow = DocumentWorkflow::where('tracking_number', $workflow_id)
             ->where(function ($query) {
-            $query->where('sender_id', auth()->id())
-                  ->orWhere('recipient_id', auth()->id());
+                $query->where('sender_id', auth()->id())
+                    ->orWhere('recipient_id', auth()->id());
             })
             ->firstOrFail();
 
-        if($action === 'received' || 'find')
-        {
-            return route('document.show', $workflow->doc_id);
+        if ($action === 'received' || $action === 'find') {
+            return route('document.show', $workflow->document_id);
         }
 
         if (!in_array($action, ['received', 'accepted', 'rejected'])) {
@@ -219,8 +222,8 @@ class DocumentWorkflowController extends Controller
     {
         $originatingOffice = $user->originating_office ?? 'UNK';
         $officeCode = strtoupper(substr($originatingOffice, 0, 3));
-        $uploadDate = $document->created_at 
-            ? $document->created_at->format('Ymd') 
+        $uploadDate = $document->created_at
+            ? $document->created_at->format('Ymd')
             : date('Ymd');
         $numberPart = str_pad($document->id, 6, '0', STR_PAD_LEFT);
 
