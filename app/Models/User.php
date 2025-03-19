@@ -88,7 +88,17 @@ class User extends Authenticatable
 
     public function isAdmin(): bool
     {
-        return Admin::where('user_id', $this->id)->exists();
+        return $this->hasRole('super-admin') || $this->hasRole('admin');
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return $this->hasRole('super-admin');
+    }
+
+    public function isCompanyAdmin(): bool
+    {
+        return $this->hasRole('admin');
     }
 
     public function plans()

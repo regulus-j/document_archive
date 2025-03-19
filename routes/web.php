@@ -19,6 +19,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TrialController;
 use App\Http\Controllers\UserManualController;
 use App\Http\Controllers\UserManagedController;
+use App\Http\Controllers\AdminDashboardController;
+
 Route::get('/', function () {
     return view('welcome');
 });
@@ -70,12 +72,22 @@ Route::middleware(['auth'])->group(function () {
 
 //--------------------------------------------------------------------------------------------------------------------
 
-Route::prefix('admin')->middleware(['auth'])->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
-    Route::get('/subscriptions', [SubscriptionController::class, 'index'])->name('subscriptions.index');
+Route::middleware(['auth', 'role:super-admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+    
+    // Subscription Management
+    Route::get('/subscriptions', [SubscriptionController::class, 'indexAdmin'])->name('subscriptions.index');
+    Route::get('/subscriptions/assign', [SubscriptionController::class, 'assignForm'])->name('subscriptions.assign.form');
+    Route::post('/subscriptions/assign', [SubscriptionController::class, 'assign'])->name('subscriptions.assign');
+    Route::post('/subscriptions/{subscription}/renew', [SubscriptionController::class, 'renew'])->name('subscriptions.renew');
+    
+    // User Management
     Route::get('/users/registered', [UserController::class, 'showRegistered'])->name('users.registered');
-    Route::get('/plans', [PlanController::class, 'index'])->name('admin.plans.index');
-    Route::get('/subscriptions', [SubscriptionController::class, 'indexAdmin'])->name('admin.subscriptions.index');
+    
+    // Plan Management
+    Route::get('/plans', [PlanController::class, 'index'])->name('plans.index');
+    
+    // Other admin routes
     Route::get('/trial', [TrialController::class, 'start'])->name('trial.start');
     Route::get('/user-manual', [UserManualController::class, 'show'])->name('userManual.manual');
 });
@@ -146,10 +158,10 @@ Route::middleware('auth')->group(function () {
             Route::get('/{workflow}/receive', [DocumentWorkflowController::class, 'receiveWorkflow'])
                 ->name('documents.receive');
             
-            Route::get('/{workflow}/approve', [DocumentWorkflowController::class, 'approveWorkflow'])
+            Route::post('/{workflow}/approve', [DocumentWorkflowController::class, 'approveWorkflow'])
                 ->name('documents.approveWorkflow');
             
-            Route::get('/{workflow}/reject', [DocumentWorkflowController::class, 'rejectWorkflow'])
+            Route::post('/{workflow}/reject', [DocumentWorkflowController::class, 'rejectWorkflow'])
                 ->name('documents.rejectWorkflow');
             
             Route::get('/{workflow}/review', [DocumentWorkflowController::class, 'reviewDocument'])
@@ -168,6 +180,7 @@ Route::middleware('auth')->group(function () {
         Route::put('/{document}', [DocumentController::class, 'update'])->name('documents.update');
         Route::delete('/{document}/delete', [DocumentController::class, 'destroy'])->name('documents.destroy');
         Route::delete('/{document}/delete-attachment', [DocumentController::class, 'deleteAttachment'])->name('documents.attachments.destroy');
+        Route::post('/documents/{document}/cancel', [DocumentController::class, 'cancelWorkflow'])->name('documents.cancel');
 
         // Update status route
         // Route::get('/{document}/status', [DocumentController::class, 'confirmReleased'])->name('documents.confirmrelease');
@@ -209,7 +222,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware(['auth'])->group(function () {
         Route::get('/plans', [PlanController::class, 'index'])->name('plans.index');
         Route::get('/plans/create', [PlanController::class, 'create'])->name('plans.create');
-        Route::post('/plans', [PlanController::class, 'store'])->name('plans.store'); // Correct route for storing a plan
+        Route::post('/plans', [PlanController::class, 'store'])->name('plans.store'); 
         Route::get('/plans/{plan}', [PlanController::class, 'show'])->name('plans.show');
         Route::get('/plans/{plan}/edit', [PlanController::class, 'edit'])->name('plans.edit');
         Route::put('/plans/{plan}', [PlanController::class, 'update'])->name('plans.update');
@@ -237,6 +250,12 @@ Route::middleware('auth')->group(function () {
     Route::middleware(['auth'])->group(function () {
         Route::resource('addresses', AddressController::class);
     });
+
+    Route::get('/user-manual', [UserManualController::class, 'show'])->name('userManual.manual');
+
+    // Add this line for report downloads
+    Route::get('/reports/{report}/download/{format?}', [ReportController::class, 'download'])
+        ->name('reports.download');
 });
 
 //stmp mail test

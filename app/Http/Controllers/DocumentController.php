@@ -765,4 +765,27 @@ class DocumentController extends Controller
 
         return view('documents.audit', compact('auditLogs'));
     }
+
+    public function cancelWorkflow(Document $document)
+    {
+        // Cancel all pending workflows
+        DocumentWorkflow::where('document_id', $document->id)
+            ->whereIn('status', ['pending', 'received'])
+            ->update(['status' => 'cancelled']);
+        
+        // Update document status
+        $document->status()->update(['status' => 'cancelled']);
+        
+        // Log action
+        DocumentAudit::logDocumentAction(
+            $document->id,
+            auth()->id(),
+            'workflow',
+            'cancelled',
+            'Document workflow cancelled'
+        );
+        
+        return redirect()->route('documents.index')
+            ->with('success', 'Document workflow has been cancelled.');
+    }
 }
