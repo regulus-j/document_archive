@@ -736,18 +736,10 @@ class DocumentController extends Controller
     public function scanQr($image)
     {
         try {
-            $result = (new QRCode)->readFromFile($image); // -> DecoderResult
-
-            // you can now use the result instance...
-            $content = $result->data;
-            $matrix = $result->getMatrix(); // -> QRMatrix
-
-            // ...or simply cast it to string to get the content:
-            $content = (string) $result;
-
-            return $result;
-
-        } catch (Throwable $e) {
+            $qrReader = new \Zxing\QrReader($image);
+            $content = $qrReader->text();
+            return $content;
+        } catch (\Throwable $e) {
             // oopsies!
             return $e->getMessage();
         }
