@@ -4,8 +4,7 @@
     <div class="min-h-screen bg-gradient-to-b from-blue-50 to-white p-4 md:p-8">
         <!-- Header Box -->
         <div class="bg-white rounded-xl shadow-xl mb-6 border border-blue-100 overflow-hidden">
-            <div
-                class="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div class="bg-white p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div class="flex items-center space-x-3">
                     <div class="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg shadow-md">
                         <svg class="w-6 h-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
@@ -35,7 +34,7 @@
 
         <!-- Error Messages -->
         @if (count($errors) > 0)
-            <div class="bg-gradient-to-r from-rose-50 to-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-r-lg shadow-md">
+            <div class="bg-white border-l-4 border-red-500 p-4 mb-6 rounded-r-lg shadow-md">
                 <div class="flex">
                     <div class="flex-shrink-0">
                         <svg class="h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
@@ -59,7 +58,7 @@
 
         <!-- Form Card -->
         <div class="bg-white rounded-xl shadow-xl overflow-hidden border border-blue-100">
-            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-blue-200">
+            <div class="bg-white px-6 py-4 border-b border-blue-200">
                 <div class="flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600 mr-2" fill="none"
                         viewBox="0 0 24 24" stroke="currentColor">
@@ -97,8 +96,7 @@
                             </div>
                         </div>
 
-                        <div
-                            class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg overflow-hidden">
+                        <div class="bg-white border border-blue-200 rounded-lg overflow-hidden">
                             <div class="max-h-96 overflow-y-auto p-1">
                                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 p-3">
                                     @foreach($permission as $value)
