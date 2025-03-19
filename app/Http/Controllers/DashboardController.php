@@ -33,7 +33,7 @@ class DashboardController extends Controller
         $activeSubscription = (object) ['status' => 'trial', 'ends_at' => $trialEndDate];
     } else {
         if (!$userCompany) {
-            return redirect()->route('dashboard-office-user')
+            return view('dashboard-office-user')
                 ->with('info', 'Please set up your company profile first.');
         }
 
