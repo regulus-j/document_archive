@@ -3,7 +3,7 @@
 @section('content')
     <div class="min-h-screen bg-gradient-to-b from-blue-50 to-white p-4 md:p-8">
         <div class="max-w-6xl mx-auto">
-            <!-- Header Box -->
+            <!-- Header -->
             <div class="bg-white rounded-xl shadow-xl mb-6 border border-blue-100 overflow-hidden">
                 <div class="bg-white p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div class="flex items-center space-x-3">
@@ -67,37 +67,70 @@
                         </span>
                     </div>
                 </div>
+
                 <!-- Card Body -->
                 <div class="p-6">
-                    <!-- Document Information -->
+                    <!-- Document Information Grid with Attachment Card -->
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                        <!-- Tracking Number Card -->
                         <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
                             <p class="text-sm font-medium text-gray-500 mb-1">Tracking Number</p>
                             <p class="text-base font-medium text-gray-900">
-                                {{ $document->trackingNumber->tracking_number ?? 'N/A' }}</p>
+                                {{ $document->trackingNumber->tracking_number ?? 'N/A' }}
+                            </p>
                         </div>
+                        <!-- Classification Card -->
                         <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
                             <p class="text-sm font-medium text-gray-500 mb-1">Classification</p>
                             <p class="text-base font-medium text-gray-900">
-                                {{ optional($document->categories->first())->category ?? 'N/A' }}</p>
+                                {{ $document->categories->first()->category ?? 'N/A' }}
+                            </p>
                         </div>
+                        <!-- From Office Card -->
                         <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
                             <p class="text-sm font-medium text-gray-500 mb-1">From Office</p>
                             <p class="text-base font-medium text-gray-900">
-                                {{ $document->transaction->fromOffice->name ?? 'N/A' }}</p>
+                                {{ $document->transaction->fromOffice->name ?? 'N/A' }}
+                            </p>
                         </div>
+                        <!-- To Office Card -->
                         <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
                             <p class="text-sm font-medium text-gray-500 mb-1">To Office</p>
                             <p class="text-base font-medium text-gray-900">
-                                {{ $document->transaction->toOffice->name ?? 'N/A' }}</p>
+                                {{ $document->transaction->toOffice->name ?? 'N/A' }}
+                            </p>
                         </div>
+                        <!-- Status Card -->
                         <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
                             <p class="text-sm font-medium text-gray-500 mb-1">Status</p>
-                            <p class="text-base font-medium text-gray-900">{{ $document->status->status }}</p>
+                            <p class="text-base font-medium text-gray-900">
+                                {{ $document->status->status }}
+                            </p>
                         </div>
+                        <!-- Remarks Card -->
                         <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
                             <p class="text-sm font-medium text-gray-500 mb-1">Remarks</p>
-                            <p class="text-base font-medium text-gray-900">{{ $document->remarks ?? 'N/A' }}</p>
+                            <p class="text-base font-medium text-gray-900">
+                                {{ $document->remarks ?? 'N/A' }}
+                            </p>
+                        </div>
+                        <!-- Attachments Card -->
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <p class="text-sm font-medium text-gray-500 mb-1">Attachments</p>
+                            @if($document->attachments->isNotEmpty())
+                                <ul class="list-disc pl-4">
+                                    @foreach($document->attachments as $attachment)
+                                        <li>
+                                            <a href="{{ route('documents.download', $attachment->id) }}"
+                                                class="text-blue-600 hover:text-blue-800 transition-colors">
+                                                {{ $attachment->filename }}
+                                            </a>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            @else
+                                <p class="text-base font-medium text-gray-900">N/A</p>
+                            @endif
                         </div>
                     </div>
 
@@ -130,15 +163,19 @@
                                         <th
                                             class="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">
                                             Status</th>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">
+                                            Remarks</th>
                                     </tr>
                                 </thead>
                                 <tbody class="bg-white divide-y divide-gray-200">
                                     @foreach($workflows as $workflow)
                                         <tr class="hover:bg-gray-50 transition-colors">
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                                {{ $workflow->step_order }}</td>
+                                                {{ $workflow->step_order }}
+                                            </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                                {{ optional($workflow->recipient)->first_name }} {{ optional($workflow->recipient)->last_name }}
+                                                {{ $workflow->recipient->first_name }} {{ $workflow->recipient->last_name }}
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm">
                                                 @if($workflow->status === 'pending')
@@ -163,56 +200,15 @@
                                                     </span>
                                                 @endif
                                             </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                                {{ $workflow->remarks ?? 'N/A' }}
+                                            </td>
                                         </tr>
                                     @endforeach
                                 </tbody>
                             </table>
                         </div>
                     </div>
-
-                    <!-- Attachments -->
-                    @if($document->attachments->isNotEmpty())
-                        <div class="mb-8">
-                            <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                                <svg class="w-5 h-5 mr-2 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                                </svg>
-                                Attachments
-                            </h3>
-                            <div class="space-y-4">
-                                @foreach ($document->attachments->groupBy(fn($att) => $att->created_at->format('Y-m-d')) as $date => $attachments)
-                                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                        <h4 class="font-medium text-gray-700 mb-3 flex items-center">
-                                            <svg class="w-4 h-4 mr-2 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                                viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                            </svg>
-                                            {{ \Carbon\Carbon::parse($date)->format('F d, Y') }}
-                                        </h4>
-                                        <ul class="space-y-2 pl-6">
-                                            @foreach ($attachments as $attachment)
-                                                <li>
-                                                    <a href="{{ route('documents.download', $attachment->id) }}"
-                                                        class="text-blue-600 hover:text-blue-800 transition-colors flex items-center group">
-                                                        <svg class="w-4 h-4 mr-2 text-gray-500 group-hover:text-blue-500"
-                                                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                                            stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                                                        </svg>
-                                                        {{ $attachment->filename }}
-                                                    </a>
-                                                </li>
-                                            @endforeach
-                                        </ul>
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-                    @endif
 
                     <!-- Download Button -->
                     <div class="flex justify-center mt-8">
@@ -258,7 +254,7 @@
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
-                            @forelse($auditLogs->unique('id') as $log)
+                            @forelse($auditLogs as $log)
                                 <tr class="hover:bg-gray-50 transition-colors">
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                                         {{ $log->created_at->format('M d, Y H:i:s') }}
@@ -268,11 +264,11 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm">
                                         <span class="px-2 py-1 text-xs font-semibold rounded-full
-                                                @if($log->action === 'created') bg-green-100 text-green-800
-                                                @elseif($log->action === 'updated') bg-yellow-100 text-yellow-800
-                                                @elseif($log->action === 'deleted') bg-red-100 text-red-800
-                                                    @else bg-blue-100 text-blue-800
-                                                @endif">
+                                                                @if($log->action === 'created') bg-green-100 text-green-800
+                                                                @elseif($log->action === 'updated') bg-yellow-100 text-yellow-800
+                                                                @elseif($log->action === 'deleted') bg-red-100 text-red-800
+                                                                    @else bg-blue-100 text-blue-800
+                                                                @endif">
                                             {{ ucfirst($log->action) }}
                                         </span>
                                     </td>
@@ -297,6 +293,7 @@
                     {{ $auditLogs->links() }}
                 </div>
             </div>
+
         </div>
     </div>
 @endsection
