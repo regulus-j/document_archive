@@ -17,8 +17,8 @@ class DashboardController extends Controller
     public function index()
 {
     $user = auth()->user();
-    $userCompany = $user->company()->first(); // Ensure this returns the company account
-
+    $userCompany = auth()->user()->companies()->first();
+    
     // Check if user is a super admin
     if ($user->isAdmin()) {
         return $this->superAdminDashboard();
@@ -76,7 +76,7 @@ class DashboardController extends Controller
     $todayDocuments = Document::whereDate('created_at', today())->count();
     $countPendingDocs = $pendingDocuments;
     $countRecentDocs = $recentDocuments->count();
-    $countOffices = $userCompany ? Office::where('company_id', $userCompany->id)->count() : 0;
+    $countOffices = $userCompany ? Office::where('company_id', $userCompany->id)->count() : "No Offices Found";
 
     $processedDocuments = DocumentWorkflow::where('recipient_id', $user->id)
         ->whereIn('status', ['approved', 'rejected'])

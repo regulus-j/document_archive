@@ -31,7 +31,8 @@
         </div>
     @endif
 
-    <!-- Form to add remarks and new attachments -->
+    <!-- Delete or comment out this form (lines 30-45) -->
+    <!--
     <form action="{{ route('documents.review', $document->id) }}" method="POST" enctype="multipart/form-data">
         @csrf
         <div>
@@ -45,4 +46,64 @@
         <button type="submit" name="action" value="approve">Approve</button>
         <button type="submit" name="action" value="reject">Reject</button>
     </form>
+    -->
+
+    <div class="mt-6 bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-lg font-semibold mb-4">Document Actions</h3>
+        
+        <div class="flex space-x-4">
+            <!-- Approval Button - Changed to toggle form display -->
+            <button 
+                type="button" 
+                class="bg-green-500 text-white px-4 py-2 rounded-md"
+                onclick="document.getElementById('approval-form').classList.toggle('hidden')">
+                Approve
+            </button>
+            
+            <!-- Rejection Button -->
+            <button 
+                type="button" 
+                class="bg-red-500 text-white px-4 py-2 rounded-md"
+                onclick="document.getElementById('rejection-form').classList.toggle('hidden')">
+                Reject
+            </button>
+        </div>
+
+        <!-- Approval Form with Comments -->
+        <div id="approval-form" class="hidden mt-4 p-4 border border-green-200 rounded-md">
+            <form action="{{ route('documents.approveWorkflow', $workflow->id) }}" method="POST" class="inline">
+                @csrf
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">Approval Remarks (Optional)</label>
+                    <textarea 
+                        name="remarks" 
+                        rows="3" 
+                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200"
+                        placeholder="Add any comments about this document..."></textarea>
+                </div>
+                <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded-md">
+                    Confirm Approval
+                </button>
+            </form>
+        </div>
+
+        <!-- Rejection Form with Comments - Update action to use rejectWorkflow route -->
+        <div id="rejection-form" class="hidden mt-4 p-4 border border-red-200 rounded-md">
+            <form method="POST" action="{{ route('documents.rejectWorkflow', $workflow->id) }}">
+                @csrf
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">Rejection Remarks (Required)</label>
+                    <textarea 
+                        name="remarks" 
+                        rows="3" 
+                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200"
+                        required
+                        placeholder="Explain why this document needs revision..."></textarea>
+                </div>
+                <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded-md">
+                    Confirm Rejection
+                </button>
+            </form>
+        </div>
+    </div>
 @endsection

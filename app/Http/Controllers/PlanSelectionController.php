@@ -9,7 +9,7 @@ class PlanSelectionController extends Controller
 {
     public function select()
     {
-        $plans = Plan::where('is_active', true)->take(3)->get();
+        $plans = Plan::where('is_active', true)->get();
         return view('plans.select', compact('plans'));
     }
 

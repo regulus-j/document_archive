@@ -117,8 +117,8 @@
                             </div>
 
                             <div class="pt-4">
-                                <button type="submit"
-                                    class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-md text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                                <button type="submit" id="generate-report-btn"
+                                    class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-md text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                                     <svg class="mr-2 -ml-1 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none"
                                         viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -181,8 +181,8 @@
                             <div
                                 class="bg-gray-50 border-2 border-dashed border-blue-200 rounded-lg h-96 flex items-center justify-center">
                                 <div class="text-center px-4">
-                                    <svg class="mx-auto h-12 w-12 text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                        viewBox="0 0 24 24" stroke="currentColor">
+                                    <svg class="mx-auto h-12 w-12 text-blue-400" xmlns="http://www.w3.org/2000/svg"
+                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                     </svg>
@@ -201,4 +201,39 @@
             </div>
         </div>
     </div>
+@endsection
+
+@section('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const reportTypeSelect = document.getElementById('report_type');
+        const startDateInput = document.querySelector('input[name="start_date"]');
+        const endDateInput = document.querySelector('input[name="end_date"]');
+        const generateButton = document.getElementById('generate-report-btn');
+        
+        // Initial validation on page load
+        validateForm();
+        
+        // Add event listeners to all form inputs
+        reportTypeSelect.addEventListener('change', validateForm);
+        startDateInput.addEventListener('change', validateForm);
+        endDateInput.addEventListener('change', validateForm);
+        
+        function validateForm() {
+            // Check if all required fields are filled
+            const isReportTypeSelected = reportTypeSelect.value !== '';
+            const isStartDateFilled = startDateInput.value !== '';
+            const isEndDateFilled = endDateInput.value !== '';
+            
+            // Enable/disable the generate button based on validation
+            if (isReportTypeSelected && isStartDateFilled && isEndDateFilled) {
+                generateButton.disabled = false;
+                generateButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                generateButton.disabled = true;
+                generateButton.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        }
+    });
+</script>
 @endsection

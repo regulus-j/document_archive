@@ -80,38 +80,65 @@ class DocumentWorkflowController extends Controller
             ->with('success', 'Document forwarded successfully');
     }
 
-    public function approveWorkflow($id): RedirectResponse
+    public function approveWorkflow(Request $request, $id): RedirectResponse
     {
         $workflow = DocumentWorkflow::findOrFail($id);
         $workflow->approve();
+        
+        // Save remarks if provided
+        if ($request->has('remarks') && !empty($request->remarks)) {
+            $workflow->remarks = $request->remarks;
+            $workflow->save();
+        }
 
-        // Fix: Pass document ID instead of document object
+        // Log with remarks if provided
+        $logMessage = 'Document workflow approved';
+        if ($request->has('remarks') && !empty($request->remarks)) {
+            $logMessage .= ': ' . $request->remarks;
+        }
+        
         DocumentAudit::logDocumentAction(
             $workflow->document_id,
             auth()->id(),
             'workflow',
             'approved',
-            'Document workflow approved'
+            $logMessage
         );
 
         return redirect()->back()->with('success', 'Document workflow approved');
     }
 
-    public function rejectWorkflow($id): RedirectResponse
+    public function rejectWorkflow(Request $request, $id): RedirectResponse
     {
+        $request->validate([
+            'remarks' => 'required|string|max:1000',
+        ]);
+
         $workflow = DocumentWorkflow::findOrFail($id);
         $workflow->reject();
+        $workflow->remarks = $request->remarks;
+        $workflow->save();
 
-        // Fix: Pass document ID instead of document object
+        // Update document status to indicate revision needed
+        $document = Document::findOrFail($workflow->document_id);
+        $document->status()->update(['status' => 'needs_revision']);
+
+        // Log with remarks
         DocumentAudit::logDocumentAction(
             $workflow->document_id,
             auth()->id(),
             'workflow',
             'rejected',
-            'Document workflow rejected'
+            'Document rejected: ' . $request->remarks
         );
 
-        return redirect()->back()->with('success', 'Document workflow rejected');
+        // Optional: Notify the sender
+        if (class_exists('\App\Notifications\DocumentRejected')) {
+            $document->sender->notify(new \App\Notifications\DocumentRejected($document, $workflow));
+        }
+
+        return redirect()->route('documents.index')
+            ->with('success', 'Document rejected. The sender has been notified to revise or cancel the workflow.');
     }
 
     // helper functions
@@ -130,10 +157,21 @@ class DocumentWorkflowController extends Controller
         return view('documents.workflow', compact('workflows'));
     }
 
-    public function receiveWorkflow($id)
+    public function receiveWorkflow($id): RedirectResponse
     {
         $workflow = DocumentWorkflow::findOrFail($id);
         $workflow->receive();
+        
+        // Log the receipt action
+        DocumentAudit::logDocumentAction(
+            $workflow->document_id,
+            auth()->id(),
+            'workflow',
+            'received',
+            'Document workflow received'
+        );
+        
+        return redirect()->back()->with('success', 'Document received successfully');
     }
 
     public function reviewDocument($id)
