@@ -140,30 +140,30 @@
                                             <div class="flex items-center">
                                                 <div
                                                     class="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center text-white font-bold shadow-sm">
-                                                    {{ substr($activity->company_name, 0, 1) }}
+                                                    {{ substr($activity['company_name'] ?? 'N/A', 0, 1) }}
                                                 </div>
                                                 <div class="ml-4">
                                                     <div class="text-sm font-medium text-gray-900">
-                                                        {{ $activity->company_name }}</div>
+                                                        {{ $activity['company_name'] ?? 'No Company' }}</div>
                                                     <div class="text-sm text-blue-600">ID:
-                                                        {{ $activity->company_id ?? 'N/A' }}</div>
+                                                        {{ $activity['company_id'] ?? 'N/A' }}</div>
                                                 </div>
                                             </div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                                @if(strpos($activity->action, 'created') !== false) bg-emerald-100 text-emerald-800
-                                                @elseif(strpos($activity->action, 'updated') !== false) bg-blue-100 text-blue-800
-                                                @elseif(strpos($activity->action, 'deleted') !== false) bg-rose-100 text-rose-800
+                                                @if(strpos($activity['action'], 'registered') !== false) bg-emerald-100 text-emerald-800
+                                                @elseif(strpos($activity['action'], 'uploaded') !== false) bg-blue-100 text-blue-800
+                                                @elseif(strpos($activity['action'], 'deleted') !== false) bg-rose-100 text-rose-800
                                                 @else bg-gray-100 text-gray-800 @endif">
-                                                {{ $activity->action }}
+                                                {{ $activity['action'] }}
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                                             {{ $activity->user_name ?? 'System' }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                            {{ $activity->created_at->diffForHumans() }}
+                                            {{ \Carbon\Carbon::parse($activity['created_at'])->diffForHumans() }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             <a href="#"

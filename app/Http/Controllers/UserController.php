@@ -80,17 +80,19 @@ class UserController extends Controller
      * Show the form for creating a new user.
      */
     public function create(): View
-{
-    $userCompany = CompanyAccount::where('user_id', auth()->id())->get();
-    $roles = Role::pluck('name', 'name')->all();
-    $company = auth()->user()->companies()->first();
-    $offices = Office::where('company_id', $company->id)->get();
+    {
+        $userCompany = CompanyAccount::where('user_id', auth()->id())->get();
+        $roles = Role::pluck('name', 'name')->all();
+        $company = auth()->user()->companies()->first();
+        $offices = Office::where('company_id', $company->id)->get();
 
-    // ✅ Fetch users that belong to the same company & offices
-    $users = User::whereIn('office_id', $offices->pluck('id'))->get();
+        // Fetch users that belong to the same company & offices
+        $users = User::whereHas('offices', function($query) use ($offices) {
+            $query->whereIn('offices.id', $offices->pluck('id'));
+        })->get();
 
-    return view('users.create', compact('roles', 'offices', 'userCompany', 'users'));
-}
+        return view('users.create', compact('roles', 'offices', 'userCompany', 'users'));
+    }
 
 
     /**
@@ -221,7 +223,9 @@ class UserController extends Controller
     public function getUsersByOffice(Request $request)
 {
     $officeId = $request->query('office_id');
-    $users = User::where('office_id', $officeId)->get(); // Adjust based on your user model structure
+    $users = User::whereHas('offices', function($query) use ($officeId) {
+        $query->where('offices.id', $officeId);
+    })->get();
     return response()->json($users);
 }
 }
