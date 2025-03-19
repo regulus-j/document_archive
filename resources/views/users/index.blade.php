@@ -17,8 +17,7 @@
             <!-- Header -->
             <div
                 class="bg-white shadow-xl rounded-xl overflow-hidden border border-blue-100 mb-6 hover:shadow-2xl transition-shadow duration-300">
-                <div
-                    class="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 flex items-center justify-between border-b border-blue-200">
+                <div class="bg-white p-6 flex items-center justify-between border-b border-blue-200">
                     <div class="flex items-center space-x-3">
                         <div
                             class="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center text-white font-bold shadow-sm">
@@ -49,7 +48,7 @@
             <!-- Filters -->
             <div
                 class="bg-white shadow-xl rounded-xl overflow-hidden border border-blue-100 mb-6 hover:shadow-2xl transition-shadow duration-300">
-                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-blue-200">
+                <div class="bg-white px-6 py-4 border-b border-blue-200">
                     <div class="flex items-center">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600 mr-2" fill="none"
                             viewBox="0 0 24 24" stroke="currentColor">
@@ -129,8 +128,7 @@
             </div>
 
             @if (session('success'))
-                <div
-                    class="bg-gradient-to-r from-emerald-50 to-green-50 border-l-4 border-emerald-500 p-4 mb-6 rounded-r-lg shadow-md">
+                <div class="bg-white border-l-4 border-emerald-500 p-4 mb-6 rounded-r-lg shadow-md">
                     <div class="flex">
                         <div class="flex-shrink-0">
                             <svg class="h-5 w-5 text-emerald-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
@@ -152,8 +150,7 @@
             <!-- Users Table -->
             <div
                 class="bg-white shadow-xl rounded-xl overflow-hidden border border-blue-100 hover:shadow-2xl transition-shadow duration-300">
-                <div
-                    class="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-blue-200 flex justify-between items-center">
+                <div class="bg-white px-6 py-4 border-b border-blue-200 flex justify-between items-center">
                     <div class="flex items-center">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600 mr-2" fill="none"
                             viewBox="0 0 24 24" stroke="currentColor">
@@ -169,30 +166,30 @@
                         <thead>
                             <tr>
                                 <th
-                                    class="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
+                                    class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
                                     {{ __('NO') }}
                                 </th>
                                 <th
-                                    class="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
+                                    class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
                                     {{ __('NAME') }}
                                 </th>
                                 <th
-                                    class="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
+                                    class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
                                     {{ __('EMAIL') }}
                                 </th>
                                 <th
-                                    class="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
+                                    class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
                                     {{ __('ROLES') }}
                                 </th>
                                 <th
-                                    class="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-3 text-right text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
+                                    class="bg-white px-6 py-3 text-right text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
                                     {{ __('ACTION') }}
                                 </th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
                             @foreach ($users as $user)
-                                <tr class="hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-colors">
+                                <tr class="hover:bg-gray-50 transition-colors">
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         {{ $loop->iteration }}
                                     </td>
