@@ -4,8 +4,7 @@
     <div class="min-h-screen bg-gradient-to-b from-blue-50 to-white p-4 md:p-8">
         <!-- Header Box -->
         <div class="bg-white rounded-xl shadow-xl mb-6 border border-blue-100 overflow-hidden">
-            <div
-                class="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div class="bg-white p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div class="flex items-center space-x-3">
                     <div class="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg shadow-md">
                         <svg class="w-6 h-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
@@ -37,8 +36,7 @@
 
         <!-- Success/Error Messages -->
         @if(session('success'))
-            <div class="mb-6 bg-gradient-to-r from-emerald-50 to-green-50 border-l-4 border-emerald-500 text-emerald-700 p-4 rounded-r-lg shadow-md"
-                role="alert">
+            <div class="mb-6 bg-white border-l-4 border-emerald-500 text-emerald-700 p-4 rounded-r-lg shadow-md" role="alert">
                 <div class="flex">
                     <div class="flex-shrink-0">
                         <svg class="h-5 w-5 text-emerald-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
@@ -56,8 +54,7 @@
         @endif
 
         @if(session('error'))
-            <div class="mb-6 bg-gradient-to-r from-rose-50 to-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-r-lg shadow-md"
-                role="alert">
+            <div class="mb-6 bg-white border-l-4 border-red-500 text-red-700 p-4 rounded-r-lg shadow-md" role="alert">
                 <div class="flex">
                     <div class="flex-shrink-0">
                         <svg class="h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
@@ -116,7 +113,7 @@
             <!-- Search Panel -->
             <div class="lg:col-span-1">
                 <div class="bg-white rounded-xl shadow-xl overflow-hidden h-full border border-blue-100">
-                    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 border-b border-blue-200">
+                    <div class="bg-white p-6 border-b border-blue-200">
                         <div class="flex items-center mb-1">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600 mr-2" fill="none"
                                 viewBox="0 0 24 24" stroke="currentColor">
@@ -260,8 +257,7 @@
             <!-- Document List -->
             <div class="lg:col-span-2">
                 <div class="bg-white rounded-xl shadow-xl overflow-hidden h-full border border-blue-100">
-                    <div
-                        class="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 border-b border-blue-200 flex justify-between items-center">
+                    <div class="bg-white p-6 border-b border-blue-200 flex justify-between items-center">
                         <div class="flex items-center">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600 mr-2" fill="none"
                                 viewBox="0 0 24 24" stroke="currentColor">
@@ -291,28 +287,28 @@
                             <thead>
                                 <tr>
                                     <th
-                                        class="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
+                                        class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
                                         No</th>
                                     <th
-                                        class="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
+                                        class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
                                         Title</th>
                                     <th
-                                        class="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
+                                        class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
                                         Uploader</th>
                                     <th
-                                        class="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
+                                        class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
                                         Status</th>
                                     <th
-                                        class="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
+                                        class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
                                         Originating</th>
                                     <th
-                                        class="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
+                                        class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
                                         Recipient</th>
                                     <th
-                                        class="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
+                                        class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
                                         Uploaded</th>
                                     <th
-                                        class="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200 relative group cursor-help">
+                                        class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200 relative group cursor-help">
                                         Days Lapsed
                                         <div
                                             class="absolute hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2 -left-1/2 transform -translate-x-1/2 mt-1 z-10 w-40 text-center">
@@ -320,13 +316,13 @@
                                         </div>
                                     </th>
                                     <th
-                                        class="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-3 text-right text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
+                                        class="bg-white px-6 py-3 text-right text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
                                         Action</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
                                 @forelse ($documents as $document)
-                                                            <tr class="hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-colors">
+                                                            <tr class="hover:bg-gray-50 transition-colors">
                                                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $loop->iteration }}
                                                                 </td>
                                                                 <td class="px-6 py-4 whitespace-nowrap">
@@ -366,7 +362,10 @@
                                                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                                     {{ $document->created_at->format('M d, Y H:i') }}
                                                                 </td>
-                                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                                <td class="px-6 py-4 whit  }}
+                                                                                                                                                                                                </td>
+                                                                                                                                                                                                <td class="
+                                                                    px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                                     {{ date_diff(new DateTime($document->updated_at), new DateTime(now()))->format('%Dd %Hh %Im') }}
                                                                 </td>
                                                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -456,8 +455,7 @@
 
         <!-- Audit Logs -->
         <div class="mt-6 bg-white rounded-xl shadow-xl overflow-hidden border border-blue-100 mb-8">
-            <div
-                class="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 border-b border-blue-200 flex justify-between items-center">
+            <div class="bg-white p-6 border-b border-blue-200 flex justify-between items-center">
                 <div class="flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600 mr-2" fill="none"
                         viewBox="0 0 24 24" stroke="currentColor">
@@ -474,28 +472,28 @@
                     <thead>
                         <tr>
                             <th
-                                class="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
+                                class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
                                 Date/Time</th>
                             <th
-                                class="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
+                                class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
                                 Document</th>
                             <th
-                                class="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
+                                class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
                                 User</th>
                             <th
-                                class="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
+                                class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
                                 Action</th>
                             <th
-                                class="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
+                                class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
                                 Status</th>
                             <th
-                                class="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
+                                class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
                                 Details</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         @forelse($auditLogs as $log)
-                                            <tr class="hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-colors">
+                                            <tr class="hover:bg-gray-50 transition-colors">
                                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                     {{ $log->created_at->format('M d, Y H:i') }}
                                                 </td>
@@ -607,11 +605,11 @@
                         cameraStream.srcObject = stream;
                         cameraContainer.classList.remove('hidden');
                         this.innerHTML = `
-                                    <svg class="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                    Close Camera
-                                `;
+                                                    <svg class="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                    Close Camera
+                                                `;
                     } catch (err) {
                         alert('Unable to access camera');
                         console.error('Error accessing camera:', err);
@@ -686,12 +684,12 @@
                 }
                 cameraContainer.classList.add('hidden');
                 cameraToggle.innerHTML = `
-                            <svg class="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
-                            Open Camera
-                        `;
+                                            <svg class="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            </svg>
+                                            Open Camera
+                                        `;
             }
 
             window.addEventListener('beforeunload', stopCamera);
