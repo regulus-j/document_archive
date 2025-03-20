@@ -20,6 +20,17 @@ use Spatie\Permission\Models\Role;
 class UserController extends Controller
 {
     /**
+     * Constructor to set up middleware
+     */
+    public function __construct()
+    {
+        $this->middleware('permission:user-list|user-create|user-edit|user-delete', ['only' => ['index', 'show']]);
+        $this->middleware('permission:user-create', ['only' => ['create', 'store']]);
+        $this->middleware('permission:user-edit', ['only' => ['edit', 'update']]);
+        $this->middleware('permission:user-delete', ['only' => ['destroy']]);
+    }
+
+    /**
      * Display a listing of the users.
      */
     public function index(Request $request): View
@@ -228,4 +239,31 @@ class UserController extends Controller
     })->get();
     return response()->json($users);
 }
+
+    /**
+     * Remove the specified user from storage.
+     */
+    public function destroy(User $user): RedirectResponse
+    {
+        // Check if the user is trying to delete themselves
+        if ($user->id === auth()->id()) {
+            return redirect()->route('users.index')
+                ->with('error', 'You cannot delete your own account.');
+        }
+
+        // Check if the user is an admin trying to delete another admin
+        if (auth()->user()->hasRole('super-admin') && $user->hasRole('super-admin')) {
+            return redirect()->route('users.index')
+                ->with('error', 'You cannot delete another super admin account.');
+        }
+
+        // Delete user's company associations
+        CompanyUser::where('user_id', $user->id)->delete();
+
+        // Delete the user
+        $user->delete();
+
+        return redirect()->route('users.index')
+            ->with('success', 'User deleted successfully.');
+    }
 }
