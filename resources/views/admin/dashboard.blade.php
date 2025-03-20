@@ -160,7 +160,7 @@
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                            {{ $activity->user_name ?? 'System' }}
+                                            {{ $activity['user_name'] ?? 'System' }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                                             {{ \Carbon\Carbon::parse($activity['created_at'])->diffForHumans() }}

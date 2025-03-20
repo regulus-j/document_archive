@@ -63,9 +63,6 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/subscriptions/{subscription}/activate', [SubscriptionController::class, 'activate'])->name('subscriptions.activate');
 });
 
-
-
-
 Route::middleware(['auth'])->group(function () {
     Route::resource('addresses', AddressController::class);
 });
@@ -235,11 +232,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/subscriptions/{subscription}/activate', [SubscriptionController::class, 'activate']);
 
     Route::get('/pay/{plan}/{billing?}', [PaymentController::class, 'linkCreate'])->name('payment.generate');
-    Route::get('/check-payment-status/{reference}', function ($reference) {
-        $controller = app(\App\Http\Controllers\PaymentController::class);
-        return response()->json($controller->checkPaymentStatus($reference));
-    })->name('payment.check-status')->middleware('web');
+    Route::get('/payment/check-status/{reference}', [PaymentController::class, 'checkPaymentStatus'])->name('payment.check-status');
     Route::get('/payment/success', [PaymentController::class, 'success'])->name('payment.success');
+    Route::get('/payment/callback', [PaymentController::class, 'handleCallback'])->name('payment.callback');
+
 
 
 

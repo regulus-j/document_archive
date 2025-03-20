@@ -34,7 +34,7 @@
                             </div>
                             <div>
                                 <dt class="text-sm font-medium text-gray-500">Payment Date</dt>
-                                <dd class="mt-1 text-sm text-gray-900">{{ $payment->payment_date->format('M d, Y H:i:s') }}</dd>
+                                <dd class="mt-1 text-sm text-gray-900">{{ \Carbon\Carbon::parse($payment->payment_date)->format('M d, Y H:i:s') }}</dd>
                             </div>
                         </dl>
                     </div>
@@ -56,11 +56,11 @@
                             </div>
                             <div>
                                 <dt class="text-sm font-medium text-gray-500">Start Date</dt>
-                                <dd class="mt-1 text-sm text-gray-900">{{ $subscription->start_date->format('M d, Y') }}</dd>
+                                <dd class="mt-1 text-sm text-gray-900">{{ \Carbon\Carbon::parse($subscription->start_date)->format('M d, Y') }}</dd>
                             </div>
                             <div>
                                 <dt class="text-sm font-medium text-gray-500">End Date</dt>
-                                <dd class="mt-1 text-sm text-gray-900">{{ $subscription->end_date->format('M d, Y') }}</dd>
+                                <dd class="mt-1 text-sm text-gray-900">{{ \Carbon\Carbon::parse($subscription->end_date)->format('M d, Y') }}</dd>
                             </div>
                         </dl>
                     </div>
