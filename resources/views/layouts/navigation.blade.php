@@ -138,10 +138,10 @@
 
                 @if(auth()->user()->hasRole('Admin')) 
                     <!-- Admin sees Company & Plans -->
-                    <x-dropdown-link :href="route('companies.userManaged', auth()->id())" class="hover:bg-blue-50 hover:text-blue-600">
+                    {{-- <x-dropdown-link :href="route('companies.userManaged', auth()->id())" class="hover:bg-blue-50 hover:text-blue-600">
                         {{ __('Company') }}
-                    </x-dropdown-link>
-                    <x-dropdown-link :href="route('plans.index', auth()->id())" class="hover:bg-blue-50 hover:text-blue-600">
+                    </x-dropdown-link> --}}
+                    <x-dropdown-link :href="route('plans.select', auth()->id())" class="hover:bg-blue-50 hover:text-blue-600">
                         {{ __('Plans & Subscription') }}
                     </x-dropdown-link>
                 @endif

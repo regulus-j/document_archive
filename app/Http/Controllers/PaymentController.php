@@ -44,7 +44,6 @@ class PaymentController extends Controller
         $client = new \GuzzleHttp\Client();
 
         $plan = Plan::findOrFail($plan);
-
         session(['selected_plan' => $plan]);
 
         $price = $plan->price * 100;
@@ -61,15 +60,15 @@ class PaymentController extends Controller
         $response = $client->request('POST', 'https://api.paymongo.com/v1/links', [
             'json' => $body,
             'headers' => [
-            'accept' => 'application/json',
-            'authorization' => 'Basic ' . base64_encode(config('services.paymongo.secret_key') . ':'),
-            'content-type' => 'application/json',
+                'accept' => 'application/json',
+                'authorization' => 'Basic ' . base64_encode(config('services.paymongo.secret_key') . ':'),
+                'content-type' => 'application/json',
             ],
         ]);
 
         $responseData = $response->getBody()->getContents();
 
-        return view('payments.out')->with('responseData', $responseData);
+        return view('payments.out', ['responseData' => $responseData]);
     }
     
     public function checkPaymentStatus($referenceNumber)
@@ -86,57 +85,93 @@ class PaymentController extends Controller
             ]);
 
             $result = json_decode($response->getBody(), true);
-            \Log::debug('PayMongo Response:', $result);
+            \Log::info('PayMongo Response:', ['data' => $result]);
 
             if (!empty($result['data'][0])) {
-                $user = auth()->user();
-                $company = $user->companies()->first();
-    
-                if ($company) {
-                    $subscription = $company->subscriptions()->where('company_id', $company->id)->first();
-    
-                    if (!$subscription) {
-                        if (!session('selected_plan')) {
-                            \Log::error('Selected plan not found in session.');
+                $paymentStatus = $result['data'][0]['attributes']['status'] ?? 'pending';
+
+                if ($paymentStatus === 'paid') {
+                    DB::beginTransaction();
+                    try {
+                        $user = auth()->user();
+                        if (!$user) {
+                            \Log::error('No authenticated user found.');
                             return 'error';
                         }
-    
-                        $subscription = CompanySubscription::create([
-                            'company_id' => $company->id,
-                            'plan_id'    => session('selected_plan')->id,
-                            'start_date' => now(),
-                            'end_date'   => now()->addMonth(), // Adjust as needed
-                            'status'     => 'active',
-                            'auto_renew' => true,
-                        ]);
-                    }
 
-                    $status = 'successful';
-    
-                    SubscriptionPayment::create([
-                        'company_subscription_id' => $subscription->id,
-                        'payment_date'            => now(),
-                        'amount'                  => $result['data'][0]['attributes']['amount'],
-                        'payment_method'          => 'other',
-                        'status'                  => $status,
-                        'transaction_reference'   => $result['data'][0]['attributes']['reference_number'],
-                        'notes'                   => $result['data'][0]['attributes']['remarks'],
-                    ]);
-    
-                    session()->forget('selected_plan');
-    
-                    return $status;
-                } else {
-                    \Log::error('No company associated with the authenticated user.');
-                    return 'error';
+                        $company = $user->companies()->first();
+                        if (!$company) {
+                            \Log::error('No company associated with user: ' . $user->id);
+                            return 'error';
+                        }
+
+                        $subscription = $this->createOrUpdateSubscription($company);
+                        $paymentData = [
+                            'attributes' => [
+                                'amount' => $result['data'][0]['attributes']['amount'] ?? 0,
+                                'reference_number' => $referenceNumber,
+                                'remarks' => $result['data'][0]['attributes']['remarks'] ?? 'Payment completed'
+                            ]
+                        ];
+                        $this->createPaymentRecord($subscription, $paymentData);
+
+                        DB::commit();
+                        return 'successful';
+                    } catch (\Exception $e) {
+                        DB::rollBack();
+                        \Log::error('Payment processing error: ' . $e->getMessage());
+                        \Log::error('Stack trace: ' . $e->getTraceAsString());
+                        return 'error';
+                    }
                 }
+
+                return $paymentStatus;
             }
 
+            \Log::warning('Empty PayMongo response for reference: ' . $referenceNumber);
             return 'pending';
         } catch (\Exception $e) {
             \Log::error('PayMongo Error: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
             return 'error';
         }
+    }
+
+    private function createOrUpdateSubscription($company)
+    {
+        $subscription = $company->subscriptions()->where('status', 'pending')->first();
+        
+        if (!$subscription) {
+            if (!session('selected_plan')) {
+                throw new \Exception('Selected plan not found in session');
+            }
+            
+            $subscription = CompanySubscription::create([
+                'company_id' => $company->id,
+                'plan_id' => session('selected_plan')->id,
+                'start_date' => now(),
+                'end_date' => now()->addMonth(),
+                'status' => 'active',
+                'auto_renew' => true,
+            ]);
+        } else {
+            $subscription->update(['status' => 'active']);
+        }
+        
+        return $subscription;
+    }
+
+    private function createPaymentRecord($subscription, $paymentData)
+    {
+        return SubscriptionPayment::create([
+            'company_subscription_id' => $subscription->id,
+            'payment_date' => now(),
+            'amount' => $paymentData['attributes']['amount'] / 100,
+            'payment_method' => 'paymongo',
+            'status' => 'successful',
+            'transaction_reference' => $paymentData['attributes']['reference_number'],
+            'notes' => $paymentData['attributes']['remarks'],
+        ]);
     }
 
     public function success(Request $request)
