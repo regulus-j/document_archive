@@ -29,7 +29,7 @@ class CreateAdminUserSeeder extends Seeder
         );
 
         // Check if the 'Admin' role already exists
-        $role = Role::firstOrCreate(['name' => 'Admin']);
+        $role = Role::firstOrCreate(['name' => 'super-admin']);
 
         $admin = Admin::firstOrCreate([
             'user_id' => $user->id,
