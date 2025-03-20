@@ -14,23 +14,16 @@ class RoleController extends Controller
 {
     function __construct()
     {   
-         $this->middleware('permission:role-list|role-create|role-edit|role-delete', ['only' => ['index','store']]);
-         $this->middleware('permission:role-create', ['only' => ['create','store']]);
-         $this->middleware('permission:role-edit', ['only' => ['edit','update']]);
-         $this->middleware('permission:role-delete', ['only' => ['destroy']]);
+        // Check if user has any of these permissions
+        $this->middleware('permission:role-list|role-create|role-edit|role-delete', ['only' => ['index','store']]);
+        $this->middleware('permission:role-create', ['only' => ['create','store']]);
+        $this->middleware('permission:role-edit', ['only' => ['edit','update']]);
+        $this->middleware('permission:role-delete', ['only' => ['destroy']]);
     }
 
     public function index(Request $request): View
     {
-        $query = Role::query();
-        
-        // Only show super-admin roles to super-admins
-        if (!auth()->user()->hasRole('super-admin')) {
-            $query->where('name', '!=', 'super-admin');
-        }
-        
-        $roles = $query->orderBy('id', 'DESC')->paginate(5);
-
+        $roles = Role::orderBy('id', 'DESC')->paginate(5);
         return view('roles.index', compact('roles'))
             ->with('i', ($request->input('page', 1) - 1) * 5);
     }
@@ -48,12 +41,6 @@ class RoleController extends Controller
             'permission' => 'required',
         ]);
 
-        // Prevent creating super-admin role if not a super-admin
-        if (strtolower($request->input('name')) === 'super-admin' && !auth()->user()->hasRole('super-admin')) {
-            return redirect()->route('roles.index')
-                ->with('error', 'You do not have permission to create a super-admin role');
-        }
-
         $permissionsID = array_map(
             function($value) { return (int)$value; },
             $request->input('permission')
@@ -70,11 +57,6 @@ class RoleController extends Controller
     {
         $role = Role::find($id);
         
-        // Prevent viewing super-admin role details if not a super-admin
-        if ($role->name === 'super-admin' && !auth()->user()->hasRole('super-admin')) {
-            abort(403, 'Unauthorized action.');
-        }
-        
         $rolePermissions = Permission::join("role_has_permissions", "role_has_permissions.permission_id", "=", "permissions.id")
             ->where("role_has_permissions.role_id", $id)
             ->get();
@@ -85,11 +67,6 @@ class RoleController extends Controller
     public function edit($id): View
     {
         $role = Role::find($id);
-        
-        // Prevent editing super-admin role if not a super-admin
-        if ($role->name === 'super-admin' && !auth()->user()->hasRole('super-admin')) {
-            abort(403, 'Unauthorized action.');
-        }
         
         $permission = Permission::get();
         $rolePermissions = DB::table("role_has_permissions")->where("role_has_permissions.role_id", $id)
@@ -108,18 +85,6 @@ class RoleController extends Controller
     
         $role = Role::find($id);
         
-        // Prevent updating super-admin role if not a super-admin
-        if ($role->name === 'super-admin' && !auth()->user()->hasRole('super-admin')) {
-            return redirect()->route('roles.index')
-                ->with('error', 'You do not have permission to update the super-admin role');
-        }
-        
-        // Prevent renaming to super-admin if not already super-admin
-        if (strtolower($request->input('name')) === 'super-admin' && $role->name !== 'super-admin' && !auth()->user()->hasRole('super-admin')) {
-            return redirect()->route('roles.index')
-                ->with('error', 'You do not have permission to create a super-admin role');
-        }
-        
         $role->name = $request->input('name');
         $role->save();
 
@@ -137,12 +102,6 @@ class RoleController extends Controller
     public function destroy($id): RedirectResponse
     {
         $role = Role::find($id);
-        
-        // Prevent deleting super-admin role regardless of who is logged in
-        if ($role->name === 'super-admin') {
-            return redirect()->route('roles.index')
-                ->with('error', 'The super-admin role cannot be deleted');
-        }
         
         DB::table("roles")->where('id', $id)->delete();
         return redirect()->route('roles.index')

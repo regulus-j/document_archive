@@ -28,18 +28,39 @@ class CreateAdminUserSeeder extends Seeder
             ]
         );
 
-        // Check if the 'Admin' role already exists
+        // Check if the 'super-admin' role already exists
         $role = Role::firstOrCreate(['name' => 'super-admin']);
 
         $admin = Admin::firstOrCreate([
             'user_id' => $user->id,
         ]);
 
-        // Assign the 'Admin' role to the user
+        // Assign the 'super-admin' role to the user
         $user->assignRole($role);
 
-        // Optionally, add permissions to the 'Admin' role
-        $permissions = Permission::all();
+        // Define allowed permissions for super-admin
+        $allowedPermissions = [
+            'role-list',
+            'role-create',
+            'role-edit',
+            'role-delete',
+            'document-list',
+            'document-create',
+            'document-edit',
+            'document-delete',
+            'document-release',
+            'document-receive',
+            'audit-list',
+            'user-list',
+            'user-create',
+            'user-edit',
+            'user-delete'
+        ];
+
+        // Get only the allowed permissions
+        $permissions = Permission::whereIn('name', $allowedPermissions)->get();
+        
+        // Sync only the allowed permissions to the super-admin role
         $role->syncPermissions($permissions);
     }
 }

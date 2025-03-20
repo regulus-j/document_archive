@@ -4,7 +4,7 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ __('Super Admin Dashboard') }}
             </h2>
-          
+
         </div>
     </x-slot>
 
@@ -21,7 +21,7 @@
                                 <div class="text-blue-600 text-sm font-medium">Total Companies</div>
                                 <div class="text-3xl font-bold text-gray-900">{{ $totalCompanies }}</div>
                                 <div class="text-sm text-emerald-500 mt-1">
-                                    <span>↑ 12% from last month</span>
+
                                 </div>
                             </div>
                             <div class="bg-gradient-to-br from-blue-500 to-blue-600 p-3 rounded-lg shadow-sm">
@@ -44,7 +44,7 @@
                                 <div class="text-indigo-600 text-sm font-medium">Total Users</div>
                                 <div class="text-3xl font-bold text-gray-900">{{ $totalUsers }}</div>
                                 <div class="text-sm text-emerald-500 mt-1">
-                                    <span>↑ 8% from last month</span>
+
                                 </div>
                             </div>
                             <div class="bg-gradient-to-br from-indigo-500 to-indigo-600 p-3 rounded-lg shadow-sm">
@@ -67,7 +67,7 @@
                                 <div class="text-cyan-600 text-sm font-medium">Total Documents</div>
                                 <div class="text-3xl font-bold text-gray-900">{{ $totalDocuments }}</div>
                                 <div class="text-sm text-emerald-500 mt-1">
-                                    <span>↑ 15% from last month</span>
+
                                 </div>
                             </div>
                             <div class="bg-gradient-to-br from-cyan-500 to-cyan-600 p-3 rounded-lg shadow-sm">
@@ -90,7 +90,7 @@
                                 <div class="text-sky-600 text-sm font-medium">Active Subscriptions</div>
                                 <div class="text-3xl font-bold text-gray-900">{{ $activeSubscriptions }}</div>
                                 <div class="text-sm text-emerald-500 mt-1">
-                                    <span>↑ 5% from last month</span>
+
                                 </div>
                             </div>
                             <div class="bg-gradient-to-br from-sky-500 to-sky-600 p-3 rounded-lg shadow-sm">
@@ -134,40 +134,35 @@
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-100">
                                 @foreach($recentActivities as $activity)
-                                    <tr
-                                        class="hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-colors">
+                                    <tr class="hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-colors">
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="flex items-center">
-                                                <div
-                                                    class="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center text-white font-bold shadow-sm">
-                                                    {{ substr($activity->company_name ?? 'N/A', 0, 1) }}
+                                                <div class="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center text-white font-bold shadow-sm">
+                                                    {{ substr($activity['company_name'] ?? 'N/A', 0, 1) }}
                                                 </div>
                                                 <div class="ml-4">
                                                     <div class="text-sm font-medium text-gray-900">
-                                                        {{ $activity->company_name ?? 'No Company' }}</div>
-                                                    <div class="text-sm text-blue-600">ID:
-                                                        {{ $activity->company_id     ?? 'N/A' }}</div>
+                                                        {{ $activity['company_name'] ?? 'No Company' }}
+                                                    </div>
+                                                    <div class="text-sm text-blue-600">
+                                                        ID: {{ $activity['company_id'] ?? 'N/A' }}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                                @if(strpos($activity->action, 'registered') !== false) bg-emerald-100 text-emerald-800
-                                                @elseif(strpos($activity->action, 'uploaded') !== false) bg-blue-100 text-blue-800
-                                                @elseif(strpos($activity->action, 'deleted') !== false) bg-rose-100 text-rose-800
-                                                @else bg-gray-100 text-gray-800 @endif">
-                                                {{ $activity->action }}
-                                            </span>
+                                            <div class="text-sm text-gray-900">{{ $activity['action'] }}</div>
+                                            <div class="text-sm text-gray-500">{{ $activity['user_name'] }}</div>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                            {{ $activity->user_name ?? 'System' }}
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                            {{ \Carbon\Carbon::parse($activity->created_at)->diffForHumans() }}
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {{ \Carbon\Carbon::parse($activity['created_at'])->diffForHumans() }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <a href="#"
-                                                class="text-blue-600 hover:text-blue-900 bg-blue-50 px-3 py-1 rounded-md hover:bg-blue-100 transition-colors">Details</a>
+                                            @if($activity['type'] === 'document')
+                                                <a href="#" class="text-blue-600 hover:text-blue-900">View Document</a>
+                                            @else
+                                                <a href="#" class="text-blue-600 hover:text-blue-900">View Profile</a>
+                                            @endif
                                         </td>
                                     </tr>
                                 @endforeach
