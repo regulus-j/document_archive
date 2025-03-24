@@ -115,7 +115,7 @@
                         </div>
 
                         <!-- Companies -->
-                        @if(auth()->user()->isAdmin() || auth()->user()->hasRole('Admin'))
+                        @if(auth()->user()->isAdmin() || auth()->user()->hasRole('company-admin'))
                             <div class="space-y-2">
                                 <x-input-label for="companies" :value="__('Company')"
                                     class="block text-sm font-medium text-gray-700 mb-1" />
@@ -137,7 +137,7 @@
                         @endif
 
                         <!-- Offices -->
-                        @if (!$user->hasRole('Admin'))
+                        @if (!$user->hasRole('company-admin'))
                             <div>
                                 <x-input-label for="offices" :value="__('Offices')"
                                     class="block text-sm font-medium text-gray-700 mb-1" />

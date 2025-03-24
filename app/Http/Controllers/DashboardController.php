@@ -17,11 +17,17 @@ class DashboardController extends Controller
     public function index()
     {
         $user = auth()->user();
-        $userCompany = auth()->user()->companies()->first();
-
+        
+        // Properly check roles and redirect to appropriate dashboard
+        if ($user->hasRole('super-admin')) {
+            return redirect()->route('admin.dashboard');
+        }
+        
+        $userCompany = $user->companies()->first();
+        
         // Check if user is a super admin
-        if ($user->isAdmin()) {
-            return $this->superAdminDashboard();
+        if (auth()->user()->isSuperAdmin()) {
+            return redirect()->route('admin.dashboard');
         }
 
         // ** Free Trial Check **
@@ -33,8 +39,30 @@ class DashboardController extends Controller
             $activeSubscription = (object) ['status' => 'trial', 'ends_at' => $trialEndDate];
         } else {
             if (!$userCompany) {
-                return view('dashboard-office-user')
-                    ->with('info', 'Please set up your company profile first.');
+                // Initialize all variables needed by dashboard-office-user.blade.php
+                $totalDocuments = 0;
+                $recentDocuments = collect();
+                $pendingDocuments = 0;
+                $todayDocuments = 0;
+                $activeSubscription = null;
+                $countPendingDocs = 0;
+                $countRecentDocs = 0;
+                $countCompanyUsers = 0;
+                $incomingDocuments = 0; 
+                $countOffices = "No Offices Found";
+                
+                return view('dashboard-office-user', compact(
+                    'totalDocuments',
+                    'recentDocuments',
+                    'pendingDocuments',
+                    'todayDocuments',
+                    'activeSubscription',
+                    'countPendingDocs',
+                    'countRecentDocs',
+                    'countCompanyUsers',
+                    'incomingDocuments',
+                    'countOffices'
+                ))->with('info', 'Please set up your company profile first.');
             }
 
             $activeSubscription = CompanySubscription::where('company_id', $userCompany->id)
@@ -88,7 +116,7 @@ class DashboardController extends Controller
             ->count();
 
         // **🚀 Correct Role Check for Admin**
-        if ($user->hasRole('Admin') && $userCompany) {
+        if ($user->hasRole('company-admin') && $userCompany) {
             return view('dashboard', compact(
                 'recentTransactions',
                 'totalDocuments',
@@ -101,6 +129,7 @@ class DashboardController extends Controller
                 'countCompanyUsers',
                 'incomingDocuments',
                 'countOffices',
+                'totalDocuments',
             ));
         } else {
             return view('dashboard-office-user', compact(
@@ -116,35 +145,5 @@ class DashboardController extends Controller
                 'countOffices',
             ));
         }
-    }
-
-    private function superAdminDashboard(): View
-    {
-        $totalCompanies = CompanyAccount::count();
-        $totalUsers = User::count();
-        $totalDocuments = Document::count();
-        $activeSubscriptions = CompanySubscription::where('status', 'active')->count();
-
-        // Convert the company data into proper objects with all required properties
-        $recentActivities = CompanyAccount::latest()
-            ->take(5)
-            ->get()
-            ->map(function ($company) {
-                return (object) [
-                    'company_name' => $company->company_name,
-                    'company_id' => $company->id,
-                    'action' => 'registered', // Changed to match your blade template conditions
-                    'user_name' => 'System', // Added default user
-                    'created_at' => $company->created_at
-                ];
-            });
-
-        return view('admin.dashboard', compact(
-            'totalCompanies',
-            'totalUsers',
-            'totalDocuments',
-            'activeSubscriptions',
-            'recentActivities'
-        ));
     }
 }

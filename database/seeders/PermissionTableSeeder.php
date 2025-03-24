@@ -30,6 +30,10 @@ class PermissionTableSeeder extends Seeder
            'user-create',
            'user-delete',
            'user-edit',
+           'office-list',
+           'office-create',
+           'office-delete',
+           'office-edit',
         ];
         
         foreach ($permissions as $permission) {
