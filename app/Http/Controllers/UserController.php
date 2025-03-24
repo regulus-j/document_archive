@@ -200,7 +200,7 @@ class UserController extends Controller
         ];
     
         // Conditionally require offices field
-        if (!$user->hasRole('Admin')) {
+        if (!$user->hasRole('company-admin')) {
             $rules['offices'] = 'required|array'; // Only require if not admin
         }
     
@@ -218,7 +218,7 @@ class UserController extends Controller
         $user->roles()->sync($roleIds);
     
         // Sync offices if not admin
-        if (!$user->hasRole('Admin')) {
+        if (!$user->hasRole('company-admin')) {
             $user->offices()->sync($request->input('offices'));
         }
     

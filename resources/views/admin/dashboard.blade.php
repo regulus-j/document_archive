@@ -138,27 +138,32 @@
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="flex items-center">
                                                 <div class="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center text-white font-bold shadow-sm">
-                                                    {{ substr($activity['company_name'] ?? 'N/A', 0, 1) }}
+                                                    {{ substr($activity['company_name'] ?? $activity->company_name ?? 'N/A', 0, 1) }}
                                                 </div>
                                                 <div class="ml-4">
                                                     <div class="text-sm font-medium text-gray-900">
-                                                        {{ $activity['company_name'] ?? 'No Company' }}
+                                                        {{ $activity['company_name'] ?? $activity->company_name ?? 'No Company' }}
                                                     </div>
                                                     <div class="text-sm text-blue-600">
-                                                        ID: {{ $activity['company_id'] ?? 'N/A' }}
+                                                        ID: {{ $activity['company_id'] ?? $activity->company_id ?? 'N/A' }}
                                                     </div>
                                                 </div>
                                             </div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm text-gray-900">{{ $activity['action'] }}</div>
-                                            <div class="text-sm text-gray-500">{{ $activity['user_name'] }}</div>
+                                            <div class="text-sm text-gray-900">{{ $activity['action'] ?? $activity->action ?? 'N/A' }}</div>
+                                            <div class="text-sm text-gray-500">{{ $activity['user_name'] ?? $activity->user_name ?? 'Unknown' }}</div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {{ \Carbon\Carbon::parse($activity['created_at'])->diffForHumans() }}
+                                            {{ \Carbon\Carbon::parse($activity['created_at'] ?? $activity->created_at)->diffForHumans() }}
+                                        </td>
+                                        <td>
+                                            <div class="px-6 py-4 whitespace-nowrap text-sm">
+                                                {{ date('M j, Y, g:i a', strtotime($activity['created_at'] ?? $activity->created_at)) }}
+                                            </div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            @if($activity['type'] === 'document')
+                                            @if(($activity['type'] ?? $activity->type ?? '') === 'document')
                                                 <a href="#" class="text-blue-600 hover:text-blue-900">View Document</a>
                                             @else
                                                 <a href="#" class="text-blue-600 hover:text-blue-900">View Profile</a>

@@ -26,6 +26,11 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/admin/dashboard', [AdminDashboardController::class, 'index'])
+    ->middleware(['auth', 'verified', 'role:super-admin'])
+    ->name('admin.dashboard');
+
+Route::get('/trial', [TrialController::class, 'start'])->name('trial.start');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -69,9 +74,7 @@ Route::middleware(['auth'])->group(function () {
 
 //--------------------------------------------------------------------------------------------------------------------
 
-Route::middleware(['auth', 'role:super-admin'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
-    
+Route::middleware(['auth', 'role:super-admin'])->prefix('admin')->name('admin.')->group(function () {       
     // Subscription Management
     Route::get('/subscriptions', [SubscriptionController::class, 'indexAdmin'])->name('subscriptions.index');
     Route::get('/subscriptions/assign', [SubscriptionController::class, 'assignForm'])->name('subscriptions.assign.form');
@@ -85,7 +88,6 @@ Route::middleware(['auth', 'role:super-admin'])->prefix('admin')->name('admin.')
     Route::get('/plans', [PlanController::class, 'index'])->name('plans.index');
     
     // Other admin routes
-    Route::get('/trial', [TrialController::class, 'start'])->name('trial.start');
     Route::get('/user-manual', [UserManualController::class, 'show'])->name('userManual.manual');
 });
 
