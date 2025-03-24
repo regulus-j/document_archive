@@ -37,7 +37,7 @@ class DocumentController extends Controller
      */
     public function index(): View
     {
-        if (auth()->user()->hasRole('Admin')) {
+        if (auth()->user()->hasRole('company-admin')) {
             $documents = Document::with(['user', 'status', 'transaction.fromOffice', 'transaction.toOffice'])
                 ->latest()
                 ->paginate(5);
@@ -84,7 +84,7 @@ class DocumentController extends Controller
 
     public function showArchive(): View
     {
-        if (auth()->user()->hasRole('Admin')) {
+        if (auth()->user()->hasRole('company-admin')) {
             $documents = Document::with(['user', 'status', 'transaction.fromOffice', 'transaction.toOffice'])->latest()->paginate(5);
         } else {
             $userOfficeIds = auth()->user()->offices->pluck('id')->toArray();
@@ -258,7 +258,7 @@ class DocumentController extends Controller
 
             $query = Document::with(['user', 'status', 'transaction.fromOffice', 'transaction.toOffice']);
 
-            if (!auth()->user()->hasRole('Admin')) {
+            if (!auth()->user()->hasRole('company-admin')) {
                 $userOfficeIds = auth()->user()->offices->pluck('id')->toArray();
                 $query->whereHas('user.offices', function ($q) use ($userOfficeIds) {
                     $q->whereIn('offices.id', $userOfficeIds);

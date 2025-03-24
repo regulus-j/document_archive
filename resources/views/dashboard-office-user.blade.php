@@ -17,6 +17,8 @@
                     </svg>
                     <div class="text-2xl font-semibold text-gray-900">
                         {{ __("Welcome back, " . auth()->user()->first_name . "!") }}
+                        <br>
+                        {{ _("From " . auth()->user()->company()->company_name . " company!")}}
                     </div>
                 </div>
             </div>
