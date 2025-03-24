@@ -90,7 +90,7 @@ class AdminDashboardController extends Controller
             $companyName = $user->company ? $user->company->company_name : 'No Company';
             $companyId = $user->company ? $user->company->id : null;
             
-            return (object)[
+            return [
                 'id' => $user->id,
                 'company_name' => $companyName,
                 'company_id' => $companyId,
@@ -106,7 +106,7 @@ class AdminDashboardController extends Controller
             $companyName = $user && $user->company ? $user->company->company_name : 'No Company';
             $companyId = $user && $user->company ? $user->company->id : null;
             
-            return (object)[
+            return [
                 'id' => $document->id,
                 'company_name' => $companyName,
                 'company_id' => $companyId,
