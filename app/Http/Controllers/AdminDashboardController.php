@@ -17,6 +17,17 @@ class AdminDashboardController extends Controller
      */
     public function index()
     {
+        // Check for proper role authorization first
+        if (!auth()->user()->hasRole('super-admin')) {
+            // Redirect company admins to regular dashboard
+            if (auth()->user()->hasRole('company-admin')) {
+                return redirect()->route('dashboard');
+            }
+            
+            // Handle unauthorized access
+            abort(403, 'Unauthorized access. You need super-admin privileges.');
+        }
+        
         // Get counts for dashboard stats
         $totalCompanies = CompanyAccount::count();
         $totalUsers = User::count();
@@ -79,7 +90,7 @@ class AdminDashboardController extends Controller
             $companyName = $user->company ? $user->company->company_name : 'No Company';
             $companyId = $user->company ? $user->company->id : null;
             
-            return [
+            return (object)[
                 'id' => $user->id,
                 'company_name' => $companyName,
                 'company_id' => $companyId,
@@ -89,13 +100,13 @@ class AdminDashboardController extends Controller
                 'type' => 'user'
             ];
         });
-        
+
         $recentDocumentActivities = Document::with('user.company')->latest()->take(5)->get()->map(function($document) {
             $user = $document->user;
             $companyName = $user && $user->company ? $user->company->company_name : 'No Company';
             $companyId = $user && $user->company ? $user->company->id : null;
             
-            return [
+            return (object)[
                 'id' => $document->id,
                 'company_name' => $companyName,
                 'company_id' => $companyId,
@@ -106,9 +117,9 @@ class AdminDashboardController extends Controller
             ];
         });
 
-        // Combine activities and convert to collection for proper sorting and Blade compatibility
-        $combinedActivities = array_merge($recentUserActivities->toArray(), $recentDocumentActivities->toArray());
-        $recentActivities = collect($combinedActivities)->sortByDesc('created_at')->take(10);
+        // Convert both collections to arrays of objects and merge
+        $combinedActivities = $recentUserActivities->toBase()->merge($recentDocumentActivities);
+        $recentActivities = $combinedActivities->sortByDesc('created_at')->take(10)->values();
 
         // Get monthly statistics for the growth chart
         $monthlyStats = $this->getMonthlyStats();
