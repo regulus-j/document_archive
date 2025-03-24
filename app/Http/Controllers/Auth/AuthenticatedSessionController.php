@@ -30,8 +30,10 @@ class AuthenticatedSessionController extends Controller
     
         // Check if the user's password_set column is false
         if (auth()->user()->password_set == 0) {
-            if(auth()->user()->isCompanyAdmin()){
+            if(auth()->user()->isSuperAdmin()){
                 return redirect()->route('admin.dashboard')->with('status', 201);
+            }elseif(auth()->user()->isCompanyAdmin()){
+                return redirect()->route('dashboard')->with('status', 201);
             }
             return redirect()->route('profile.edit')->with('message', 'Please change your password before proceeding.');
         }
