@@ -27,8 +27,8 @@
 
                         @if(auth()->user()->isSuperAdmin())
                         <x-nav-link 
-                                :href="route('users.index')" 
-                                :active="request()->routeIs('users.index')"
+                                :href="route('admin.users-index')" 
+                                :active="request()->routeIs('admin.users-index')"
                                 class="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 {{ request()->routeIs('admin.registered') ? 'text-blue-600 border-b-2 border-blue-600' : '' }}">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
@@ -108,12 +108,6 @@
                             </x-nav-link>
 
                             @else
-                            <x-nav-link 
-                                :href="route('dashboard')" 
-                                :active="request()->routeIs('dashboard')"
-                                class="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 {{ request()->routeIs('dashboard') ? 'text-blue-600 border-b-2 border-blue-600' : '' }}">
-                                {{ __('Dashboard') }}
-                            </x-nav-link>
                             
                             @can('document-list')
                                 <div x-data="{ open: false }" class="relative">
