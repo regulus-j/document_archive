@@ -25,9 +25,8 @@
                             {{ __('Dashboard') }}
                         </x-nav-link>
 
-                        <!-- Admin Navigation Links -->
-                        @if(auth()->user()->isAdmin())
-                            <x-nav-link 
+                        @if(auth()->user()->isSuperAdmin())
+                        <x-nav-link 
                                 :href="route('users.index')" 
                                 :active="request()->routeIs('users.index')"
                                 class="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 {{ request()->routeIs('admin.registered') ? 'text-blue-600 border-b-2 border-blue-600' : '' }}">
@@ -47,7 +46,6 @@
                                 {{ __('Roles and Permissions') }}
                             </x-nav-link>
 
-                            @if(auth()->user()->isSuperAdmin())
                             <x-nav-link 
                                 :href="route('companies.index')" 
                                 :active="request()->routeIs('companies.index')"
@@ -57,7 +55,6 @@
                                 </svg>
                                 {{ __('Companies') }}
                             </x-nav-link>
-                            @endif
 
                             <x-nav-link 
                                 :href="route('admin.plans.index')" 
@@ -78,22 +75,19 @@
                                 </svg>
                                 {{ __('Subscriptions') }}
                             </x-nav-link>
-                        
-                        <!-- Non-Admin Navigation Links -->
-                        @else
-                            <!-- Users Management - For users with permission -->
-                            @if(auth()->user()->can('user-list'))
-                                <x-nav-link 
-                                    :href="route('users.index')" 
-                                    :active="request()->routeIs('users.index')"
-                                    class="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 {{ request()->routeIs('admin.registered') ? 'text-blue-600 border-b-2 border-blue-600' : '' }}">
-                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                                    </svg>
-                                    {{ __('Users') }}
-                                </x-nav-link>
+                            
+                            @elseif(auth()->user()->hasRole('company-admin')) 
+                            <x-nav-link 
+                                :href="route('users.index')" 
+                                :active="request()->routeIs('users.index')"
+                                class="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 {{ request()->routeIs('admin.registered') ? 'text-blue-600 border-b-2 border-blue-600' : '' }}">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                                </svg>
+                                {{ __('Users') }}
+                            </x-nav-link>
 
-                                <x-nav-link 
+                            <x-nav-link 
                                     :href="route('office.index')" 
                                     :active="request()->routeIs('office.index')"
                                     class="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 {{ request()->routeIs('admin.registered') ? 'text-blue-600 border-b-2 border-blue-600' : '' }}">
@@ -102,22 +96,25 @@
                                     </svg>
                                     {{ __('Office') }}
                                 </x-nav-link>
-                            @endif
 
-                            <!-- Roles Management - For users with permission -->
-                            @can('role-list')
-                                <x-nav-link 
-                                    :href="route('roles.index')" 
-                                    :active="request()->routeIs('roles.index')"
-                                    class="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 {{ request()->routeIs('roles.index') ? 'text-blue-600 border-b-2 border-blue-600' : '' }}">
-                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
-                                    </svg>
-                                    {{ __('Roles and Permissions') }}
-                                </x-nav-link>
-                            @endcan
+                            <x-nav-link 
+                                :href="route('plans.select')" 
+                                :active="request()->routeIs('plans.select')"
+                                class="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 {{ request()->routeIs('subscriptions.index') ? 'text-blue-600 border-b-2 border-blue-600' : '' }}">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2zM10 8.5a.5.5 0 11-1 0 .5.5 0 011 0zm5 5a.5.5 0 11-1 0 .5.5 0 011 0z"></path>
+                                </svg>
+                                {{ __('Plans & Subscriptions') }}
+                            </x-nav-link>
 
-                            <!-- Documents Dropdown - For users with permission -->
+                            @else
+                            <x-nav-link 
+                                :href="route('dashboard')" 
+                                :active="request()->routeIs('dashboard')"
+                                class="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 {{ request()->routeIs('dashboard') ? 'text-blue-600 border-b-2 border-blue-600' : '' }}">
+                                {{ __('Dashboard') }}
+                            </x-nav-link>
+                            
                             @can('document-list')
                                 <div x-data="{ open: false }" class="relative">
                                     <button @click="open = !open" 
@@ -150,9 +147,9 @@
                                     </div>
                                 </div>
                             @endcan
+                        @endif
 
-                            <!-- Reports - For all users -->
-                            <x-nav-link 
+                        <x-nav-link 
                                 :href="route('reports.index')" 
                                 :active="request()->routeIs('reports.index')"
                                 class="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 {{ request()->routeIs('reports.index') ? 'text-blue-600 border-b-2 border-blue-600' : '' }}">
@@ -161,14 +158,10 @@
                                 </svg>
                                 {{ __('Reports') }}
                             </x-nav-link>
-                        @endif
-                    </div>
-                </div>
-            </div>
-            
+
             <!-- Desktop User Dropdown -->
             <div class="hidden md:block">
-                <div class="ml-4 flex items-center md:ml-6">
+                <div class="flex items-center justify-between w-full">
                     <div class="relative" style="z-index: 999;">
                         <x-dropdown align="right" width="48">
                             <x-slot name="trigger">
@@ -190,8 +183,8 @@
 
                                 @if(auth()->user()->hasRole('company-admin')) 
                                     <!-- Admin sees Plans -->
-                                    <x-dropdown-link :href="route('plans.select', auth()->id())" class="hover:bg-blue-50 hover:text-blue-600">
-                                        {{ __('Plans & Subscription') }}
+                                    <x-dropdown-link :href="route('companies.userManaged', auth()->id())" class="hover:bg-blue-50 hover:text-blue-600">
+                                        {{ __('Company Account') }}
                                     </x-dropdown-link>
                                 @endif
 
@@ -299,18 +292,16 @@
         </div>
 
         <!-- Mobile Profile Section -->
-        <div class="pt-4 pb-1 border-t border-gray-200">
-            <div class="flex items-center px-4">
-                <div class="flex-shrink-0">
-                    <svg class="h-10 w-10 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
+        <!-- Mobile Profile Section -->
+                <div class="pt-4 pb-1 border-t border-gray-200">
+                    <div class="flex items-center px-4">
+                        <div class="flex-shrink-0">
+                            <svg class="h-10 w-10 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                        </div>
+                    </div>
                 </div>
-                <div class="ml-3">
-                    <div class="font-medium text-base text-gray-800">{{ Auth::user()->name }}</div>
-                    <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>
-                </div>
-            </div>
 
             <div class="mt-3 space-y-1">
                 <x-responsive-nav-link :href="route('profile.edit')" class="text-gray-600 hover:bg-blue-50 hover:text-blue-600">
