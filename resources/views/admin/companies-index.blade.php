@@ -5,26 +5,45 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h1 class="text-3xl font-bold text-gray-900 mb-6">Company Management</h1>
 
-            <div class="bg-white shadow-xl rounded-lg overflow-hidden border border-blue-100">
-                <div class="p-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-xl font-semibold text-gray-800">Company List</h2>
-                        <!-- Add search input -->
-                        <input type="text" 
-                               id="searchInput" 
-                               placeholder="Search companies..." 
-                               class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
-                    </div>
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold text-gray-800">Company List</h2>
+                <!-- Add search input and button -->
+                <div class="flex">
+                    <input type="text" 
+                        id="searchInput" 
+                        placeholder="Search companies..." 
+                        class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                    <button id="searchButton" class="ml-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        Search
+                    </button>
+                </div>
+            </div>
 
                     <div class="overflow-x-auto bg-white rounded-lg shadow overflow-y-auto relative">
                         <table class="border-collapse table-auto w-full whitespace-no-wrap bg-white table-striped relative">
-                            <!-- Your existing thead code remains the same -->
+                            <thead>
+                                <tr>
+                                    <th class="px-4 py-2">ID</th>
+                                    <th class="px-4 py-2">Name</th>
+                                    <th class="px-4 py-2">Owner</th>
+                                    <th class="px-4 py-2">Status</th>
+                                    <th class="px-4 py-2">Plan</th>
+                                </tr>
+                            </thead>
                             <tbody id="companiesTableBody">
-                                @foreach ($companies as $company)
+                                @forelse ($companies as $company)
                                     <tr class="hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-colors">
-                                        <!-- Your existing row code remains the same -->
+                                        <td class="px-4 py-2">{{ $company['id'] }}</td>
+                                        <td class="px-4 py-2">{{ $company['name'] }}</td>
+                                        <td class="px-4 py-2">{{ $company['owner'] }}</td>
+                                        <td class="px-4 py-2">{{ $company['status'] }}</td>
+                                        <td class="px-4 py-2">{{ $company['plan'] }}</td>
                                     </tr>
-                                @endforeach
+                                @empty
+                                    <tr>
+                                        <td colspan="5" class="text-center py-4">No companies found.</td>
+                                    </tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>
@@ -35,8 +54,8 @@
 
     <!-- Add JavaScript for search functionality -->
     <script>
-        document.getElementById('searchInput').addEventListener('keyup', function() {
-            const searchText = this.value.toLowerCase();
+                document.getElementById('searchButton').addEventListener('click', function() {
+            const searchText = document.getElementById('searchInput').value.toLowerCase();
             const tbody = document.getElementById('companiesTableBody');
             const rows = tbody.getElementsByTagName('tr');
 
@@ -45,7 +64,7 @@
                 let found = false;
                 
                 for (let cell of cells) {
-                    if (cell.textContent.toLowerCase().indexOf(searchText) > -1) {
+                    if (cell.textContent.toLowerCase().includes(searchText)) {
                         found = true;
                         break;
                     }
