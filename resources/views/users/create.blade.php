@@ -166,7 +166,8 @@
                             </div>
 
                             <!-- Companies -->
-                            <div class="space-y-2">
+                            <input type="hidden" name="companies" value={{ auth()->user()->company()->first()->id}}>
+                            {{-- <div class="space-y-2">
                                 <label for="companies"
                                     class="block text-sm font-medium text-gray-700">{{ __('Company') }}</label>
                                 <div class="relative">
@@ -185,7 +186,7 @@
                                     <p class="text-sm text-red-600">{{ $message }}</p>
                                 @enderror
                                 <p class="text-xs text-gray-500 mt-1">Select the company this user belongs to</p>
-                            </div>
+                            </div> --}}
 
                             <!-- Offices -->
                             <div class="space-y-2 md:col-span-2">

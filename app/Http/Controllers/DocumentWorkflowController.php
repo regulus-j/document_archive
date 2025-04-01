@@ -45,13 +45,16 @@ class DocumentWorkflowController extends Controller
 
         $request->validate([
             'recipient_batch' => 'required|array',
+            'recipient_office_batch' => 'array',
             'step_order' => 'required|array',
-            'remarks' => 'nullable|array',
         ]);
 
         $document->status()->update(['status' => 'forwarded']);
 
-        // Fix: Pass document ID instead of document object
+        // Generate tracking number
+        $trackingNumber = $this->createTrackingNumber($document, auth()->user());
+
+        // Log the forward action
         DocumentAudit::logDocumentAction(
             $document->id,
             auth()->id(),
@@ -64,14 +67,32 @@ class DocumentWorkflowController extends Controller
             if (empty($recipients)) {
                 continue;
             }
+            
+            // Get the office IDs for this batch
+            $officeIds = $request->recipient_office_batch[$batchIndex] ?? [];
+            
+            // Process each recipient
             foreach ($recipients as $recipientId) {
+                // Get the recipient's office ID (using the first selected office if multiple)
+                $recipientOfficeId = null;
+                if (!empty($officeIds)) {
+                    $recipientOfficeId = $officeIds[0]; // Use first office as default
+                } else {
+                    // Get the user's office ID as a fallback
+                    $user = \App\Models\User::find($recipientId);
+                    $recipientOfficeId = $user->office_id ?? 1; // Default to office ID 1 if no office is found
+                }
+                
                 DocumentWorkflow::create([
+                    'tracking_number' => $trackingNumber,
                     'document_id' => $document->id,
                     'sender_id' => auth()->id(),
                     'recipient_id' => $recipientId,
+                    'recipient_office' => $recipientOfficeId,
                     'step_order' => $request->step_order[$batchIndex],
                     'remarks' => $request->remarks[$batchIndex] ?? null,
-                    'status' => 'pending'
+                    'status' => 'pending',
+                    'received_at' => null,
                 ]);
             }
         }
