@@ -33,6 +33,7 @@ class UserController extends Controller
     /**
      * Display a listing of the users.
      */
+
     public function index(Request $request): View
     {
         $company = CompanyAccount::where('user_id', auth()->id())->first();
@@ -40,7 +41,7 @@ class UserController extends Controller
 
         $roles = Role::all();
 
-        if (auth()->user()->isSuperAdmin()) {
+        if (auth()->user()->hasRole('super-admin')) {
             return $this->showRegistered();
         }
 
@@ -54,7 +55,6 @@ class UserController extends Controller
         return view('users.index', compact('users', 'roles'))
             ->with('i', ($request->input('page', 1) - 1) * 5);
     }
-
     public function showRegistered(): View
     {
         $users = User::with(['companies.subscriptions.plan'])
