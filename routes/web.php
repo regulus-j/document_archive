@@ -21,6 +21,7 @@ use App\Http\Controllers\UserManualController;
 use App\Http\Controllers\UserManagedController;
 use App\Http\Controllers\AdminDashboardController;
 
+
 Route::get('/', function () {
     return view('welcome');
 });
@@ -70,6 +71,7 @@ Route::middleware(['auth'])->group(function () {
 
 Route::middleware(['auth'])->group(function () {
     Route::resource('addresses', AddressController::class);
+    Route::get('/admin/users', [UserController::class, 'index'])->name('admin.users-index');
 });
 
 //--------------------------------------------------------------------------------------------------------------------
