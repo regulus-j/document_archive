@@ -114,8 +114,9 @@
                             <x-input-error :messages="$errors->get('roles')" class="mt-2" />
                         </div>
 
+                        <input type="hidden" name="companies" value={{ auth()->user()->company()->first()->id}}>
                         <!-- Companies -->
-                        @if(auth()->user()->isAdmin() || auth()->user()->hasRole('company-admin'))
+                        {{-- @if(auth()->user()->isAdmin() || auth()->user()->hasRole('company-admin'))
                             <div class="space-y-2">
                                 <x-input-label for="companies" :value="__('Company')"
                                     class="block text-sm font-medium text-gray-700 mb-1" />
@@ -134,7 +135,7 @@
                                 <p class="mt-1 text-xs text-gray-500">Hold Ctrl (or Cmd) to select multiple companies</p>
                                 <x-input-error :messages="$errors->get('companies')" class="mt-2" />
                             </div>
-                        @endif
+                        @endif --}}
 
                         <!-- Offices -->
                         @if (!$user->hasRole('company-admin'))

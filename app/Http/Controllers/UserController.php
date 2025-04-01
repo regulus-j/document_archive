@@ -40,8 +40,15 @@ class UserController extends Controller
 
         $roles = Role::all();
 
-        if (auth()->user()->isAdmin()) {
+        if (auth()->user()->isSuperAdmin()) {
             return $this->showRegistered();
+        }
+
+        if (auth()->user()->isCompanyAdmin()) {
+            $companyId = auth()->user()->companies()->first()->id;
+            $users = User::whereHas('companies', function($query) use ($companyId) {
+                $query->where('company_accounts.id', $companyId);
+            })->paginate(5);
         }
 
         return view('users.index', compact('users', 'roles'))

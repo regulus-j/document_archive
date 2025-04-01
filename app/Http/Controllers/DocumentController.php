@@ -220,12 +220,18 @@ class DocumentController extends Controller
     public function forwardDocument(Request $request, $id)
     {
         $document = Document::findOrFail($id);
-        $company = CompanyAccount::where('user_id', auth()->id())->first();
-
-        $users = $company ? $company->employees()->paginate(10) : collect();
-        $offices = $company ? $company->offices()->paginate(10) : collect();
-        ;
-
+        
+        // Get the companies this user belongs to
+        $userCompanyIds = auth()->user()->companies()->pluck('company_id');
+        
+        // Get users from these companies
+        $users = User::whereHas('companies', function($query) use ($userCompanyIds) {
+            $query->whereIn('company_id', $userCompanyIds);
+        })->where('id', '!=', auth()->id())->get(); // Exclude the current user
+        
+        // Get offices from these companies
+        $offices = Office::whereIn('company_id', $userCompanyIds)->get();
+        
         return view('documents.forward', compact('document', 'offices', 'users'));
     }
 
