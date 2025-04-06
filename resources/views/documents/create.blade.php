@@ -170,28 +170,30 @@
                         <!-- Originating Office -->
                         <div class="space-y-2">
                             <label for="from_office" class="block text-sm font-medium text-gray-700">Originating Office</label>
-                            <select name="from_office" id="from_office"
-                                    class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 transition-all"
-                                    required>
-                                <option value="">Select Office</option>
-                                @foreach(Auth::user()->offices as $office)
-                                    <option value="{{ $office->id }}">{{ $office->name }}</option>
-                                @endforeach
-                            </select>
-                            <p class="text-xs text-gray-500">Select the office where this document originates</p>
+                            <input type="text" 
+                                id="from_office" 
+                                value="{{ auth()->user()->offices->first()->name ?? 'N/A' }}" 
+                                class="w-full rounded-lg border-gray-300 bg-gray-100 cursor-not-allowed" 
+                                readonly>
+                            <input type="hidden" 
+                                name="from_office" 
+                                value="{{ auth()->user()->offices->first()->id }}">
                         </div>
                         <!-- Recipient Office -->
                         <div class="space-y-2">
-                            <label for="office_id" class="block text-sm font-medium text-gray-700">Recipient Office</label>
-                            <select name="office_id" id="office_id"
-                                    class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 transition-all">
-                                <option value="">Select Office</option>
-                                @foreach ($offices as $office)
-                                    <option value="{{ $office->id }}">{{ $office->name }}</option>
-                                @endforeach
-                            </select>
-                            <p class="text-xs text-gray-500">Select the office that should receive this document</p>
-                        </div>
+                                <label for="from_office" class="block text-sm font-medium text-gray-700">Recipient Office</label>
+                                <select name="recipient_office" id="recipient_office"
+                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 transition-all"
+                                        required>
+                                    <option value="">Select Recipient Office</option>
+                                    @foreach($offices as $office)
+                                        @if($office->id != auth()->user()->offices->first()->id)
+                                            <option value="{{ $office->id }}">{{ $office->name }}</option>
+                                        @endif
+                                    @endforeach
+                                </select>
+                                <p class="text-xs text-gray-500">Select the office to which this document will be sent</p>
+                            </div>
                         <!-- Recipients -->
                         <div class="md:col-span-2 space-y-2">
                             <label for="recipients" class="block text-sm font-medium text-gray-700">Recipients</label>
