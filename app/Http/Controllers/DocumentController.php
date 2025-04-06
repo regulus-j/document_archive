@@ -328,7 +328,15 @@ class DocumentController extends Controller
         $users = $company ? $company->employees()->paginate(10) : collect();
         $offices = Office::all();
 
-        $categories = DocumentCategory::all()->pluck('category', 'id');
+        $categories = [
+            1 => 'Letter',
+            2 => 'Memo',
+            3 => 'Reports',
+            4 => 'Proposal',
+            5 => 'Presentation',
+            6 => 'Others',
+            
+        ];
 
         return view('documents.create', compact('offices', 'categories', 'users'));
     }
