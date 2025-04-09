@@ -1,5 +1,18 @@
 @extends('layouts.app')
 
+@php
+use App\Models\Office;
+
+$currentUserCompany = auth()->user()->companies()->first();
+$originatingOfficeId = auth()->user()->offices->first()->id ?? null;
+$offices = $currentUserCompany 
+    ? Office::where('company_id', $currentUserCompany->id)
+        ->where('id', '!=', $originatingOfficeId)
+        ->get() 
+    : collect();
+@endphp
+
+
 @section('content')
 <div class="min-h-screen bg-gradient-to-b from-blue-50 to-white p-4 md:p-8">
     <!-- Header Box -->
