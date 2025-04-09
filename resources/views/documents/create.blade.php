@@ -125,7 +125,7 @@
                     </div>
                 </div>
 
-                <!-- Purpose Section -->
+                {{-- <!-- Purpose Section -->
                 <div class="border-b border-gray-200 pb-6">
                     <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600 mr-2" fill="none"
@@ -154,7 +154,7 @@
                         @endforeach
                     </div>
                     <p class="text-xs text-gray-500 mt-2">Select all purposes that apply to this document</p>
-                </div>
+                </div> --}}
 
                 <!-- Routing Section -->
                 <div class="border-b border-gray-200 pb-6">
@@ -180,7 +180,7 @@
                             </select>
                             <p class="text-xs text-gray-500">Select the office where this document originates</p>
                         </div>
-                        <!-- Recipient Office -->
+                        {{-- <!-- Recipient Office -->
                         <div class="space-y-2">
                             <label for="office_id" class="block text-sm font-medium text-gray-700">Recipient Office</label>
                             <select name="office_id" id="office_id"
@@ -206,7 +206,7 @@
                                 @endif
                             </select>
                             <p class="text-xs text-gray-500">Select one or more recipients for this document</p>
-                        </div>
+                        </div> --}}
                     </div>
                 </div>
 
