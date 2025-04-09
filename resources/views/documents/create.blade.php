@@ -180,19 +180,17 @@
                                 value="{{ auth()->user()->offices->first()->id }}">
                         </div>
                         <!-- Recipient Office -->
-                        <div class="space-y-2">
-                                <label for="from_office" class="block text-sm font-medium text-gray-700">Recipient Office</label>
-                                <select name="recipient_office" id="recipient_office"
+                            <div class="space-y-2">
+                                <label for="recipient_office_id" class="block text-sm font-medium text-gray-700">Recipient Office</label>
+                                <select name="recipient_office_id" id="recipient_office_id"
                                         class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 transition-all"
                                         required>
                                     <option value="">Select Recipient Office</option>
                                     @foreach($offices as $office)
-                                        @if($office->id != auth()->user()->offices->first()->id)
-                                            <option value="{{ $office->id }}">{{ $office->name }}</option>
-                                        @endif
+                                        <option value="{{ $office->id }}">{{ $office->name }}</option>
                                     @endforeach
                                 </select>
-                                <p class="text-xs text-gray-500">Select the office to which this document will be sent</p>
+                                <p class="text-xs text-gray-500">Select an office within your company</p>
                             </div>
                         <!-- Recipients -->
                         <div class="md:col-span-2 space-y-2">
