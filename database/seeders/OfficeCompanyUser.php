@@ -9,9 +9,6 @@ use App\Models\Office;
 
 class OfficeCompanyUser extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run()
     {
         // Create company accounts first
@@ -26,8 +23,11 @@ class OfficeCompanyUser extends Seeder
             $offices = array_merge($offices, $companyOffices->toArray());
         }
         
-        // Create users and assign each to at least one office
-        User::factory()->count(11)->create()->each(function ($user) use ($offices) {
+        // Create users explicitly first
+        $users = User::factory()->count(11)->create();
+        
+        // Now assign offices to each user
+        foreach ($users as $user) {
             // Determine how many offices to assign to this user (1-3)
             $numOffices = rand(1, 3);
             
@@ -39,12 +39,12 @@ class OfficeCompanyUser extends Seeder
             // Assign offices to user
             $user->offices()->attach($selectedOfficeIds);
             
-            // Optionally, assign user to a company
+            // Assign user to a company
             $companyId = $offices[array_search($selectedOfficeIds[0], array_column($offices, 'id'))]['company_id'];
             \App\Models\CompanyUser::create([
                 'user_id' => $user->id,
                 'company_id' => $companyId
             ]);
-        });
+        }
     }
 }
