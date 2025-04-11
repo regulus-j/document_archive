@@ -44,8 +44,8 @@ class DocumentWorkflowController extends Controller
         $document = Document::findOrFail($id);
 
         $request->validate([
-            'recipient_batch' => 'required|array',
-            'recipient_office_batch' => 'array',
+            'recipient_batch' => 'array',
+            'recipient_office_batch' => 'required|array',
             'step_order' => 'required|array',
         ]);
 
