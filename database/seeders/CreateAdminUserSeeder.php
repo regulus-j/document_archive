@@ -14,6 +14,9 @@ use Illuminate\Support\Facades\Hash;
 
 class CreateAdminUserSeeder extends Seeder
 {
+    /**
+     * Run the database seeds.
+     */
     public function run()
     {
         $users = [
@@ -39,54 +42,71 @@ class CreateAdminUserSeeder extends Seeder
 
         $adminUserId = null;
 
-        // Create users first
         foreach ($users as $userData) {
             $user = User::firstOrCreate(
                 ['email' => $userData['email']],
                 $userData
             );
 
+            // Assign roles based on email
             if ($userData['email'] === 'superadmin@example.com') {
                 $role = Role::firstOrCreate(['name' => 'super-admin']);
                 $user->assignRole('super-admin');
+                // Super admin is NOT assigned to any company
             } elseif ($userData['email'] === 'admin@example.com') {
                 $role = Role::firstOrCreate(['name' => 'company-admin']);
                 $user->assignRole('company-admin');
+                
+                // Save admin user ID to create company later
                 $adminUserId = $user->id;
             } else {
                 $role = Role::firstOrCreate(['name' => 'user']);
                 $user->assignRole('user');
             }
         }
-
-        // Then create company
-        $company = CompanyAccount::firstOrCreate(
-            ['id' => 1],
-            [
-                'user_id' => $adminUserId,
-                'company_name' => 'Demo Company',
-                'registered_name' => 'Demo Company Ltd',
-                'company_email' => 'info@democompany.com',
-                'company_phone' => '123-456-7890',
-                'industry' => 'Technology',
-                'company_size' => 'Medium'
-            ]
-        );
-
-        // Finally, attach users to company (except super-admin)
-        foreach ($users as $userData) {
-            if ($userData['email'] !== 'superadmin@example.com') {
-                $user = User::where('email', $userData['email'])->first();
-                $this->attachUserToCompany($user->id, $company->id);
+        
+        // Now create the company with the actual admin user ID
+        if ($adminUserId) {
+            // Create company AFTER we have the admin user
+            $company = CompanyAccount::firstOrCreate(
+                ['id' => 1],
+                [
+                    'user_id' => $adminUserId, // Use the actual admin ID
+                    'company_name' => 'Demo Company',
+                    'registered_name' => 'Demo Company Ltd',
+                    'company_email' => 'info@democompany.com',
+                    'company_phone' => '123-456-7890',
+                    'industry' => 'Technology',
+                    'company_size' => 'Medium'
+                ]
+            );
+            
+            // Attach admin to company
+            $this->attachUserToCompany($adminUserId, $company->id);
+            
+            // Attach regular user to company if it exists
+            $regularUser = User::where('email', 'user@example.com')->first();
+            if ($regularUser) {
+                $this->attachUserToCompany($regularUser->id, $company->id);
             }
         }
     }
-
+    
+    /**
+     * Attach a user to a company
+     */
     private function attachUserToCompany($userId, $companyId)
     {
-        CompanyUser::firstOrCreate([
-            'user_id' => $userId,
-            'company_id' => $companyId
-        ]);
+        // Check if relationship already exists
+        $exists = CompanyUser::where('user_id', $userId)
+            ->where('company_id', $companyId)
+            ->exists();
+            
+        if (!$exists) {
+            CompanyUser::create([
+                'user_id' => $userId,
+                'company_id' => $companyId
+            ]);
+        }
     }
 }
