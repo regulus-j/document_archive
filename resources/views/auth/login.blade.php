@@ -62,5 +62,17 @@
             class="w-full mt-6 py-3 bg-blue-500 text-white rounded-full hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150">
             {{ __('Log in') }}
         </button>
+
+        <div class="mt-6 text-center">
+            <div class="border-t border-gray-200 my-4"></div>
+            <p class="text-sm text-gray-600">
+                {{ __('Don\'t have an account?') }}
+                @if (Route::has('register'))
+                    <a class="text-sm text-blue-500 hover:text-blue-600" href="{{ route('register') }}">
+                        {{ __('Register') }}
+                    </a>
+                @endif
+            </p>
+        </div>
     </form>
 </x-guest-layout>
