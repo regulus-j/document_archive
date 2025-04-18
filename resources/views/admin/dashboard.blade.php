@@ -164,9 +164,9 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             @if(($activity['type'] ?? $activity->type ?? '') === 'document')
-                                                <a href="#" class="text-blue-600 hover:text-blue-900">View Document</a>
+                                                <a href="{{ route('documents.show', $activity['document_id'] ?? $activity->document_id ?? 0) }}" class="text-blue-600 hover:text-blue-900">View Document</a>
                                             @else
-                                                <a href="#" class="text-blue-600 hover:text-blue-900">View Profile</a>
+                                                <a href="{{ route('users.show', $activity['user_id'] ?? $activity->user_id ?? 0) }}" class="text-blue-600 hover:text-blue-900">View Profile</a>
                                             @endif
                                         </td>
                                     </tr>

@@ -44,7 +44,7 @@ class DocumentWorkflowController extends Controller
         $document = Document::findOrFail($id);
 
         $request->validate([
-            'recipient_batch' => 'array',
+            'recipient_batch' => 'nullable|array',
             'recipient_office_batch' => 'required|array',
             'step_order' => 'required|array',
         ]);
@@ -63,7 +63,9 @@ class DocumentWorkflowController extends Controller
             'Document forwarded'
         );
 
-        foreach ($request->recipient_batch as $batchIndex => $recipients) {
+        $recipientBatches = $request->recipient_batch ?? [];
+        
+        foreach ($recipientBatches as $batchIndex => $recipients) {
             if (empty($recipients)) {
                 continue;
             }
@@ -89,6 +91,29 @@ class DocumentWorkflowController extends Controller
                     'sender_id' => auth()->id(),
                     'recipient_id' => $recipientId,
                     'recipient_office' => $recipientOfficeId,
+                    'step_order' => $request->step_order[$batchIndex],
+                    'remarks' => $request->remarks[$batchIndex] ?? null,
+                    'status' => 'pending',
+                    'received_at' => null,
+                ]);
+            }
+        }
+        
+        // Process office-only workflows when no recipients are selected
+        $officeOnlyBatches = array_diff_key($request->recipient_office_batch, $recipientBatches);
+        foreach ($officeOnlyBatches as $batchIndex => $officeIds) {
+            if (empty($officeIds)) {
+                continue;
+            }
+            
+            // If only offices are selected (no specific users), create a workflow for the office manager
+            foreach ($officeIds as $officeId) {
+                DocumentWorkflow::create([
+                    'tracking_number' => $trackingNumber,
+                    'document_id' => $document->id,
+                    'sender_id' => auth()->id(),
+                    'recipient_id' => null, // No specific recipient
+                    'recipient_office' => $officeId,
                     'step_order' => $request->step_order[$batchIndex],
                     'remarks' => $request->remarks[$batchIndex] ?? null,
                     'status' => 'pending',
