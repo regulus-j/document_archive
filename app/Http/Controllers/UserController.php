@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Mail\UserInvite;
+use App\Mail\userInvite;
 use App\Models\Office;
 use App\Models\User;
 use App\Models\CompanyAccount;
