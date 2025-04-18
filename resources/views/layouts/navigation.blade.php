@@ -76,6 +76,8 @@
                                 {{ __('Subscriptions') }}
                             </x-nav-link>
 
+                            
+                            @elseif(auth()->user()->hasRole('company-admin')) 
                             <x-nav-link 
                             :href="route('plans.select')" 
                             :active="request()->routeIs('plans.select')"
@@ -85,8 +87,7 @@
                             </svg>
                             {{ __('Plans & Subscriptions') }}
                             </x-nav-link>
-                            
-                            @elseif(auth()->user()->hasRole('company-admin')) 
+
                             <x-nav-link 
                                 :href="route('users.index')" 
                                 :active="request()->routeIs('users.index')"

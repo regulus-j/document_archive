@@ -17,13 +17,16 @@ return new class extends Migration
             $table->string('tracking_number');
             $table->unsignedBigInteger('document_id'); // The document being routed
             $table->unsignedBigInteger('sender_id');     // Who forwarded the document
-            $table->unsignedBigInteger('recipient_id');  // Who is supposed to take action
+            $table->unsignedBigInteger('recipient_id')->nullable();  // Who is supposed to take action
             $table->unsignedBigInteger('recipient_office')->nullable();
             $table->unsignedInteger('step_order');       // The order or sequence of the workflow
             $table->enum('status', ['pending', 'received', 'approved', 'rejected'])->default('pending');
             $table->text('remarks')->nullable();         // Remarks if any during approval/rejection
             $table->timestamp('received_at')->nullable();
             $table->timestamps();
+
+            // Add CHECK constraint to ensure at least one of recipient_id or recipient_office is not null
+            $table->check('NOT (recipient_id IS NULL AND recipient_office IS NULL)');
 
             $table->foreign('recipient_office')->references('id')->on('offices')->onDelete('cascade');
             $table->foreign('document_id')->references('id')->on('documents')->onDelete('cascade');

@@ -62,17 +62,38 @@ class DocumentController extends Controller
                 $topWorkflows = DocumentWorkflow::where('document_id', $doc->id)
                     ->where('step_order', $maxStepOrder)
                     ->get();
+                
+                // Get unique recipient IDs and office IDs
                 $recipientIds = $topWorkflows->pluck('recipient_id')->unique();
+                $recipientOfficeIds = $topWorkflows->pluck('recipient_office')->filter()->unique();
+                
+                // Get recipient users
                 $users = User::whereIn('id', $recipientIds)->get();
-
-                // Build a collection of each user’s full name (assuming first_name and last_name)
-                $recipientNames = $users->map(function ($user) {
-                    $fname = $user->first_name ?? '';
-                    $lname = $user->last_name ?? '';
-                    return trim("$fname $lname");
-                });
-
-                $highestRecipients[$doc->id] = $recipientNames;
+                
+                // Get recipient offices
+                $offices = Office::whereIn('id', $recipientOfficeIds)->get();
+                
+                // Build collection of recipient info including names and offices
+                $recipientInfo = collect();
+                foreach ($topWorkflows as $workflow) {
+                    $user = $users->firstWhere('id', $workflow->recipient_id);
+                    $office = $offices->firstWhere('id', $workflow->recipient_office);
+                    
+                    if ($user) {
+                        $fname = $user->first_name ?? '';
+                        $lname = $user->last_name ?? '';
+                        $officeName = $office ? $office->name : 'No Office';
+                        
+                        $recipientInfo->push([
+                            'name' => trim("$fname $lname"),
+                            'office' => $officeName,
+                            'recipient_id' => $user->id,
+                            'office_id' => $workflow->recipient_office
+                        ]);
+                    }
+                }
+                
+                $highestRecipients[$doc->id] = $recipientInfo;
             } else {
                 // If the document has no workflow records
                 $highestRecipients[$doc->id] = collect([]);

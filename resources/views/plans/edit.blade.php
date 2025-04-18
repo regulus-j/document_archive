@@ -61,6 +61,7 @@
                     <div class="space-y-4">
                         <div class="flex items-center">
                             <input type="checkbox" name="is_active" id="is_active" 
+                                    value="1"
                                    class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                    {{ old('is_active', $plan->is_active) ? 'checked' : '' }}>
                             <label for="is_active" class="ml-2 block text-sm text-gray-700">Active Plan</label>
@@ -69,6 +70,7 @@
                         @foreach(['feature_1', 'feature_2', 'feature_3'] as $feature)
                             <div class="flex items-center">
                                 <input type="checkbox" name="{{ $feature }}" id="{{ $feature }}"
+                                        value="1"
                                        class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                        {{ old($feature, $plan->$feature) ? 'checked' : '' }}>
                                 <label for="{{ $feature }}" class="ml-2 block text-sm text-gray-700">

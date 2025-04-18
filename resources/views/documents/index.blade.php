@@ -291,30 +291,7 @@
                                         No</th>
                                     <th
                                         class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
-                                        Title</th>
-                                    <th
-                                        class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
-                                        Uploader</th>
-                                    <th
-                                        class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
-                                        Status</th>
-                                    <th
-                                        class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
-                                        Originating</th>
-                                    <th
-                                        class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
-                                        Recipient</th>
-                                    <th
-                                        class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
-                                        Uploaded</th>
-                                    <th
-                                        class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200 relative group cursor-help">
-                                        Days Lapsed
-                                        <div
-                                            class="absolute hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2 -left-1/2 transform -translate-x-1/2 mt-1 z-10 w-40 text-center">
-                                            Days passed since previous update
-                                        </div>
-                                    </th>
+                                        Details</th>
                                     <th
                                         class="bg-white px-6 py-3 text-right text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
                                         Action</th>
@@ -322,111 +299,111 @@
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
                                 @forelse ($documents as $document)
-                                                            <tr class="hover:bg-gray-50 transition-colors">
-                                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $loop->iteration }}
-                                                                </td>
-                                                                <td class="px-6 py-4 whitespace-nowrap">
-                                                                    <div class="text-sm font-medium text-gray-900">{{ $document->title }}</div>
-                                                                </td>
-                                                                <td class="px-6 py-4 whitespace-nowrap">
-                                                                    <div class="flex items-center">
-                                                                        <div
-                                                                            class="flex-shrink-0 h-8 w-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold shadow-sm">
-                                                                            {{ substr($document->user->first_name, 0, 1) }}
-                                                                        </div>
-                                                                        <div class="ml-3 text-sm text-gray-700">
-                                                                            {{ $document->user->first_name . ' ' . $document->user->last_name }}
-                                                                        </div>
-                                                                    </div>
-                                                                </td>
-                                                                <td class="px-6 py-4 whitespace-nowrap">
-                                                                    @php
-                                                                        $statusColor = 'gray';
-                                                                        if ($document->status?->status == 'Approved') {
-                                                                            $statusColor = 'emerald';
-                                                                        } elseif ($document->status?->status == 'Pending') {
-                                                                            $statusColor = 'amber';
-                                                                        }
-                                                                    @endphp
-                                                                    <span
-                                                                        class="px-2.5 py-1 text-xs leading-5 font-semibold rounded-full bg-{{ $statusColor }}-100 text-{{ $statusColor }}-800">
-                                                                        {{ $document->status?->status ?? 'N/A' }}
-                                                                    </span>
-                                                                </td>
-                                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                                    {{ $document->transaction?->fromOffice?->name ?? 'N/A' }}
-                                                                </td>
-                                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                                    {{ $document->originatingOffice?->name ?? 'N/A' }}
-                                                                </td>
-                                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                                    {{ $document->created_at->format('M d, Y H:i') }}
-                                                                </td>
-                                                                <td class="px-6 py-4 whit  }}
-                                                                                                                                                                                                </td>
-                                                                                                                                                                                                <td class="
-                                                                    px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                                    {{ date_diff(new DateTime($document->updated_at), new DateTime(now()))->format('%Dd %Hh %Im') }}
-                                                                </td>
-                                                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                                    <div class="flex items-center justify-end space-x-2">
-                                                                        <a href="{{ route('documents.show', $document->id) }}"
-                                                                            class="p-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
-                                                                            title="View">
-                                                                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                                                                viewBox="0 0 24 24" stroke="currentColor">
-                                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                                            </svg>
-                                                                        </a>
-                                                                        @can('document-edit')
-                                                                            <a href="{{ route('documents.edit', $document->id) }}"
-                                                                                class="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition-colors"
-                                                                                title="Edit">
-                                                                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                                                                    viewBox="0 0 24 24" stroke="currentColor">
-                                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                                                </svg>
-                                                                            </a>
-                                                                        @endcan
-                                                                        @can('document-delete')
-                                                                            <form action="{{ route('documents.destroy', $document->id) }}" method="POST"
-                                                                                onsubmit="return confirm('Are you sure you want to delete this document?');"
-                                                                                class="inline-block">
-                                                                                @csrf
-                                                                                @method('DELETE')
-                                                                                <button type="submit"
-                                                                                    class="p-1.5 bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-100 transition-colors"
-                                                                                    title="Delete">
-                                                                                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                                                                        viewBox="0 0 24 24" stroke="currentColor">
-                                                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                                                            stroke-width="2"
-                                                                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                                                    </svg>
-                                                                                </button>
-                                                                            </form>
-                                                                        @endcan
-                                                                        <form action="{{ route('documents.download', $document->id) }}" method="GET"
-                                                                            class="inline-block">
-                                                                            @csrf
-                                                                            <button type="submit"
-                                                                                class="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors"
-                                                                                title="Download">
-                                                                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                                                                    viewBox="0 0 24 24" stroke="currentColor">
-                                                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                                                        stroke-width="2"
-                                                                                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                                                                </svg>
-                                                                            </button>
-                                                                        </form>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
+                                    <tr class="hover:bg-gray-50 transition-colors">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $loop->iteration }}</td>
+                                        <td class="px-6 py-4">
+                                            <div class="flex flex-col space-y-2">
+                                                <div class="text-sm font-medium text-gray-900">{{ $document->title }}</div>
+                                                
+                                                <div class="flex items-center">
+                                                    <div class="flex-shrink-0 h-8 w-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold shadow-sm">
+                                                        {{ substr($document->user->first_name, 0, 1) }}
+                                                    </div>
+                                                    <div class="ml-3 text-sm text-gray-700">
+                                                        {{ $document->user->first_name . ' ' . $document->user->last_name }}
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="flex flex-wrap gap-2 items-center">
+                                                    @php
+                                                        $statusColor = 'gray';
+                                                        if ($document->status?->status == 'Approved') {
+                                                            $statusColor = 'emerald';
+                                                        } elseif ($document->status?->status == 'Pending') {
+                                                            $statusColor = 'amber';
+                                                        }
+                                                    @endphp
+                                                    <span class="px-2.5 py-1 text-xs leading-5 font-semibold rounded-full bg-{{ $statusColor }}-100 text-{{ $statusColor }}-800">
+                                                        {{ $document->status?->status ?? 'N/A' }}
+                                                    </span>
+                                                    
+                                                    <span class="text-xs text-gray-500">
+                                                        <span class="font-medium">From:</span> {{ $document->transaction?->fromOffice?->name ?? 'N/A' }}
+                                                    </span>
+                                                    
+                                                    <span class="text-xs text-gray-500">
+                                                        <span class="font-medium">To:</span> {{ $document->originatingOffice?->name ?? 'N/A' }}
+                                                    </span>
+                                                    
+                                                    <span class="text-xs text-gray-500">
+                                                        <span class="font-medium">Uploaded:</span> {{ $document->created_at->format('M d, Y H:i') }}
+                                                    </span>
+                                                    
+                                                    <span class="text-xs text-gray-500">
+                                                        <span class="font-medium">Last Updated:</span> {{ $document->updated_at->format('M d, Y H:i') }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <div class="flex items-center justify-end space-x-2">
+                                                <a href="{{ route('documents.show', $document->id) }}"
+                                                    class="p-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
+                                                    title="View">
+                                                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                        viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                    </svg>
+                                                </a>
+                                                @can('document-edit')
+                                                    <a href="{{ route('documents.edit', $document->id) }}"
+                                                        class="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition-colors"
+                                                        title="Edit">
+                                                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                            viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                        </svg>
+                                                    </a>
+                                                @endcan
+                                                @can('document-delete')
+                                                    <form action="{{ route('documents.destroy', $document->id) }}" method="POST"
+                                                        onsubmit="return confirm('Are you sure you want to delete this document?');"
+                                                        class="inline-block">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit"
+                                                            class="p-1.5 bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-100 transition-colors"
+                                                            title="Delete">
+                                                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                                viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    stroke-width="2"
+                                                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                            </svg>
+                                                        </button>
+                                                    </form>
+                                                @endcan
+                                                <form action="{{ route('documents.download', $document->id) }}" method="GET"
+                                                    class="inline-block">
+                                                    @csrf
+                                                    <button type="submit"
+                                                        class="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors"
+                                                        title="Download">
+                                                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                            viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2"
+                                                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                                        </svg>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
                                 @empty
                                     <tr>
                                         <td colspan="9" class="px-6 py-4 text-center text-sm text-gray-500">
