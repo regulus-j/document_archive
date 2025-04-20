@@ -126,14 +126,14 @@
                         <a href="#" class="inline-block border border-white text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">Learn More</a>
                     </div>
                     <div class="flex-grow">
-                        <img src="{{ asset('images/DocuTracking.png') }}" alt="Document Tracking" class="w-full h-full object-cover">
+                        <img src="{{ asset('images/DocuTrack.png') }}" alt="Document Tracking" class="w-full h-full object-cover">
                     </div>
                 </div>
                 
                 <!-- Solution 2: Document Archiving -->
                 <div class="flex flex-col h-full">
                     <div class="flex-grow">
-                        <img src="{{ asset('images/access.jpg') }}" alt="Document Archiving" class="w-full h-full object-cover">
+                        <img src="{{ asset('images/access.png') }}" alt="Document Archiving" class="w-full h-full object-cover">
                     </div>
                     <div class="bg-blue-700 p-8 text-white">
                         <h3 class="text-2xl font-semibold mb-3">Document Archiving</h3>
@@ -145,7 +145,7 @@
                 <!-- Solution 3: Document Upload -->
                 <div class="flex flex-col h-full">
                     <div class="flex-grow">
-                        <img src="{{ asset('images/scan_document.jpg') }}" alt="Document Upload" class="w-full h-full object-cover">
+                        <img src="{{ asset('images/upload.png') }}" alt="Document Upload" class="w-full h-full object-cover">
                     </div>
                     <div class="bg-blue-600 p-8 text-white">
                         <h3 class="text-2xl font-semibold mb-3">Document Upload</h3>
@@ -162,7 +162,7 @@
                         <a href="#" class="inline-block border border-white text-white px-4 py-2 rounded-md hover:bg-blue-400 transition-colors">Learn More</a>
                     </div>
                     <div class="flex-grow">
-                        <img src="{{ asset('images/keyword.jpg') }}" alt="Document Search" class="w-full h-full object-cover">
+                        <img src="{{ asset('images/DocuSearch.png') }}" alt="Document Search" class="w-full h-full object-cover">
                     </div>
                 </div>
             </div>
