@@ -122,8 +122,13 @@ class DocumentWorkflowController extends Controller
             }
         }
 
+        $docQR = $document->trackingNumber();
+        $qrCodeData = app(DocumentController::class)->generateTrackingSlip($document->id, auth()->id(), $trackingNumber);
+        
+
         return redirect()->route('documents.index')
-            ->with('success', 'Document forwarded successfully');
+        ->with('data', $qrCodeData)
+        ->with('success', 'Document forwarded successfully');
     }
 
     public function approveWorkflow(Request $request, $id): RedirectResponse
