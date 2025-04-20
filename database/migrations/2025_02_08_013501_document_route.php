@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -24,9 +25,6 @@ return new class extends Migration
             $table->text('remarks')->nullable();         // Remarks if any during approval/rejection
             $table->timestamp('received_at')->nullable();
             $table->timestamps();
-
-            // Add CHECK constraint to ensure at least one of recipient_id or recipient_office is not null
-            $table->check('NOT (recipient_id IS NULL AND recipient_office IS NULL)');
 
             $table->foreign('recipient_office')->references('id')->on('offices')->onDelete('cascade');
             $table->foreign('document_id')->references('id')->on('documents')->onDelete('cascade');
