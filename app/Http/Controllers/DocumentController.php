@@ -149,8 +149,9 @@ class DocumentController extends Controller
 
         try {
             \Log::info('Starting document upload process');
-            $companyPath = auth()->user()->company->id ?? 'default';
-
+            $companyId = auth()->user()->companies()->first()->id ?? 'default';
+            $companyPath = $companyId;
+            
             $file = $request->file('upload');
             $fileName = time() . '_' . $file->getClientOriginalName();
             \Log::info('Uploading file', ['fileName' => $fileName]);
@@ -258,16 +259,28 @@ class DocumentController extends Controller
 
     public function searchByTr(Request $request)
     {
+        // Validate the tracking number input
         $request->validate([
             'tracking_number' => 'required|string|max:255',
         ]);
 
-        $document = DocumentTrackingNumber::where('tracking_number', $request->tracking_number)
-            ->with('document')
-            ->firstOrFail()
-            ->document;
+        try {
+            // Search for the document by tracking number
+            $documentTracking = DocumentTrackingNumber::where('tracking_number', $request->tracking_number)
+                ->with('document') // Load the related document
+                ->firstOrFail();
 
-        return view('documents.show', compact('document'));
+            $document = $documentTracking->document;
+
+            // Redirect to the document's show route
+            return redirect()->route('documents.show', $document->id)
+                ->with('success', 'Document found.');
+        } catch (\Exception $e) {
+            // Log the error and return an error message
+            \Log::error('Error searching for tracking number: ' . $e->getMessage());
+
+            return redirect()->back()->with('error', 'Tracking number not found.');
+        }
     }
     /**
      * Search for documents using text input or image upload.
