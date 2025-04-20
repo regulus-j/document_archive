@@ -22,27 +22,47 @@ class OfficeCompanyUser extends Seeder
         // Get existing users to use for companies
         $users = User::all();
         
-        // Create company accounts with valid user_id references
-        $companies = [];
+        // Check if company with ID 1 exists
+        $companyOne = CompanyAccount::find(1);
+        
+        // Create company ID 1 if it doesn't exist
+        if (!$companyOne) {
+            $companyOne = CompanyAccount::factory()->create([
+                'id' => 1,
+                'user_id' => $users->first()->id
+            ]);
+        }
+        
+        // Create additional companies with valid user_id references
+        $companies = [$companyOne];
         foreach ($users->take(2) as $index => $user) {
+            // Skip if this user is already assigned to company one
+            if ($user->id == $companyOne->user_id) {
+                continue;
+            }
+            
             $company = CompanyAccount::factory()->create([
                 'user_id' => $user->id
             ]);
             $companies[] = $company;
         }
         
-        // If no companies were created, stop here
-        if (empty($companies)) {
-            return;
-        }
-        
-        // Create offices for each company
+        // Ensure all companies have offices (especially company ID 1)
         $offices = [];
         foreach ($companies as $company) {
-            $companyOffices = Office::factory()
-                ->count(5)
-                ->create(['company_id' => $company->id]);
-            $offices = array_merge($offices, $companyOffices->toArray());
+            // Check if company already has offices
+            $existingOffices = Office::where('company_id', $company->id)->get();
+            
+            if ($existingOffices->count() == 0) {
+                // Create new offices only if none exist
+                $companyOffices = Office::factory()
+                    ->count(5)
+                    ->create(['company_id' => $company->id]);
+                $offices = array_merge($offices, $companyOffices->toArray());
+            } else {
+                // Use existing offices
+                $offices = array_merge($offices, $existingOffices->toArray());
+            }
         }
         
         // Create more users and assign each to at least one office
@@ -64,7 +84,7 @@ class OfficeCompanyUser extends Seeder
                 'user_id' => $user->id,
                 'company_id' => $companyId
             ]);
-        });  // Fixed: Added missing closing parenthesis and semicolon
+        });
         
         // Find admin and regular user by email
         $adminUser = User::where('email', 'admin@example.com')->first();
