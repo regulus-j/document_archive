@@ -26,6 +26,8 @@ return new class extends Migration
             $table->timestamp('received_at')->nullable();
             $table->timestamps();
 
+            //check removed
+            
             $table->foreign('recipient_office')->references('id')->on('offices')->onDelete('cascade');
             $table->foreign('document_id')->references('id')->on('documents')->onDelete('cascade');
             $table->foreign('sender_id')->references('id')->on('users')->onDelete('cascade');
