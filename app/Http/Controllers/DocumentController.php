@@ -54,75 +54,74 @@ class DocumentController extends Controller
 
         $auditLogs = DocumentAudit::latest()->paginate(15);
 
-        // Determine the recipients with the highest step_order for each document
-        $highestRecipients = [];
+        // Determine the recipients for each document
+        $documentRecipients = [];
         foreach ($documents as $doc) {
-            $maxStepOrder = DocumentWorkflow::where('document_id', $doc->id)->max('step_order');
-            if ($maxStepOrder) {
-                $topWorkflows = DocumentWorkflow::where('document_id', $doc->id)
-                    ->where('step_order', $maxStepOrder)
-                    ->get();
-                
-                // Get unique recipient IDs and office IDs
-                $recipientIds = $topWorkflows->pluck('recipient_id')->unique();
-                $recipientOfficeIds = $topWorkflows->pluck('recipient_office')->filter()->unique();
-                
-                // Get recipient users
-                $users = User::whereIn('id', $recipientIds)->get();
-                
-                // Get recipient offices
-                $offices = Office::whereIn('id', $recipientOfficeIds)->get();
-                
-                // Build collection of recipient info including names and offices
-                $recipientInfo = collect();
-                foreach ($topWorkflows as $workflow) {
-                    $user = $users->firstWhere('id', $workflow->recipient_id);
-                    $office = $offices->firstWhere('id', $workflow->recipient_office);
-                    
-                    if ($user) {
-                        $fname = $user->first_name ?? '';
-                        $lname = $user->last_name ?? '';
-                        $officeName = $office ? $office->name : 'No Office';
-                        
-                        $recipientInfo->push([
-                            'name' => trim("$fname $lname"),
-                            'office' => $officeName,
-                            'recipient_id' => $user->id,
-                            'office_id' => $workflow->recipient_office
-                        ]);
-                    }
+            $workflows = DocumentWorkflow::with(['recipient', 'recipientOffice'])
+                ->where('document_id', $doc->id)
+                ->get();
+            
+            $recipients = collect();
+            
+            foreach ($workflows as $workflow) {
+                // Add user recipients
+                if ($workflow->recipient) {
+                    $name = trim($workflow->recipient->first_name . ' ' . $workflow->recipient->last_name);
+                    $recipients->push([
+                        'name' => $name,
+                        'type' => 'user',
+                        'step_order' => $workflow->step_order
+                    ]);
                 }
                 
-                $highestRecipients[$doc->id] = $recipientInfo;
-            } else {
-                // If the document has no workflow records
-                $highestRecipients[$doc->id] = collect([]);
+                // Add office recipients
+                if ($workflow->recipient_office && $workflow->recipientOffice) {
+                    $recipients->push([
+                        'name' => $workflow->recipientOffice->name,
+                        'type' => 'office',
+                        'step_order' => $workflow->step_order
+                    ]);
+                }
             }
+            
+            $documentRecipients[$doc->id] = $recipients;
         }
 
-        return view('documents.index', compact('documents', 'auditLogs', 'highestRecipients'));
+        return view('documents.index', compact('documents', 'auditLogs', 'documentRecipients'));
     }
 
-    public function showArchive(): View
+    public function showArchive(Request $request): View
     {
-        if (auth()->user()->hasRole('company-admin')) {
-            $documents = Document::with(['user', 'status', 'transaction.fromOffice', 'transaction.toOffice'])->latest()->paginate(5);
-        } else {
-            $userOfficeIds = auth()->user()->offices->pluck('id')->toArray();
-
-            $documents = Document::with(['user', 'status', 'transaction.fromOffice', 'transaction.toOffice'])
-                ->whereHas('user.offices', function ($query) use ($userOfficeIds) {
-                    $query->whereIn('offices.id', $userOfficeIds);
-                })
-                ->latest()
-                ->paginate(5);
+        $search = $request->input('search');
+        
+        $query = Document::with(['user', 'status', 'transaction.fromOffice', 'transaction.toOffice'])
+            ->whereHas('status', function($q) {
+                $q->where('status', 'archived');
+            });
+        
+        // Apply search if provided
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+            });
         }
-
+        
+        // Filter by user's office if not company admin
+        if (!auth()->user()->hasRole('company-admin')) {
+            $userOfficeIds = auth()->user()->offices->pluck('id')->toArray();
+            $query->whereHas('user.offices', function ($q) use ($userOfficeIds) {
+                $q->whereIn('offices.id', $userOfficeIds);
+            });
+        }
+        
+        $documents = $query->latest()->paginate(5);
         $auditLogs = DocumentAudit::paginate(15);
 
         return view('documents.archive', array_merge([
             'documents' => $documents,
             'i' => (request()->input('page', 1) - 1) * 5,
+            'search' => $search,
         ], compact('auditLogs')));
     }
 
@@ -130,9 +129,6 @@ class DocumentController extends Controller
     public function uploadController(Request $request)
     {
         \Log::info('uploadController called');
-
-        $request->from_office = 1;
-        $request->to_office = 2;
 
         //upload to database
         $request->validate([
@@ -143,8 +139,8 @@ class DocumentController extends Controller
             'remarks' => 'nullable|string|max:250',
             'upload' => 'required|file', // 10MB max
             'attachements.*' => 'file|mimes:jpeg,png,jpg,gif,pdf,docx|max:10240',
-            'archive' => 'string',
-            'forward' => 'string',
+            'archive' => 'nullable|string',
+            'forward' => 'nullable|string',
         ]);
 
         try {
@@ -166,8 +162,6 @@ class DocumentController extends Controller
             ]);
             \Log::info('Document created', ['document_id' => $document->id]);
 
-            // $document->categories()->attach([$request->classification]);
-
             $document->status()->create([
                 'status' => 'pending',
             ]);
@@ -183,19 +177,22 @@ class DocumentController extends Controller
             ]);
             \Log::info('Tracking number record created', ['document_id' => $document->id]);
 
-            DocumentTransaction::create([
-                'doc_id' => $document->id,
-                'from_office' => $request->from_office,
-                'to_office' => $request->to_office,
-            ]);
-            \Log::info('Document transaction created', ['document_id' => $document->id]);
+            // Only create transaction if to_office is provided AND forwarding is enabled
+            if ($request->has('to_office') && $request->forward == '1') {
+                DocumentTransaction::create([
+                    'doc_id' => $document->id,
+                    'from_office' => $request->from_office,
+                    'to_office' => $request->to_office,
+                ]);
+                \Log::info('Document transaction created', ['document_id' => $document->id]);
+            }
 
             // Handle additional attachments if any
             if ($request->hasFile('attachments')) {
                 \Log::info('Processing attachments');
                 foreach ($request->file('attachments') as $attachment) {
                     $attachmentName = time() . '_' . $attachment->getClientOriginalName();
-                    $companyPath = auth()->user()->company->id ?? 'default';
+                    $companyPath = auth()->user()->companies()->first()->id ?? 'default';
                     \Log::info('Uploading attachment', ['attachmentName' => $attachmentName]);
                     $attachmentPath = $attachment->storeAs($companyPath . '/attachments', $attachmentName, 'public');
 
@@ -219,6 +216,7 @@ class DocumentController extends Controller
                 $document->status()->update(['status' => 'archived']);
                 \Log::info('Document status updated to archived', ['document_id' => $document->id]);
             }
+            
             if ($request->forward == '1') {
                 \Log::info('Redirecting to forward route', ['document_id' => $document->id]);
                 return redirect()->route('documents.forward', $document->id)
@@ -312,23 +310,21 @@ class DocumentController extends Controller
                 $fullPath = storage_path("app/public/temp/{$filePath}");
 
                 if ($this->isImage($file)) {
-                    // $outputBase = storage_path('app/temp/ocr_{time()}');
-                    // $command = '"C:\\Program Files\\Tesseract-OCR\\tesseract.exe" "'.str_replace('/', '\\', $fullPath).'" "'.str_replace('/', '\\', $outputBase).'" -l eng';
-                    // $output = shell_exec($command);
-
-                    // if (file_exists("{$outputBase}.txt")) {
-                    //     $content = file_get_contents("{$outputBase}.txt");
-                    //     unlink("{$outputBase}.txt");
-                    //     $searchText .= " {$content}";
-                    // }
-
                     $qrResult = $this->scanQr($fullPath);
 
-                    $document = Document::where('tracking_number', $qrResult)->first();
-
-                    return view('documents.show', compact('document'));
+                    if (!empty($qrResult)) {
+                        // If QR code contains a tracking number
+                        $documentTracking = DocumentTrackingNumber::where('tracking_number', $qrResult)->first();
+                        
+                        if ($documentTracking) {
+                            $document = Document::find($documentTracking->doc_id);
+                            if ($document) {
+                                return redirect()->route('documents.show', $document->id)
+                                    ->with('success', 'Document found by QR code.');
+                            }
+                        }
+                    }
                 }
-
             }
 
             if (!empty($searchText)) {
@@ -338,10 +334,47 @@ class DocumentController extends Controller
             $documents = $query->latest()->paginate(5);
             $auditLogs = DocumentAudit::paginate(15);
 
-            return view('documents.index', array_merge([
+            // Determine the recipients for each document (same code as in index method)
+            $documentRecipients = [];
+            foreach ($documents as $doc) {
+                $workflows = DocumentWorkflow::with(['recipient', 'recipientOffice'])
+                    ->where('document_id', $doc->id)
+                    ->get();
+                
+                $recipients = collect();
+                
+                foreach ($workflows as $workflow) {
+                    // Add user recipients
+                    if ($workflow->recipient) {
+                        $name = trim($workflow->recipient->first_name . ' ' . $workflow->recipient->last_name);
+                        $recipients->push([
+                            'name' => $name,
+                            'type' => 'user',
+                            'step_order' => $workflow->step_order
+                        ]);
+                    }
+                    
+                    // Add office recipients
+                    if ($workflow->recipient_office && $workflow->recipientOffice) {
+                        $recipients->push([
+                            'name' => $workflow->recipientOffice->name,
+                            'type' => 'office',
+                            'step_order' => $workflow->step_order
+                        ]);
+                    }
+                }
+                
+                $documentRecipients[$doc->id] = $recipients;
+            }
+
+            // Return to the current page with search results
+            return redirect()->back()->with([
                 'documents' => $documents,
-                'i' => (request()->input('page', 1) - 1) * 5,
-            ], compact('auditLogs')));
+                'auditLogs' => $auditLogs,
+                'documentRecipients' => $documentRecipients,
+                'searchPerformed' => true,
+                'searchText' => $searchText,
+            ]);
 
         } catch (Exception $e) {
             \Log::error('Search processing error: ' . $e->getMessage());
@@ -555,26 +588,70 @@ class DocumentController extends Controller
      */
     public function show(Document $document): View
     {
-        $this->logDocumentAction($document, 'viewed');
-        $document->load(['trackingNumber', 'categories', 'transaction.fromOffice', 'transaction.toOffice', 'status']);
-        $documentRoute = DocumentWorkflow::with('recipient')
-            ->where('document_id', $document->id)
-            ->where('recipient_id', auth()->id())
-            ->get()
-            ->map(function ($workflow) {
-                $user = $workflow->recipient;
-                return trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? ''));
-            });
+        // Check if the user can access this document
+        if (!auth()->user()->hasRole('super-admin') && 
+            !auth()->user()->hasRole('company-admin') &&
+            auth()->user()->id != $document->uploader &&
+            !DocumentWorkflow::where('document_id', $document->id)
+                ->where('recipient_id', auth()->user()->id)
+                ->exists()) {
+            abort(403, 'You do not have permission to view this document');
+        }
 
-        $workflows = DocumentWorkflow::with('recipient')
+        // Get workflows and organize by step order for display
+        $workflows = DocumentWorkflow::with(['sender', 'recipient', 'recipientOffice'])
             ->where('document_id', $document->id)
+            ->orderBy('step_order')
             ->get();
 
         $docRoute = [];
 
+        // Group recipients by step order
         foreach ($workflows as $workflow) {
-            $recipientName = trim(($workflow->recipient->first_name ?? '') . ' ' . ($workflow->recipient->last_name ?? ''));
-            $docRoute[$workflow->step_order][] = $recipientName;
+            // Add user recipient if available
+            if ($workflow->recipient) {
+                $recipientName = trim(($workflow->recipient->first_name ?? '') . ' ' . ($workflow->recipient->last_name ?? ''));
+                $docRoute[$workflow->step_order][] = [
+                    'name' => $recipientName,
+                    'type' => 'user',
+                    'workflow' => $workflow
+                ];
+            }
+            
+            // Add office recipient if available
+            if ($workflow->recipient_office && isset($workflow->recipientOffice->name)) {
+                $docRoute[$workflow->step_order][] = [
+                    'name' => $workflow->recipientOffice->name,
+                    'type' => 'office',
+                    'workflow' => $workflow
+                ];
+            }
+            
+            // If neither recipient nor office, add placeholder
+            if ((!$workflow->recipient && !$workflow->recipient_office) || 
+                ($workflow->recipient_office && !isset($workflow->recipientOffice->name))) {
+                $docRoute[$workflow->step_order][] = [
+                    'name' => 'Unassigned',
+                    'type' => 'none',
+                    'workflow' => $workflow
+                ];
+            }
+        }
+
+        // Check if we should also fetch recipients from the document_recipients table
+        if (empty($docRoute)) {
+            $documentRecipients = $document->recipients()->with('offices')->get();
+            
+            if ($documentRecipients->isNotEmpty()) {
+                foreach ($documentRecipients as $index => $recipient) {
+                    $recipientName = trim(($recipient->first_name ?? '') . ' ' . ($recipient->last_name ?? ''));
+                    $docRoute[1][] = [
+                        'name' => $recipientName,
+                        'type' => 'user',
+                        'workflow' => null
+                    ];
+                }
+            }
         }
 
         $attachments = Document::with('attachments')->findOrFail($document->id)->attachments;

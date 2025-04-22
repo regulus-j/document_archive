@@ -43,12 +43,18 @@ Route::middleware('auth')->group(function () {
 //----------------------------------------------------------------------------------------------------------------
 
 Route::get('/plans', [PlanController::class, 'index'])->name('plans.index');
+Route::get('/plans/select', [PlanSelectionController::class, 'select'])->name('plans.select');
+Route::get('/plans/view', [PlanController::class, 'index'])->name('subscriptions.plans'); // Added missing route
 Route::get('/register/{plan}', [PlanController::class, 'register'])->name('plans.register');
 Route::post('/plans/{plan}/subscribe', [PlanController::class, 'subscribe'])->name('plans.subscribe');
 
 Route::middleware(['auth'])->group(function () {
-    Route::get('/plans/select', [PlanSelectionController::class, 'select'])->name('plans.select');
     Route::post('/plans/store', [PlanSelectionController::class, 'store'])->name('plans.store');
+
+    // Subscription management for company admins
+    Route::get('/subscriptions/status', [SubscriptionController::class, 'showStatus'])->name('subscriptions.status');
+    Route::post('/subscriptions/cancel-request', [SubscriptionController::class, 'requestCancellation'])->name('subscriptions.request-cancellation');
+    Route::post('/subscriptions/upgrade-request', [SubscriptionController::class, 'requestUpgrade'])->name('subscriptions.request-upgrade');
 
     // Payment routes
     Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
@@ -202,11 +208,13 @@ Route::middleware('auth')->group(function () {
         Route::resource('offices', OfficeController::class);
     });
 
+    Route::get('/admin/company-dashboard', [ReportController::class, 'companyDashboard'])->name('reports.company-dashboard');
+
     Route::prefix('reports')->group(function () {
         Route::get('/', [ReportController::class, 'index'])->name('reports.index');
         Route::get('/create', [ReportController::class, 'create'])->name('reports.create');
         Route::post('/', [ReportController::class, 'store'])->name('reports.store');
-        Route::get('/reports/analytics', [ReportController::class, 'analytics'])->name('reports.analytics');
+        Route::get('/analytics', [ReportController::class, 'analytics'])->name('reports.analytics');
         Route::get('/{report}', [ReportController::class, 'show'])->name('reports.show');
         Route::get('/{report}/edit', [ReportController::class, 'edit'])->name('reports.edit');
         Route::put('/{report}', [ReportController::class, 'update'])->name('reports.update');
@@ -251,6 +259,32 @@ Route::middleware('auth')->group(function () {
     Route::get('/reports/{report}/download/{format?}', [ReportController::class, 'download'])
         ->name('reports.download');
 });
+
+// Document Management for Company Admins
+Route::middleware(['auth', 'role:company-admin'])->prefix('admin/documents')->name('admin.document-management.')->group(function () {
+    Route::get('/', [App\Http\Controllers\Admin\DocumentManagementController::class, 'index'])->name('index');
+    Route::get('/list', [App\Http\Controllers\Admin\DocumentManagementController::class, 'documents'])->name('documents');
+    Route::get('/show/{id}', [App\Http\Controllers\Admin\DocumentManagementController::class, 'show'])->name('show');
+    Route::delete('/delete/{id}', [App\Http\Controllers\Admin\DocumentManagementController::class, 'destroy'])->name('delete');
+    Route::post('/toggle-archive/{id}', [App\Http\Controllers\Admin\DocumentManagementController::class, 'toggleArchive'])->name('toggle-archive');
+    Route::post('/bulk-delete', [App\Http\Controllers\Admin\DocumentManagementController::class, 'bulkDelete'])->name('bulk-delete');
+    Route::get('/deletion-schedule', [App\Http\Controllers\Admin\DocumentManagementController::class, 'showDeletionSchedule'])->name('schedule');
+    Route::post('/deletion-schedule', [App\Http\Controllers\Admin\DocumentManagementController::class, 'saveDeletionSchedule'])->name('save-schedule');
+    Route::post('/run-deletion-schedule', [App\Http\Controllers\Admin\DocumentManagementController::class, 'runDeletionSchedule'])->name('run-schedule');
+});
+
+// // Reports Routes
+// Route::middleware(['auth'])->prefix('reports')->name('reports.')->group(function () {
+//     Route::get('/', [ReportController::class, 'index'])->name('index');
+//     Route::get('/create', [ReportController::class, 'create'])->name('create');
+//     Route::post('/', [ReportController::class, 'store'])->name('store');
+//     Route::get('/analytics', [ReportController::class, 'analytics'])->name('analytics');
+//     Route::get('/{report}', [ReportController::class, 'show'])->name('show');
+//     Route::get('/{report}/edit', [ReportController::class, 'edit'])->name('edit');
+//     Route::put('/{report}', [ReportController::class, 'update'])->name('update');
+//     Route::delete('/{report}', [ReportController::class, 'destroy'])->name('destroy');
+//     Route::post('/generate', [ReportController::class, 'generate'])->name('generate');
+// });
 
 //stmp mail test
 // Route::get('/testroute', function() {

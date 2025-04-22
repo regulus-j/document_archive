@@ -90,14 +90,40 @@
                         <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
                             <p class="text-sm font-medium text-gray-500 mb-1">From Office</p>
                             <p class="text-base font-medium text-gray-900">
-                                {{ $document->transaction->fromOffice->name ?? 'N/A' }}
+                                @if(isset($docRoute[1]) && count($docRoute[1]) > 0)
+                                    @foreach($docRoute[1] as $route)
+                                        @if($route['type'] == 'office')
+                                            {{ $route['name'] }}
+                                            @break
+                                        @endif
+                                    @endforeach
+                                @else
+                                    {{ $document->user->offices->first()->name ?? 'N/A' }}
+                                @endif
                             </p>
                         </div>
                         <!-- To Office Card -->
                         <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
                             <p class="text-sm font-medium text-gray-500 mb-1">To Office</p>
                             <p class="text-base font-medium text-gray-900">
-                                {{ $document->transaction->toOffice->name ?? 'N/A' }}
+                                @if(isset($workflows) && $workflows->isNotEmpty())
+                                    @php 
+                                        $officeNames = [];
+                                        foreach($workflows as $workflow) {
+                                            if($workflow->recipient_office && $workflow->recipientOffice) {
+                                                $officeNames[] = $workflow->recipientOffice->name;
+                                            }
+                                        }
+                                    @endphp
+                                    
+                                    @if(count($officeNames) > 0)
+                                        {{ implode(', ', array_unique($officeNames)) }}
+                                    @else
+                                        N/A
+                                    @endif
+                                @else
+                                    N/A
+                                @endif
                             </p>
                         </div>
                         <!-- Status Card -->
@@ -175,7 +201,18 @@
                                                 {{ $workflow->step_order }}
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                                {{ $workflow->recipient->first_name }} {{ $workflow->recipient->last_name }}
+                                                @if($workflow->recipient)
+                                                    {{ $workflow->recipient->first_name }} {{ $workflow->recipient->last_name }}
+                                                @elseif($workflow->recipient_office && $workflow->recipientOffice)
+                                                    <span class="flex items-center">
+                                                        <svg class="h-4 w-4 text-gray-500 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                                        </svg>
+                                                        {{ $workflow->recipientOffice->name }}
+                                                    </span>
+                                                @else
+                                                    <span class="text-gray-400">Unassigned</span>
+                                                @endif
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm">
                                                 @if($workflow->status === 'pending')
@@ -211,7 +248,7 @@
                     </div>
 
                     <!-- Download Button -->
-                    <div class="flex justify-center mt-8">
+                    <div class="flex justify-center mt-8 space-x-4">
                         <a href="{{ route('documents.download', $document->id) }}"
                             class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
                             <svg class="mr-2 -ml-1 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none"
@@ -221,6 +258,35 @@
                             </svg>
                             Download Document
                         </a>
+                        
+                        @foreach($workflows as $workflow)
+                            @if($workflow->recipient_id == auth()->id() && $workflow->status == 'pending')
+                                <form action="{{ route('workflow.receive', $workflow->id) }}" method="POST">
+                                    @csrf
+                                    <button type="submit" 
+                                        class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
+                                        <svg class="mr-2 -ml-1 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M5 13l4 4L19 7" />
+                                        </svg>
+                                        Receive Document
+                                    </button>
+                                </form>
+                            @endif
+                            
+                            @if($workflow->recipient_id == auth()->id() && $workflow->status == 'received')
+                                <a href="{{ route('workflow.review', $workflow->id) }}" 
+                                    class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-colors">
+                                    <svg class="mr-2 -ml-1 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                                    </svg>
+                                    Review Document
+                                </a>
+                            @endif
+                        @endforeach
                     </div>
                 </div>
             </div>

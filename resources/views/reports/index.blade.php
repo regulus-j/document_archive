@@ -115,6 +115,46 @@
                                 </div>
                                 <p class="text-xs text-gray-500">Select the date range for your report data</p>
                             </div>
+                            
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-700">{{ __('Export Format') }}</label>
+                                <div class="flex space-x-4">
+                                    <div class="flex items-center">
+                                        <input type="radio" id="export_none" name="export_format" value="none" checked
+                                            class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500">
+                                        <label for="export_none" class="ml-2 block text-sm text-gray-700">
+                                            Preview Only
+                                        </label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="radio" id="export_pdf" name="export_format" value="pdf"
+                                            class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500">
+                                        <label for="export_pdf" class="ml-2 block text-sm text-gray-700">
+                                            <div class="flex items-center">
+                                                <svg class="w-4 h-4 mr-1 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
+                                                    <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
+                                                    <path d="M4.603 14.087a.81.81 0 0 1-.438-.42c-.195-.388-.13-.776.08-1.102.198-.307.526-.568.897-.787a7.68 7.68 0 0 1 1.482-.645 19.697 19.697 0 0 0 1.062-2.227 7.269 7.269 0 0 1-.43-1.295c-.086-.4-.119-.796-.046-1.136.075-.354.274-.672.65-.823.192-.077.4-.12.602-.077a.7.7 0 0 1 .477.365c.088.164.12.356.127.538.007.188-.012.396-.047.614-.084.51-.27 1.134-.52 1.794a10.954 10.954 0 0 0 .98 1.686 5.753 5.753 0 0 1 1.334.05c.364.066.734.195.96.465.12.144.193.32.2.518.007.192-.047.382-.138.563a1.04 1.04 0 0 1-.354.416.856.856 0 0 1-.51.138c-.331-.014-.654-.196-.933-.417a5.712 5.712 0 0 1-.911-.95 11.651 11.651 0 0 0-1.997.406 11.307 11.307 0 0 1-1.02 1.51c-.292.35-.609.656-.927.787a.793.793 0 0 1-.58.029zm1.379-1.901c-.166.076-.32.15-.459.222-.328.168-.61.335-.815.534-.107.104-.189.207-.242.32-.051.112-.063.234-.019.349.027.07.091.138.19.178a.663.663 0 0 0 .292-.004c.336-.137.642-.48.912-.816.228-.28.47-.63.719-.93.239-.3.442-.555.592-.75a9.053 9.053 0 0 0-.625-.216c-.189-.061-.384-.12-.587-.166zm3.26-3.216c.135.074.2.175.198.273 0 .086-.034.16-.088.226a.602.602 0 0 1-.156.147c-.117.096-.259.16-.39.16-.144 0-.302-.053-.44-.154-.169-.123-.26-.143-.3-.148a5.01 5.01 0 0 0-.368.069 28.64 28.64 0 0 0-.83.195c-.239.572-.445 1.112-.576 1.541-.016.066-.03.126-.044.183.116-.043.223-.087.318-.128.36-.157.699-.32 1.004-.481.304-.16.577-.31.802-.44.023-.031.052-.044.083-.51.177-.037.377-.05.575-.035zm-2.36 4.49v.002z"/>
+                                                </svg>
+                                                PDF
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="radio" id="export_excel" name="export_format" value="excel"
+                                            class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500">
+                                        <label for="export_excel" class="ml-2 block text-sm text-gray-700">
+                                            <div class="flex items-center">
+                                                <svg class="w-4 h-4 mr-1 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
+                                                    <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V9h-3.5V3z"/>
+                                                    <path d="M12.021 6.828c.461-1.062.992-1.828 2.312-1.828v9.5c-2.937 0-5.5-4.666-5.5-4.666S6.25 14.5 3.312 14.5v-9.5c1.321 0 1.851.766 2.312 1.828.396.739.76 1.291 1.521 1.616-.358-.322-.6-.695-.842-1.091-.483-.974-1.096-2.353-3.303-2.353v9.5c2.361 0 4.256-1.2 5.873-3.193.438-.537.847-1.128 1.203-1.731C9.518 10.461 9.9 11.1 10.331 11.659c2.273 2.974 3.585 2.841 4.998 2.841v-9.5c-2.208 0-2.82 1.38-3.303 2.353-.242.396-.484.769-.842 1.091.761-.325 1.125-.877 1.521-1.616z"/>
+                                                </svg>
+                                                Excel
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                                <p class="text-xs text-gray-500">Choose how you want to receive the report</p>
+                            </div>
 
                             <div class="pt-4">
                                 <button type="submit" id="generate-report-btn"
