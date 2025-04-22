@@ -200,12 +200,17 @@ class SubscriptionController extends Controller
             return redirect()->back()->with('error', 'Unauthorized access.');
         }
         
-        // Get the company ID for the authenticated user
-        $companyId = auth()->user()->company()->first()->id;
+        // Get the company for the authenticated user
+        $company = auth()->user()->company()->first();
+        
+        // Check if company exists
+        if (!$company) {
+            return redirect()->route('companies.create')->with('error', 'You need to create a company profile first.');
+        }
         
         // Get current active subscription using the active scope
         $subscription = CompanySubscription::active()
-            ->where('company_id', $companyId)
+            ->where('company_id', $company->id)
             ->with('plan')
             ->first();
             
@@ -231,11 +236,16 @@ class SubscriptionController extends Controller
             return redirect()->back()->with('error', 'Unauthorized access.');
         }
         
-        // Get the company ID for the authenticated user
-        $companyId = auth()->user()->company()->first()->id;
+        // Get the company for the authenticated user
+        $company = auth()->user()->company()->first();
+        
+        // Check if company exists
+        if (!$company) {
+            return redirect()->route('companies.create')->with('error', 'You need to create a company profile first.');
+        }
         
         // Get current active subscription
-        $subscription = CompanySubscription::where('company_id', $companyId)
+        $subscription = CompanySubscription::where('company_id', $company->id)
             ->where('status', 'active')
             ->first();
             
@@ -265,11 +275,16 @@ class SubscriptionController extends Controller
             return redirect()->back()->with('error', 'Unauthorized access.');
         }
         
-        // Get the company ID for the authenticated user
-        $companyId = auth()->user()->company()->first()->id;
+        // Get the company for the authenticated user
+        $company = auth()->user()->company()->first();
+        
+        // Check if company exists
+        if (!$company) {
+            return redirect()->route('companies.create')->with('error', 'You need to create a company profile first.');
+        }
         
         // Get current active subscription
-        $subscription = CompanySubscription::where('company_id', $companyId)
+        $subscription = CompanySubscription::where('company_id', $company->id)
             ->where('status', 'active')
             ->first();
             
