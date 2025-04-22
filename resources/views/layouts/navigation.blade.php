@@ -207,12 +207,15 @@
                                         {{ __('Profile') }}
                                     </x-dropdown-link>
 
-                                    @if(auth()->user()->hasRole('company-admin')) 
-                                        <!-- Admin sees Company Account -->
-                                        <x-dropdown-link :href="route('companies.userManaged', auth()->id())" class="hover:bg-blue-50 hover:text-blue-600">
+                                    <!-- Check if user is company owner by checking if they have a company where they are the user_id -->
+                                    @if(App\Models\CompanyAccount::where('user_id', auth()->id())->exists())
+                                        <!-- Company owner sees Company Account -->
+                                        <x-dropdown-link :href="route('companies.edit', App\Models\CompanyAccount::where('user_id', auth()->id())->first())" class="hover:bg-blue-50 hover:text-blue-600">
                                             {{ __('Company Account') }}
                                         </x-dropdown-link>
-                                        
+                                    @endif
+                                    
+                                    @if(auth()->user()->hasRole('company-admin')) 
                                         <!-- Moved Plans & Subscriptions here and renamed -->
                                         <x-dropdown-link :href="route('plans.select')" class="hover:bg-blue-50 hover:text-blue-600">
                                             {{ __('Manage Subscription') }}
@@ -409,9 +412,16 @@
                     {{ __('Profile') }}
                 </x-responsive-nav-link>
 
-                @if(auth()->user()->hasRole('company-admin'))
-                    <x-responsive-nav-link :href="route('companies.userManaged', auth()->id())" class="text-gray-600 hover:bg-blue-50 hover:text-blue-600">
+                <!-- Check if user is company owner for mobile navigation -->
+                @if(App\Models\CompanyAccount::where('user_id', auth()->id())->exists())
+                    <x-responsive-nav-link :href="route('companies.edit', App\Models\CompanyAccount::where('user_id', auth()->id())->first())" class="text-gray-600 hover:bg-blue-50 hover:text-blue-600">
                         {{ __('Company Account') }}
+                    </x-responsive-nav-link>
+                @endif
+                
+                @if(auth()->user()->hasRole('company-admin'))
+                    <x-responsive-nav-link :href="route('plans.select')" class="text-gray-600 hover:bg-blue-50 hover:text-blue-600">
+                        {{ __('Manage Subscription') }}
                     </x-responsive-nav-link>
                 @endif
 

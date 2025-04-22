@@ -33,7 +33,11 @@ class AuthenticatedSessionController extends Controller
             if(auth()->user()->isSuperAdmin()){
                 return redirect()->route('admin.dashboard')->with('status', 201);
             }elseif(auth()->user()->isCompanyAdmin()){
-                return redirect()->route('dashboard')->with('status', 201);
+                $company = auth()->user()->company;
+                if ($company && ($subscription = $company->latestSubscriptionByStartDate()->first()) && !$subscription->isActive()) {
+                    return redirect()->route('dashboard')->with('status', 201);
+                }
+                return redirect()->route('reports.company-dashboard')->with('status', 201);
             }
             return redirect()->route('profile.edit')->with('message', 'Please change your password before proceeding.');
         }

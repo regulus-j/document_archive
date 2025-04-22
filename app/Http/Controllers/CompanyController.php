@@ -36,19 +36,30 @@ class CompanyController extends Controller
 
     public function create()
     {
+        // Check if the current user already owns a company (unless they're a super admin)
+        if (!auth()->user()->isSuperAdmin()) {
+            $existingCompany = CompanyAccount::where('user_id', auth()->id())->first();
+            if ($existingCompany) {
+                return redirect()->route('dashboard')
+                    ->with('error', 'You already own a company. Each user can only own one company.');
+            }
+        }
+        
         // Show the form for creating a new company.
         return view('companies.create');
     }
 
     public function store(Request $request)
     {
-        // Validate and store a newly created company.
-        $validated = $request->validate([
-            'user_id'         => 'required|exists:users,id',
-            'company_name'    => 'required|string|max:255',
-            'registered_name' => 'required|string|max:255',
-            'company_email'   => 'required|email|max:255',
-            'company_phone'   => 'required|string|max:20',
+        // Use custom validation rules from the model to enforce one company per user
+        $request->validate(CompanyAccount::rules());
+        
+        $validated = $request->only([
+            'user_id',
+            'company_name',
+            'registered_name',
+            'company_email',
+            'company_phone',
         ]);
 
         if($request->part == '2') {
@@ -90,17 +101,27 @@ class CompanyController extends Controller
 
     public function update(Request $request, CompanyAccount $company)
     {
-        // Validate and update the specified company.
-        $validated = $request->validate([
-            'user_id'         => 'required|exists:users,id',
-            'company_name'    => 'required|string|max:255',
-            'registered_name' => 'required|string|max:255',
-            'company_email'   => 'required|email|max:255',
-            'company_phone'   => 'required|string|max:20',
+        // Use custom validation rules from the model to enforce one company per user
+        // Passing the company ID to exclude the current company from validation
+        $request->validate(CompanyAccount::rules($company->id));
+        
+        $validated = $request->only([
+            'user_id',
+            'company_name',
+            'registered_name',
+            'company_email',
+            'company_phone',
         ]);
 
         $company->update($validated);
-        return redirect()->route('companies.index')->with('success', 'Company updated successfully.');
+        
+        // Check if the current user is an admin or the company owner
+        if (auth()->user()->isSuperAdmin()) {
+            return redirect()->route('companies.index')->with('success', 'Company updated successfully.');
+        } else {
+            // For company owners, redirect to dashboard or company show page
+            return redirect()->route('dashboard')->with('success', 'Company information updated successfully.');
+        }
     }
 
     public function destroy(CompanyAccount $company)

@@ -22,6 +22,33 @@ class CompanyAccount extends Model
         'company_size',
     ];
 
+    // Custom validation rules
+    public static function rules($userId = null)
+    {
+        return [
+            'user_id' => [
+                'required',
+                'exists:users,id',
+                function ($attribute, $value, $fail) use ($userId) {
+                    $query = self::where('user_id', $value);
+                    
+                    // If updating an existing record, exclude the current record
+                    if ($userId) {
+                        $query->where('id', '!=', $userId);
+                    }
+                    
+                    if ($query->exists()) {
+                        $fail('This user already owns a company.');
+                    }
+                }
+            ],
+            'company_name' => 'required|string|max:255',
+            'registered_name' => 'required|string|max:255',
+            'company_email' => 'required|email|max:255',
+            'company_phone' => 'required|string|max:20',
+        ];
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
@@ -42,6 +69,18 @@ class CompanyAccount extends Model
     public function address(): HasMany
     {
         return $this->hasMany(CompanyAddress::class, 'company_id');
+    }
+
+    public function latestSubscriptionByStartDate(): HasOne
+    {
+        return $this->hasOne(CompanySubscription::class, 'company_id')
+                    ->orderBy('start_date', 'desc');
+    }
+
+    public function latestSubscriptionByEndDate(): HasOne
+    {
+        return $this->hasOne(CompanySubscription::class, 'company_id')
+                    ->orderBy('end_date', 'desc');
     }
 
     public function subscriptions(): HasMany
