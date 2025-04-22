@@ -21,9 +21,9 @@ class PlanSelectionController extends Controller
         // Get the authenticated user's company
         $company = CompanyAccount::where('user_id', Auth::id())->first();
         
-        if (!$company) {
-            return redirect()->route('plans.select')->with('error', 'Please set up your company profile first.');
-        }
+        // if (!$company) {
+        //     return redirect()->route('plans.select')->with('error', 'Please set up your company profile first.');
+        // }
         
         // Check if the company already has an active subscription
         // Using the active scope from the model for consistent behavior
