@@ -200,8 +200,13 @@ class SubscriptionController extends Controller
             return redirect()->back()->with('error', 'Unauthorized access.');
         }
         
-        // Get the company for the authenticated user
+        // Get the company for the authenticated user (first try owned company)
         $company = auth()->user()->company()->first();
+        
+        // If not found, check if user belongs to a company
+        if (!$company) {
+            $company = auth()->user()->companies()->first();
+        }
         
         // Check if company exists
         if (!$company) {
@@ -236,8 +241,13 @@ class SubscriptionController extends Controller
             return redirect()->back()->with('error', 'Unauthorized access.');
         }
         
-        // Get the company for the authenticated user
+        // Get the company for the authenticated user (first try owned company)
         $company = auth()->user()->company()->first();
+        
+        // If not found, check if user belongs to a company
+        if (!$company) {
+            $company = auth()->user()->companies()->first();
+        }
         
         // Check if company exists
         if (!$company) {
@@ -275,8 +285,13 @@ class SubscriptionController extends Controller
             return redirect()->back()->with('error', 'Unauthorized access.');
         }
         
-        // Get the company for the authenticated user
+        // Get the company for the authenticated user (first try owned company)
         $company = auth()->user()->company()->first();
+        
+        // If not found, check if user belongs to a company
+        if (!$company) {
+            $company = auth()->user()->companies()->first();
+        }
         
         // Check if company exists
         if (!$company) {

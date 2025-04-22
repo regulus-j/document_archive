@@ -19,10 +19,10 @@ class PlanSelectionController extends Controller
     public function select(Request $request)
     {
         // Get the authenticated user's company
-        $company = CompanyAccount::where('user_id', Auth::id())->first();
+        $company = CompanyAccount::where('user_id', auth()->user()->id);
         
         if (!$company) {
-            return redirect()->route('companies.create')->with('error', 'Please set up your company profile first.');
+            return redirect()->route('company.create')->with('error', 'Please set up your company profile first.');
         }
         
         // Check if the company already has an active subscription
