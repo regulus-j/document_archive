@@ -65,6 +65,9 @@ class DocumentWorkflowController extends Controller
 
         $recipientBatches = $request->recipient_batch ?? [];
         
+        // Keep track of all recipient IDs to sync with document_recipients table
+        $allRecipientIds = [];
+        
         foreach ($recipientBatches as $batchIndex => $recipients) {
             if (empty($recipients)) {
                 continue;
@@ -75,6 +78,9 @@ class DocumentWorkflowController extends Controller
             
             // Process each recipient
             foreach ($recipients as $recipientId) {
+                // Add to all recipients for later syncing
+                $allRecipientIds[] = $recipientId;
+                
                 // Get the recipient's office ID (using the first selected office if multiple)
                 $recipientOfficeId = null;
                 if (!empty($officeIds)) {
@@ -121,11 +127,20 @@ class DocumentWorkflowController extends Controller
                 ]);
             }
         }
+        
+        // Sync all recipient IDs with the document_recipients table to ensure proper recipient data
+        if (!empty($allRecipientIds)) {
+            foreach ($allRecipientIds as $recipientId) {
+                \DB::table('document_recipients')->updateOrInsert(
+                    ['document_id' => $document->id, 'recipient_id' => $recipientId],
+                    ['created_at' => now(), 'updated_at' => now()]
+                );
+            }
+        }
 
         $docQR = $document->trackingNumber();
         $qrCodeData = app(DocumentController::class)->generateTrackingSlip($document->id, auth()->id(), $trackingNumber);
         
-
         return redirect()->route('documents.index')
         ->with('data', $qrCodeData)
         ->with('success', 'Document forwarded successfully');

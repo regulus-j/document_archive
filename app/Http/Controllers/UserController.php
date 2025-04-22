@@ -122,7 +122,7 @@ class UserController extends Controller
 
         $request->validate([
             'first_name' => 'required|string|max:255',
-            'middle_name' => 'string|max:255',
+            'middle_name' => 'nullable|string|max:255', // Changed from string to nullable|string
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'offices' => 'required|array',

@@ -65,8 +65,8 @@ class DashboardController extends Controller
                 ))->with('info', 'Please set up your company profile first.');
             }
 
-            $activeSubscription = CompanySubscription::where('company_id', $userCompany->id)
-                ->where('status', 'active')
+            $activeSubscription = CompanySubscription::active()
+                ->where('company_id', $userCompany->id)
                 ->first();
 
             if (!$activeSubscription) {

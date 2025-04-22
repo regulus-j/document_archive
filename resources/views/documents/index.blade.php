@@ -332,7 +332,17 @@
                                                     </span>
                                                     
                                                     <span class="text-xs text-gray-500">
-                                                        <span class="font-medium">To:</span> {{ $document->originatingOffice?->name ?? 'N/A' }}
+                                                        <span class="font-medium">To:</span>
+                                                        @if(isset($documentRecipients[$document->id]) && count($documentRecipients[$document->id]) > 0)
+                                                            @foreach($documentRecipients[$document->id] as $recipient)
+                                                                <span class="inline-flex items-center">
+                                                                    {{ $recipient['name'] }}
+                                                                    @if(!$loop->last), @endif
+                                                                </span>
+                                                            @endforeach
+                                                        @else
+                                                            N/A
+                                                        @endif
                                                     </span>
                                                     
                                                     <span class="text-xs text-gray-500">

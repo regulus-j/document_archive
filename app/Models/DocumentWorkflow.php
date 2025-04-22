@@ -14,6 +14,7 @@ class DocumentWorkflow extends Model
         'document_id',
         'sender_id',
         'recipient_id',
+        'recipient_office',
         'step_order',
         'status',
         'remarks',
@@ -32,6 +33,11 @@ class DocumentWorkflow extends Model
     public function recipient()
     {
         return $this->belongsTo(User::class, 'recipient_id');
+    }
+
+    public function recipientOffice()
+    {
+        return $this->belongsTo(Office::class, 'recipient_office');
     }
 
     public function receive()

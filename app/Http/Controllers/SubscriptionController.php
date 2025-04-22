@@ -6,6 +6,7 @@ use App\Models\CompanySubscription;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Carbon;
+use App\Models\Plan;
 
 class SubscriptionController extends Controller
 {
@@ -187,5 +188,101 @@ class SubscriptionController extends Controller
         }
         
         return response()->json(['message' => count($subscriptions) . ' subscriptions renewed successfully']);
+    }
+    
+    /**
+     * Display subscription status for a company admin
+     */
+    public function showStatus()
+    {
+        // Check if user is a company admin
+        if (!auth()->user()->hasRole('company-admin')) {
+            return redirect()->back()->with('error', 'Unauthorized access.');
+        }
+        
+        // Get the company ID for the authenticated user
+        $companyId = auth()->user()->company()->first()->id;
+        
+        // Get current active subscription using the active scope
+        $subscription = CompanySubscription::active()
+            ->where('company_id', $companyId)
+            ->with('plan')
+            ->first();
+            
+        // // If no active subscription, redirect to plan selection with parameter to prevent redirect loop
+        // if (!$subscription) {
+        //     return redirect()->route('plans.select', ['from_subscription_status' => 1])
+        //         ->with('info', 'Your company doesn\'t have an active subscription. Please select a plan.');
+        // }
+        
+        // Get available plans for potential upgrades
+        $availablePlans = Plan::where('is_active', true)->get();
+        
+        return view('subscriptions.status', compact('subscription', 'availablePlans'));
+    }
+    
+    /**
+     * Request cancellation of subscription
+     */
+    public function requestCancellation(Request $request)
+    {
+        // Check if user is a company admin
+        if (!auth()->user()->hasRole('company-admin')) {
+            return redirect()->back()->with('error', 'Unauthorized access.');
+        }
+        
+        // Get the company ID for the authenticated user
+        $companyId = auth()->user()->company()->first()->id;
+        
+        // Get current active subscription
+        $subscription = CompanySubscription::where('company_id', $companyId)
+            ->where('status', 'active')
+            ->first();
+            
+        if (!$subscription) {
+            return redirect()->back()->with('error', 'No active subscription found.');
+        }
+        
+        // Send cancellation request notification to administrators
+        // This is a placeholder for actual notification logic
+        
+        return redirect()->back()
+            ->with('success', 'Your cancellation request has been submitted. An administrator will contact you shortly.');
+    }
+    
+    /**
+     * Request plan upgrade
+     */
+    public function requestUpgrade(Request $request)
+    {
+        // Validate request
+        $validated = $request->validate([
+            'plan_id' => 'required|exists:plans,id',
+        ]);
+        
+        // Check if user is a company admin
+        if (!auth()->user()->hasRole('company-admin')) {
+            return redirect()->back()->with('error', 'Unauthorized access.');
+        }
+        
+        // Get the company ID for the authenticated user
+        $companyId = auth()->user()->company()->first()->id;
+        
+        // Get current active subscription
+        $subscription = CompanySubscription::where('company_id', $companyId)
+            ->where('status', 'active')
+            ->first();
+            
+        if (!$subscription) {
+            return redirect()->back()->with('error', 'No active subscription found.');
+        }
+        
+        $newPlan = \App\Models\Plan::find($validated['plan_id']);
+        
+        // Send upgrade request notification to administrators
+        // This is a placeholder for actual notification logic
+        
+        return redirect()->back()
+            ->with('success', 'Your plan upgrade request has been submitted. An administrator will contact you shortly.');
     }
 }
