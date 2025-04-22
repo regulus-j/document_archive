@@ -22,7 +22,7 @@ class PlanSelectionController extends Controller
         $company = CompanyAccount::where('user_id', Auth::id())->first();
         
         if (!$company) {
-            return redirect()->route('company.setup')->with('error', 'Please set up your company profile first.');
+            return redirect()->route('plans.select')->with('error', 'Please set up your company profile first.');
         }
         
         // Check if the company already has an active subscription
