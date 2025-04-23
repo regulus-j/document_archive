@@ -27,10 +27,21 @@ class OfficeController extends Controller
      */
     public function create()
     {
-        $offices = Office::all()->pluck('name', 'id');
-        $companies = auth()->user()->companies()->pluck('company_name', 'id');
-
-        return view('offices.create', compact('offices', 'companies'));
+        // Get the current user's company
+        $company = auth()->user()->companies()->first();
+        
+        if (!$company) {
+            return redirect()->route('companies.create')
+                ->with('error', 'Please create a company first.');
+        }
+        
+        // Only show offices from the user's company
+        $offices = Office::where('company_id', $company->id)->pluck('name', 'id');
+        
+        // Get users from the current company for office lead selection
+        $users = $company->employees()->get(['id', 'first_name', 'last_name']);
+        
+        return view('offices.create', compact('offices', 'users'));
     }
 
     public function store(Request $request)
@@ -38,15 +49,28 @@ class OfficeController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'parent_office_id' => 'nullable|exists:offices,id',
-            'company_id' => 'required|exists:company_accounts,id',
-
+            'office_lead' => 'nullable|exists:users,id',
         ]);
+
+        // Get the current user's company
+        $company = auth()->user()->companies()->first();
+        
+        if (!$company) {
+            return redirect()->route('companies.create')
+                ->with('error', 'Please create a company first.');
+        }
 
         $office = Office::create([
-            'company_id' => $request->company_id,
+            'company_id' => $company->id,
             'name' => $request->name,
             'parent_office_id' => $request->parent_office_id,
+            'office_lead' => $request->office_lead,
         ]);
+
+        // If an office lead is selected, ensure they're attached to this office
+        if ($request->office_lead) {
+            $office->users()->syncWithoutDetaching([$request->office_lead]);
+        }
 
         return redirect()->route('office.index')
             ->with('success', 'Office created successfully.');
@@ -67,31 +91,52 @@ class OfficeController extends Controller
      */
     public function edit(Office $office)
     {
-        $office = Office::with('parentOffice')->find($office->id);
-        $offices = Office::where('id', '!=', $office->id)->get();  // Exclude current office
+        $office = Office::with('parentOffice', 'lead')->find($office->id);
+        
+        // Get the current user's company
+        $company = auth()->user()->companies()->first();
+        
+        if (!$company) {
+            return redirect()->route('companies.create')
+                ->with('error', 'Please create a company first.');
+        }
+        
+        // Only show offices from the same company and exclude the current office
+        $offices = Office::where('company_id', $company->id)
+                         ->where('id', '!=', $office->id)
+                         ->get();
+                         
+        // Get users from the current company for office lead selection
+        $users = $company->employees()->get(['id', 'first_name', 'last_name']);
 
-        return view('offices.edit', compact('office', 'offices'));
+        return view('offices.edit', compact('office', 'offices', 'users'));
     }
     /**
      * Update the specified resource in storage.
      */
     public function update(Request $request, Office $office)
     {
-        //
         $request->validate([
             'name' => 'required|string|max:255',
             'parent_office_id' => 'nullable|exists:offices,id',
+            'office_lead' => 'nullable|exists:users,id',
         ]);
 
         try {
             $office->update([
                 'name' => $request->name,
                 'parent_office_id' => $request->parent_office_id,
+                'office_lead' => $request->office_lead,
             ]);
+            
+            // If an office lead is selected, ensure they're attached to this office
+            if ($request->office_lead) {
+                $office->users()->syncWithoutDetaching([$request->office_lead]);
+            }
 
             return redirect()->route('office.index')->with('success', 'Office updated successfully.');
         } catch (\Exception $e) {
-            return back()->with('error', 'Error updating office');
+            return back()->with('error', 'Error updating office: ' . $e->getMessage());
         }
     }
 

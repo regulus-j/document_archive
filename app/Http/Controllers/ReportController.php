@@ -1433,4 +1433,358 @@ class ReportController extends Controller
         
         return round($bytes, $precision) . ' ' . $units[$pow];
     }
+
+    /**
+     * Office lead dashboard for office-specific statistics
+     * Provides comprehensive information for office leads
+     */
+    public function officeLeadDashboard(Request $request)
+    {
+        // Get the logged in user
+        $user = auth()->user();
+        
+        // Check if user is an office lead
+        $office = Office::where('office_lead', $user->id)->first();
+        if (!$office) {
+            return redirect()->route('dashboard')->with('error', 'You are not assigned as an office lead.');
+        }
+        
+        // Date range filter
+        $startDate = $request->filled('start_date') ? $request->input('start_date') : now()->subMonths(1)->format('Y-m-d');
+        $endDate = $request->filled('end_date') ? $request->input('end_date') : now()->format('Y-m-d');
+        
+        // Check for export requests
+        $exportFormat = $request->input('export_format');
+        
+        // Get office members
+        $officeMembers = $office->users()->get();
+        $memberIds = $officeMembers->pluck('id')->toArray();
+        
+        // Get office document statistics
+        $documentsUploaded = Document::whereIn('uploader', $memberIds)
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->count();
+        
+        $documentsUploadedToday = Document::whereIn('uploader', $memberIds)
+            ->whereDate('created_at', today())
+            ->count();
+        
+        $pendingWorkflows = DocumentWorkflow::whereIn('sender_id', $memberIds)
+            ->orWhereIn('recipient_id', $memberIds)
+            ->where('status', 'pending')
+            ->count();
+        
+        // Get document workflow statistics
+        $workflowStats = $this->getOfficeWorkflowStatistics($office->id, $memberIds, $startDate, $endDate);
+        
+        // Get member performance metrics
+        $memberPerformanceMetrics = $this->getMemberPerformanceMetrics($memberIds, $startDate, $endDate);
+        
+        // Get document category distribution for this office
+        $categoryDistribution = $this->getOfficeDocumentCategoryDistribution($memberIds);
+        
+        // Get document status distribution for this office
+        $statusDistribution = $this->getOfficeDocumentStatusDistribution($memberIds);
+        
+        // Get document volume trends for this office
+        $documentTrends = $this->getOfficeDocumentVolumeTrends($memberIds, $startDate, $endDate);
+        
+        // Handle exports if requested
+        if ($exportFormat === 'pdf') {
+            return $this->exportOfficeLeadDashboardToPdf(
+                $office, 
+                $officeMembers,
+                $documentsUploaded,
+                $documentsUploadedToday,
+                $pendingWorkflows,
+                $workflowStats,
+                $memberPerformanceMetrics,
+                $categoryDistribution,
+                $statusDistribution,
+                $documentTrends,
+                $startDate,
+                $endDate
+            );
+        }
+        
+        return view('reports.office-lead-dashboard', compact(
+            'office',
+            'officeMembers',
+            'documentsUploaded',
+            'documentsUploadedToday',
+            'pendingWorkflows',
+            'workflowStats',
+            'memberPerformanceMetrics',
+            'categoryDistribution',
+            'statusDistribution',
+            'documentTrends',
+            'startDate',
+            'endDate'
+        ));
+    }
+
+    /**
+     * Export office lead dashboard to PDF
+     */
+    private function exportOfficeLeadDashboardToPdf($office, $officeMembers, $documentsUploaded, $documentsUploadedToday,
+                                                   $pendingWorkflows, $workflowStats, $memberPerformanceMetrics,
+                                                   $categoryDistribution, $statusDistribution, $documentTrends,
+                                                   $startDate, $endDate)
+    {
+        // Create PDF with the office dashboard data
+        $pdf = PDF::loadView('reports.office_lead_dashboard_pdf', [
+            'office' => $office,
+            'officeMembers' => $officeMembers,
+            'documentsUploaded' => $documentsUploaded,
+            'documentsUploadedToday' => $documentsUploadedToday,
+            'pendingWorkflows' => $pendingWorkflows,
+            'workflowStats' => $workflowStats,
+            'memberPerformanceMetrics' => $memberPerformanceMetrics,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'generatedAt' => now()->format('Y-m-d H:i:s')
+        ]);
+        
+        $fileName = 'office_lead_dashboard_' . $office->name . '_' . now()->format('Y_m_d_H_i_s') . '.pdf';
+        
+        // Create a report record for tracking
+        Report::create([
+            'name' => $office->name . ' Office Dashboard Report',
+            'description' => "Office performance dashboard for date range: $startDate to $endDate",
+            'type' => 'office_dashboard',
+            'user_id' => auth()->id(),
+            'generated_at' => now(),
+            'data' => json_encode([
+                'office_id' => $office->id,
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'metrics_summary' => [
+                    'total_documents' => $documentsUploaded,
+                    'today_documents' => $documentsUploadedToday,
+                    'pending_workflows' => $pendingWorkflows,
+                    'member_count' => count($officeMembers),
+                ]
+            ])
+        ]);
+        
+        return $pdf->download($fileName);
+    }
+
+    /**
+     * Get workflow statistics for an office
+     */
+    private function getOfficeWorkflowStatistics($officeId, $memberIds, $startDate, $endDate)
+    {
+        // Calculate workflows sent from this office
+        $workflowsSent = DocumentWorkflow::whereIn('sender_id', $memberIds)
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->count();
+        
+        // Calculate workflows received by this office
+        $workflowsReceived = DocumentWorkflow::whereIn('recipient_id', $memberIds)
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->count();
+            
+        // Calculate workflows targeting the office as a whole
+        $workflowsToOffice = DocumentWorkflow::where('recipient_office', $officeId)
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->count();
+        
+        // Calculate workflows approved
+        $workflowsApproved = DocumentWorkflow::whereIn('recipient_id', $memberIds)
+            ->where('status', 'approved')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->count();
+        
+        // Calculate workflows rejected
+        $workflowsRejected = DocumentWorkflow::whereIn('recipient_id', $memberIds)
+            ->where('status', 'rejected')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->count();
+        
+        // Calculate average processing time
+        $avgProcessingTime = DocumentWorkflow::selectRaw('AVG(TIMESTAMPDIFF(MINUTE, received_at, updated_at)) as avg_time')
+            ->whereIn('recipient_id', $memberIds)
+            ->whereIn('status', ['approved', 'rejected'])
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->whereNotNull('received_at')
+            ->whereNotNull('updated_at')
+            ->whereRaw('received_at <= updated_at')
+            ->value('avg_time') ?? 0;
+        
+        return [
+            'workflows_sent' => $workflowsSent,
+            'workflows_received' => $workflowsReceived,
+            'workflows_to_office' => $workflowsToOffice,
+            'workflows_approved' => $workflowsApproved,
+            'workflows_rejected' => $workflowsRejected,
+            'avg_processing_time' => $this->formatTimeInMinutes($avgProcessingTime),
+            'avg_processing_minutes' => $avgProcessingTime,
+            'approval_rate' => ($workflowsApproved + $workflowsRejected > 0) 
+                ? round(($workflowsApproved / ($workflowsApproved + $workflowsRejected)) * 100, 1) 
+                : 0
+        ];
+    }
+
+    /**
+     * Get performance metrics for office members
+     */
+    private function getMemberPerformanceMetrics($memberIds, $startDate, $endDate)
+    {
+        $memberMetrics = [];
+        
+        foreach ($memberIds as $memberId) {
+            $member = User::find($memberId);
+            if (!$member) continue;
+            
+            // Documents uploaded
+            $uploadsCount = Document::where('uploader', $memberId)
+                ->whereBetween('created_at', [$startDate, $endDate])
+                ->count();
+                
+            // Documents forwarded (sent workflows)
+            $forwardedCount = DocumentWorkflow::where('sender_id', $memberId)
+                ->whereBetween('created_at', [$startDate, $endDate])
+                ->count();
+                
+            // Documents processed (received workflows)
+            $processedCount = DocumentWorkflow::where('recipient_id', $memberId)
+                ->whereIn('status', ['approved', 'rejected'])
+                ->whereBetween('created_at', [$startDate, $endDate])
+                ->count();
+                
+            // Average processing time for received documents
+            $avgProcessingMinutes = DocumentWorkflow::selectRaw('AVG(TIMESTAMPDIFF(MINUTE, received_at, updated_at)) as avg_time')
+                ->where('recipient_id', $memberId)
+                ->whereIn('status', ['approved', 'rejected'])
+                ->whereBetween('created_at', [$startDate, $endDate])
+                ->whereNotNull('received_at')
+                ->whereNotNull('updated_at')
+                ->whereRaw('received_at <= updated_at')
+                ->value('avg_time') ?? 0;
+                
+            // Average response time (time to first view a document)
+            $avgResponseMinutes = DocumentWorkflow::selectRaw('AVG(TIMESTAMPDIFF(MINUTE, created_at, received_at)) as avg_time')
+                ->where('recipient_id', $memberId)
+                ->whereBetween('created_at', [$startDate, $endDate])
+                ->whereNotNull('received_at')
+                ->value('avg_time') ?? 0;
+                
+            // Approval rate
+            $totalReviewed = DocumentWorkflow::where('recipient_id', $memberId)
+                ->whereIn('status', ['approved', 'rejected'])
+                ->whereBetween('created_at', [$startDate, $endDate])
+                ->count();
+                
+            $totalApproved = DocumentWorkflow::where('recipient_id', $memberId)
+                ->where('status', 'approved')
+                ->whereBetween('created_at', [$startDate, $endDate])
+                ->count();
+                
+            $approvalRate = $totalReviewed > 0 ? ($totalApproved / $totalReviewed) * 100 : 0;
+            
+            $memberMetrics[] = [
+                'member' => $member,
+                'uploads_count' => $uploadsCount,
+                'forwarded_count' => $forwardedCount,
+                'processed_count' => $processedCount,
+                'total_documents_handled' => $uploadsCount + $forwardedCount + $processedCount,
+                'avg_processing_time' => $this->formatTimeInMinutes($avgProcessingMinutes),
+                'avg_response_time' => $this->formatTimeInMinutes($avgResponseMinutes),
+                'avg_processing_minutes' => $avgProcessingMinutes, // Raw value for sorting
+                'avg_response_minutes' => $avgResponseMinutes,    // Raw value for sorting
+                'approval_rate' => round($approvalRate, 1),
+                'performance_score' => $this->calculatePerformanceScore($avgResponseMinutes, $avgProcessingMinutes, $approvalRate, $processedCount)
+            ];
+        }
+        
+        // Sort by performance score (highest first)
+        usort($memberMetrics, function($a, $b) {
+            return $b['performance_score'] <=> $a['performance_score'];
+        });
+        
+        return $memberMetrics;
+    }
+
+    /**
+     * Get document category distribution for an office
+     */
+    private function getOfficeDocumentCategoryDistribution($memberIds)
+    {
+        // Get documents uploaded by office members
+        $documents = Document::whereIn('uploader', $memberIds)->pluck('id');
+        
+        // Get category counts using the pivot table
+        $categoryCounts = DB::table('document_category')
+            ->join('document_categories', 'document_category.category_id', '=', 'document_categories.id')
+            ->whereIn('document_category.doc_id', $documents)
+            ->select('document_categories.category', DB::raw('count(*) as count'))
+            ->groupBy('document_categories.category')
+            ->orderBy('count', 'desc')
+            ->get();
+            
+        return $categoryCounts;
+    }
+
+    /**
+     * Get document status distribution for an office
+     */
+    private function getOfficeDocumentStatusDistribution($memberIds)
+    {
+        // Get status counts
+        $statusCounts = DB::table('document_status')
+            ->join('documents', 'document_status.doc_id', '=', 'documents.id')
+            ->whereIn('documents.uploader', $memberIds)
+            ->select('document_status.status', DB::raw('count(*) as count'))
+            ->groupBy('document_status.status')
+            ->orderBy('count', 'desc')
+            ->get();
+            
+        return $statusCounts;
+    }
+
+    /**
+     * Get document volume trends over time for an office
+     */
+    private function getOfficeDocumentVolumeTrends($memberIds, $startDate, $endDate)
+    {
+        // Convert strings to Carbon instances
+        $start = Carbon::parse($startDate);
+        $end = Carbon::parse($endDate);
+        
+        // Prepare data arrays
+        $months = [];
+        $documentCounts = [];
+        $workflowCounts = [];
+        
+        // Generate data for each month in the range
+        $current = $start->copy()->startOfMonth();
+        while ($current <= $end) {
+            $monthLabel = $current->format('M Y');
+            $monthStart = $current->copy()->startOfMonth();
+            $monthEnd = $current->copy()->endOfMonth();
+            
+            // Documents created
+            $docsCount = Document::whereIn('uploader', $memberIds)
+                ->whereBetween('created_at', [$monthStart, $monthEnd])
+                ->count();
+            
+            // Workflows created
+            $workflowCount = DocumentWorkflow::whereIn('sender_id', $memberIds)
+                ->whereBetween('created_at', [$monthStart, $monthEnd])
+                ->count();
+            
+            $months[] = $monthLabel;
+            $documentCounts[] = $docsCount;
+            $workflowCounts[] = $workflowCount;
+            
+            $current->addMonth();
+        }
+        
+        return [
+            'months' => $months,
+            'document_counts' => $documentCounts,
+            'workflow_counts' => $workflowCounts
+        ];
+    }
 }

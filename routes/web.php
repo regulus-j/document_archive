@@ -220,6 +220,7 @@ Route::middleware('auth')->group(function () {
         Route::put('/{report}', [ReportController::class, 'update'])->name('reports.update');
         Route::delete('/{report}', [ReportController::class, 'destroy'])->name('reports.destroy');
         Route::post('/generate', [ReportController::class, 'generate'])->name('reports.generate');
+        Route::get('/office-dashboard', [ReportController::class, 'officeLeadDashboard'])->name('reports.office-dashboard');
     });
 
     Route::middleware(['auth'])->group(function () {

@@ -92,18 +92,18 @@
                                 @enderror
                             </div>
 
-                            <!-- Company -->
+                            <!-- Office Lead -->
                             <div>
-                                <label for="company_id" class="block text-sm font-medium text-gray-700 mb-1">
-                                    {{ __('Company') }} <span class="text-red-500">*</span>
+                                <label for="office_lead" class="block text-sm font-medium text-gray-700 mb-1">
+                                    {{ __('Office Leader') }}
                                 </label>
                                 <div class="relative">
-                                    <select id="company_id" name="company_id"
-                                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50 @error('company_id') border-red-500 @enderror">
-                                        <option value="">{{ __('Select Company') }}</option>
-                                        @foreach($companies as $id => $name)
-                                            <option value="{{ $id }}" {{ old('company_id') == $id ? 'selected' : '' }}>
-                                                {{ $name }}
+                                    <select id="office_lead" name="office_lead"
+                                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50 @error('office_lead') border-red-500 @enderror">
+                                        <option value="">{{ __('Select Office Leader (Optional)') }}</option>
+                                        @foreach($users as $user)
+                                            <option value="{{ $user->id }}" {{ old('office_lead') == $user->id ? 'selected' : '' }}>
+                                                {{ $user->first_name }} {{ $user->last_name }}
                                             </option>
                                         @endforeach
                                     </select>
@@ -116,8 +116,8 @@
                                         </svg>
                                     </div>
                                 </div>
-                                <p class="mt-1 text-xs text-gray-500">Select the company this office belongs to</p>
-                                @error('company_id')
+                                <p class="mt-1 text-xs text-gray-500">The selected user will be added to this office automatically</p>
+                                @error('office_lead')
                                     <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
