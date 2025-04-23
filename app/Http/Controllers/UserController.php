@@ -168,6 +168,14 @@ class UserController extends Controller
         // Fix company association by properly handling array or single value
         $companyId = is_array($request->companies) ? $request->companies[0] : $request->companies;
         
+        // If user is not a super admin, use their company
+        if (!auth()->user()->hasRole('super-admin')) {
+            $userCompany = auth()->user()->companies()->first();
+            if ($userCompany) {
+                $companyId = $userCompany->id;
+            }
+        }
+
         CompanyUser::create([
             'company_id' => $companyId,
             'user_id'     => $user->id,
@@ -228,41 +236,71 @@ class UserController extends Controller
             'last_name' => 'required|string|max:255',
             'email' => "required|email|unique:users,email,{$id}",
             'roles' => 'required|array',
-            'companies' => 'required|exists:company_accounts,id'
         ];
     
         // Conditionally require offices field
         if (!$user->hasRole('company-admin')) {
-            $rules['offices'] = 'required|array'; // Only require if not admin
+            $rules['offices'] = 'required|array';
         }
     
         // Validate the request with the prepared rules
         $request->validate($rules);
     
         // Update user details
-        $input = $request->all();
-        if (!empty($input['password'])) {
-            $input['password'] = Hash::make($input['password']);
+        $user->update([
+            'first_name' => $request->first_name,
+            'middle_name' => $request->middle_name,
+            'last_name' => $request->last_name,
+            'email' => $request->email,
+        ]);
+        
+        // Update password if provided
+        if (!empty($request->password)) {
+            $user->password = Hash::make($request->password);
+            $user->save();
         }
     
         // Sync roles
-        $roleIds = Role::whereIn('name', $request->input('roles'))->pluck('id')->toArray();
-        $user->roles()->sync($roleIds);
+        $user->syncRoles($request->input('roles'));
     
-        // Sync offices if not admin
-        if (!$user->hasRole('company-admin')) {
-            $user->offices()->sync($request->input('offices'));
+        // Ensure company association is maintained
+        $companyId = $request->input('companies');
+        if ($companyId) {
+            // Check if user already has this company
+            $companyExists = CompanyUser::where('user_id', $user->id)
+                ->where('company_id', $companyId)
+                ->exists();
+                
+            if (!$companyExists) {
+                // Remove old company associations
+                CompanyUser::where('user_id', $user->id)->delete();
+                
+                // Add new company association
+                CompanyUser::create([
+                    'user_id' => $user->id,
+                    'company_id' => $companyId
+                ]);
+            }
         }
     
-        // Update company association
-        $companyId = $request->companies[0]; // Get the first selected company ID
-        CompanyUser::where('user_id', $user->id)->update([
-            'company_id' => $companyId // Use the single company ID
-        ]);
+        // Sync offices if user is not company admin
+        if (!$user->hasRole('company-admin') && $request->has('offices')) {
+            $user->offices()->sync($request->input('offices'));
+        } else if ($user->hasRole('company-admin')) {
+            // For company admins, ensure they have at least one office from their company
+            $company = auth()->user()->companies()->first();
+            if ($company) {
+                $office = Office::where('company_id', $company->id)->first();
+                if ($office && $user->offices()->count() == 0) {
+                    $user->offices()->sync([$office->id]);
+                }
+            }
+        }
     
         return redirect()->route('users.index')
             ->with('success', 'User updated successfully');
     }
+
     public function getUsersByOffice(Request $request)
 {
     $officeId = $request->query('office_id');
