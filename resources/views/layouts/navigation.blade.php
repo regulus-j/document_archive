@@ -13,21 +13,8 @@
                 
                 <!-- Desktop Navigation Links -->
                 <div class="hidden lg:block">
-                    <div class="ml-10 flex items-baseline space-x-4">
-                        <!-- Dashboard - Always Visible -->
-                        @if(!auth()->user()->hasRole('company-admin'))
-                            <x-nav-link 
-                                :href="route('dashboard')" 
-                                :active="request()->routeIs('dashboard') || request()->routeIs('admin.dashboard')" 
-                                class="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 {{ request()->routeIs('dashboard') || request()->routeIs('admin.dashboard') ? 'text-blue-600 border-b-2 border-blue-600' : '' }}">
-                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
-                                </svg>
-                                {{ __('Dashboard') }}
-                            </x-nav-link>
-                        @endif
-
-                        @if(auth()->user()->hasRole('company-admin'))
+                    <div class="ml-10 flex items-baseline space-x-4">   
+                        @if(auth()->user()->hasRole('company-admin') && auth()->user()->company && auth()->user()->company->subscription && auth()->user()->company->subscription->status === 'active')
                             <x-nav-link 
                                 :href="route('reports.company-dashboard')" 
                                 :active="request()->routeIs('reports.company-dashboard')"
@@ -37,7 +24,17 @@
                                 </svg>
                                 {{ __('Dashboard') }}
                             </x-nav-link>
-                        @endif
+                        @else
+                        <x-nav-link 
+                        :href="route('dashboard')" 
+                        :active="request()->routeIs('dashboard') || request()->routeIs('admin.dashboard')" 
+                        class="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 {{ request()->routeIs('dashboard') || request()->routeIs('admin.dashboard') ? 'text-blue-600 border-b-2 border-blue-600' : '' }}">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                        </svg>
+                        {{ __('Dashboard') }}
+                    </x-nav-link>
+                    @endif
 
                         @if(auth()->user()->isSuperAdmin())
                             <x-nav-link 
