@@ -224,9 +224,9 @@
                                         {{ __('Manual') }}
                                     </x-dropdown-link>
 
-                                    <x-dropdown-link :href="route('userManual.manual', auth()->id())" class="hover:bg-blue-50 hover:text-blue-600">
+                                    {{-- <x-dropdown-link :href="route('userManual.manual', auth()->id())" class="hover:bg-blue-50 hover:text-blue-600">
                                         {{ __('Settings') }}
-                                    </x-dropdown-link>
+                                    </x-dropdown-link> --}}
 
                                     <!-- Logout button is always available -->
                                     <form method="POST" action="{{ route('logout') }}">
@@ -426,9 +426,9 @@
                     {{ __('Manual') }}
                 </x-responsive-nav-link>
 
-                <x-responsive-nav-link :href="route('userManual.manual', auth()->id())" class="text-gray-600 hover:bg-blue-50 hover:text-blue-600">
+                {{-- <x-responsive-nav-link :href="route('userManual.manual', auth()->id())" class="text-gray-600 hover:bg-blue-50 hover:text-blue-600">
                     {{ __('Settings') }}
-                </x-responsive-nav-link>
+                </x-responsive-nav-link> --}}
 
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
