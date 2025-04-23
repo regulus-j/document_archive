@@ -221,6 +221,7 @@ Route::middleware('auth')->group(function () {
         Route::delete('/{report}', [ReportController::class, 'destroy'])->name('reports.destroy');
         Route::post('/generate', [ReportController::class, 'generate'])->name('reports.generate');
         Route::get('/office-dashboard', [ReportController::class, 'officeLeadDashboard'])->name('reports.office-dashboard');
+        Route::get('/reports/office-user-dashboard', [ReportController::class, 'officeUserDashboard'])->name('reports.office-user-dashboard');
     });
 
     Route::middleware(['auth'])->group(function () {

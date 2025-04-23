@@ -7,9 +7,35 @@
 
     <div class="py-12 bg-gray-100">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-8">
+            <!-- Success/Error Messages -->
+            @if(session('success'))
+                <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4" role="alert">
+                    <p>{{ session('success') }}</p>
+                </div>
+            @endif
+            @if(session('error'))
+                <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
+                    <p>{{ session('error') }}</p>
+                </div>
+            @endif
+            @if(session('info'))
+                <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-4" role="alert">
+                    <p>{{ session('info') }}</p>
+                </div>
+            @endif
+            
             <!-- Filter Section -->
             <div class="bg-white shadow-lg rounded-lg p-6">
-                <h3 class="text-2xl font-bold text-gray-900 mb-6">Filter Documents</h3>
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-2xl font-bold text-gray-900">Filter Documents</h3>
+                    <button type="button" data-bs-toggle="modal" data-bs-target="#bulkDeleteModal" 
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        Bulk Delete Documents
+                    </button>
+                </div>
                 <form method="GET" action="{{ route('admin.document-management.documents') }}" class="space-y-4">
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div>
@@ -95,7 +121,7 @@
                                             @method('DELETE')
                                             <button type="submit" 
                                                 class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-red-600 hover:bg-red-700"
-                                                onclick="return confirm('Delete this document?')">
+                                                onclick="return confirm('Delete this document? This action cannot be undone.')">
                                                 Delete
                                             </button>
                                         </form>
@@ -112,6 +138,54 @@
                 <div class="mt-6">
                     {{ $documents->withQueryString()->links() }}
                 </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bulk Delete Modal -->
+    <div class="modal fade" id="bulkDeleteModal" tabindex="-1" aria-labelledby="bulkDeleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form action="{{ route('admin.document-management.bulk-delete') }}" method="POST">
+                    @csrf
+                    <div class="modal-header">
+                        <h5 class="modal-title font-semibold text-xl" id="bulkDeleteModalLabel">Bulk Delete Documents</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="rounded-md bg-yellow-50 p-4 mb-4">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm text-yellow-700">
+                                        <strong>Warning:</strong> This action will permanently delete documents.
+                                        <strong>Archived documents will not be affected.</strong>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="date_from" class="block text-sm font-medium text-gray-700 mb-1">From Date:</label>
+                            <input type="date" name="date_from" id="bulk_date_from" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            <small class="text-gray-500">Leave blank to include all documents from the beginning</small>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="date_to" class="block text-sm font-medium text-gray-700 mb-1">To Date:</label>
+                            <input type="date" name="date_to" id="bulk_date_to" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            <small class="text-gray-500">Leave blank to include all documents up to today</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer flex justify-end space-x-3 bg-gray-50 px-4 py-3">
+                        <button type="button" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-md transition" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-md transition" onclick="return confirm('Are you sure you want to permanently delete these documents? This action cannot be undone.')">Delete Documents</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

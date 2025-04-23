@@ -18,18 +18,28 @@ class DashboardController extends Controller
     {
         $user = auth()->user();
         
-        // Properly check roles and redirect to appropriate dashboard
+        // First check if user is a super-admin and redirect accordingly
         if ($user->hasRole('super-admin')) {
             return redirect()->route('admin.dashboard');
         }
         
         $userCompany = $user->companies()->first();
         
-        // Check if user is a super admin
-        if (auth()->user()->isSuperAdmin()) {
-            return redirect()->route('admin.dashboard');
-        }
+        // If user is a company-admin and has an active subscription, redirect to company dashboard
+        if ($user->hasRole('company-admin')) {
+            $hasActiveSubscription = false;
 
+            // Check for active subscription or trial
+            $trialEndDate = DB::table('company_users')
+                ->where('user_id', $user->id)
+                ->value('trial_ends_at');
+            
+            if (($trialEndDate && now()->lessThan($trialEndDate)) || 
+                ($userCompany && CompanySubscription::active()->where('company_id', $userCompany->id)->exists())) {
+                return redirect()->route('reports.company-dashboard');
+            }
+        }
+        
         // Check if user is an office lead
         $isOfficeLead = Office::where('office_lead', $user->id)->exists();
         $ledOffice = null;
@@ -75,6 +85,10 @@ class DashboardController extends Controller
             }
         }
 
+        // Set up subscription information for view
+        $activeSubscription = null;
+        $needsSubscription = false;
+        
         // ** Free Trial Check **
         $trialEndDate = DB::table('company_users')
             ->where('user_id', $user->id)
@@ -82,43 +96,44 @@ class DashboardController extends Controller
 
         if ($trialEndDate && now()->lessThan($trialEndDate)) {
             $activeSubscription = (object) ['status' => 'trial', 'ends_at' => $trialEndDate];
-        } else {
-            if (!$userCompany) {
-                // Initialize all variables needed by dashboard-office-user.blade.php
-                $totalDocuments = 0;
-                $recentDocuments = collect();
-                $pendingDocuments = 0;
-                $todayDocuments = 0;
-                $activeSubscription = null;
-                $countPendingDocs = 0;
-                $countRecentDocs = 0;
-                $countCompanyUsers = 0;
-                $incomingDocuments = 0; 
-                $countOffices = "No Offices Found";
-                
-                return view('dashboard-office-user', compact(
-                    'totalDocuments',
-                    'recentDocuments',
-                    'pendingDocuments',
-                    'todayDocuments',
-                    'activeSubscription',
-                    'countPendingDocs',
-                    'countRecentDocs',
-                    'countCompanyUsers',
-                    'incomingDocuments',
-                    'countOffices',
-                    'isOfficeLead'
-                ))->with('info', 'Please set up your company profile first.');
-            }
-
+        } else if ($userCompany) {
             $activeSubscription = CompanySubscription::active()
                 ->where('company_id', $userCompany->id)
                 ->first();
-
-            if (!$activeSubscription) {
-                return redirect()->route('plans.select')
-                    ->with('info', 'Please select a plan and complete the payment to continue.');
+                
+            // Set flag for showing subscription banner to company admins
+            if (!$activeSubscription && $user->hasRole('company-admin')) {
+                $needsSubscription = true;
             }
+        }
+
+        // Initialize variables for dashboard views instead of redirecting
+        if (!$userCompany) {
+            // Initialize all variables needed by dashboard-office-user.blade.php
+            $totalDocuments = 0;
+            $recentDocuments = collect();
+            $pendingDocuments = 0;
+            $todayDocuments = 0;
+            $countPendingDocs = 0;
+            $countRecentDocs = 0;
+            $countCompanyUsers = 0;
+            $incomingDocuments = 0; 
+            $countOffices = "No Offices Found";
+            
+            return view('dashboard-office-user', compact(
+                'totalDocuments',
+                'recentDocuments',
+                'pendingDocuments',
+                'todayDocuments',
+                'activeSubscription',
+                'countPendingDocs',
+                'countRecentDocs',
+                'countCompanyUsers',
+                'incomingDocuments',
+                'countOffices',
+                'isOfficeLead',
+                'needsSubscription'
+            ))->with('info', 'Please set up your company profile first.');
         }
 
         // Fetch dashboard data
@@ -161,8 +176,8 @@ class DashboardController extends Controller
             })
             ->count();
 
-        // **🚀 Correct Role Check for Admin**
-        if ($user->hasRole('company-admin') && $userCompany) {
+        // For company admins show the admin dashboard
+        if ($user->hasRole('company-admin')) {
             return view('dashboard', compact(
                 'recentTransactions',
                 'totalDocuments',
@@ -182,28 +197,31 @@ class DashboardController extends Controller
                 'officeDocuments',
                 'officeDocumentCount',
                 'officeDocumentsTodayCount',
-                'officePendingWorkflowsCount'
+                'officePendingWorkflowsCount',
+                'needsSubscription'
             ));
-        } else {
-            return view('dashboard-office-user', compact(
-                'totalDocuments',
-                'recentDocuments',
-                'pendingDocuments',
-                'todayDocuments',
-                'activeSubscription',
-                'countPendingDocs',
-                'countRecentDocs',
-                'countCompanyUsers',
-                'incomingDocuments',
-                'countOffices',
-                'isOfficeLead',
-                'ledOffice',
-                'officeMembers',
-                'officeDocuments',
-                'officeDocumentCount',
-                'officeDocumentsTodayCount',
-                'officePendingWorkflowsCount'
-            ));
-        }
+        } 
+        
+        // For regular company users, use the office user dashboard
+        return view('dashboard-office-user', compact(
+            'totalDocuments',
+            'recentDocuments',
+            'pendingDocuments',
+            'todayDocuments',
+            'activeSubscription',
+            'countPendingDocs',
+            'countRecentDocs',
+            'countCompanyUsers',
+            'incomingDocuments',
+            'countOffices',
+            'isOfficeLead',
+            'ledOffice',
+            'officeMembers',
+            'officeDocuments',
+            'officeDocumentCount',
+            'officeDocumentsTodayCount',
+            'officePendingWorkflowsCount',
+            'needsSubscription'
+        ));
     }
 }

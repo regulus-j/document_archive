@@ -162,6 +162,12 @@ class DocumentController extends Controller
             ]);
             \Log::info('Document created', ['document_id' => $document->id]);
 
+            // Attach the document category - This fixes the categories not being assigned
+            if ($request->has('classification')) {
+                $document->categories()->attach([$request->classification]);
+                \Log::info('Document category assigned', ['document_id' => $document->id, 'category_id' => $request->classification]);
+            }
+
             $document->status()->create([
                 'status' => 'pending',
             ]);

@@ -345,58 +345,108 @@ class DocumentManagementController extends Controller
                 ->with('error', 'You do not have a company associated with your account.');
         }
         
+        \Log::info('Starting bulk delete operation', [
+            'user_id' => $user->id,
+            'company_id' => $company->id,
+            'date_from' => $request->date_from,
+            'date_to' => $request->date_to
+        ]);
+        
         // Build query with proper company filter
-        $query = Document::with('status');
+        $query = Document::query();
         
-        if (Schema::hasColumn('documents', 'company_id')) {
-            $query->where('company_id', $company->id);
-        } else {
-            // Filter by company through users relationship
-            $query->whereHas('user.companies', function($q) use ($company) {
-                $q->where('companies.id', $company->id);
-            });
-        }
+        // Get all users in this company for proper filtering
+        $companyUserIds = User::whereHas('companies', function($query) use ($company) {
+            $query->where('company_accounts.id', $company->id);
+        })->pluck('id')->toArray();
         
-        // Only delete non-archived documents
-        $query->whereHas('status', function($q) {
-            $q->where('status', '!=', 'archived');
-        });
-            
+        \Log::info('Company users found', ['count' => count($companyUserIds)]);
+        
+        // Find documents uploaded by users in this company
+        $query->whereIn('uploader', $companyUserIds);
+        
+        // Apply date from filter if provided
         if ($request->date_from) {
-            $query->where('created_at', '>=', Carbon::parse($request->date_from));
+            $fromDate = Carbon::parse($request->date_from)->startOfDay();
+            $query->where('created_at', '>=', $fromDate);
         }
         
+        // Apply date to filter if provided
         if ($request->date_to) {
-            $query->where('created_at', '<=', Carbon::parse($request->date_to)->endOfDay());
+            $toDate = Carbon::parse($request->date_to)->endOfDay();
+            $query->where('created_at', '<=', $toDate);
         }
         
-        // Get count before deletion for message
-        $count = $query->count();
+        // Exclude archived documents using direct query on the status relationship
+        // We're checking:
+        // 1. Documents with no status record
+        // 2. Documents with a status that's not 'archived'
+        $documentsToDelete = $query->where(function($q) {
+            $q->whereDoesntHave('status')
+              ->orWhereHas('status', function($subq) {
+                  $subq->where('status', '!=', 'archived');
+              });
+        })->get();
+        
+        $count = $documentsToDelete->count();
+        
+        \Log::info('Documents found for bulk deletion', [
+            'count' => $count,
+            'query_sql' => $query->toSql(),
+            'query_bindings' => $query->getBindings()
+        ]);
         
         if ($count === 0) {
             return redirect()->route('admin.document-management.documents')
                 ->with('info', 'No documents found matching the deletion criteria.');
         }
         
-        // Get document IDs for logging
-        $documentIds = $query->pluck('id')->toArray();
+        $deletedCount = 0;
         
-        // Log the deletion for each document
-        foreach ($documentIds as $docId) {
-            DocumentAudit::logDocumentAction(
-                $docId,
-                $user->id,
-                'bulk-delete',
-                'deleted',
-                'Document deleted as part of bulk operation by company admin'
-            );
+        // Process each document for proper deletion
+        foreach ($documentsToDelete as $document) {
+            try {
+                // Log the deletion action
+                DocumentAudit::logDocumentAction(
+                    $document->id,
+                    $user->id,
+                    'bulk-delete',
+                    'deleted',
+                    'Document deleted as part of bulk operation by company admin'
+                );
+                
+                // Delete document file from storage
+                if ($document->path && Storage::disk('public')->exists($document->path)) {
+                    Storage::disk('public')->delete($document->path);
+                }
+                
+                // Delete attachment files from storage
+                foreach ($document->attachments as $attachment) {
+                    if ($attachment->path && Storage::disk('public')->exists($attachment->path)) {
+                        Storage::disk('public')->delete($attachment->path);
+                    }
+                }
+                
+                // Actually delete the document record (this will use soft delete)
+                $document->delete();
+                $deletedCount++;
+                
+            } catch (\Exception $e) {
+                \Log::error('Error deleting document', [
+                    'document_id' => $document->id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+            }
         }
         
-        // Delete the documents
-        $query->delete();
+        \Log::info('Bulk delete completed', [
+            'found' => $count,
+            'deleted' => $deletedCount
+        ]);
         
         return redirect()->route('admin.document-management.documents')
-            ->with('success', "{$count} documents have been deleted.");
+            ->with('success', "{$deletedCount} documents have been deleted.");
     }
     
     /**
@@ -453,11 +503,11 @@ class DocumentManagementController extends Controller
      */
     public function saveDeletionSchedule(Request $request)
     {
+        // Validate with proper conditional validations for different criteria
         $validated = $request->validate([
             'criteria' => ['required', Rule::in(['age', 'storage', 'both'])],
             'retention_days' => 'required_if:criteria,age,both|integer|min:1',
             'storage_limit_mb' => 'required_if:criteria,storage,both|integer|min:1',
-            'is_active' => 'boolean',
         ]);
         
         $user = Auth::user();
@@ -468,13 +518,34 @@ class DocumentManagementController extends Controller
                 ->with('error', 'You do not have a company associated with your account.');
         }
         
+        // The logic below was causing retention_days to be null when criteria was 'storage',
+        // but the database column doesn't allow nulls. Set default values for all cases.
+        
+        // Always provide a retention days value, default to existing or 365 days
+        $schedule = DocumentDeletionSchedule::where('company_id', $company->id)->first();
+        $retentionDays = $request->retention_days ?? ($schedule ? $schedule->retention_days : 365);
+        
+        // Always provide a storage limit value, default to existing or 100MB
+        $storageLimit = $request->storage_limit_mb ?? ($schedule ? $schedule->storage_limit_mb : 100);
+        
+        // Properly handle the checkbox value (checkbox inputs use 'on' as value when checked)
+        $isActive = $request->has('is_active');
+        
+        \Log::info('Saving deletion schedule', [
+            'company_id' => $company->id,
+            'criteria' => $request->criteria,
+            'retention_days' => $retentionDays,
+            'storage_limit_mb' => $storageLimit,
+            'is_active' => $isActive
+        ]);
+        
         $schedule = DocumentDeletionSchedule::updateOrCreate(
             ['company_id' => $company->id],
             [
-                'retention_days' => $request->retention_days ?? 365,
-                'storage_limit_mb' => $request->storage_limit_mb,
+                'retention_days' => $retentionDays,
+                'storage_limit_mb' => $storageLimit,
                 'criteria' => $request->criteria,
-                'is_active' => $request->has('is_active'),
+                'is_active' => $isActive,
             ]
         );
         
@@ -511,7 +582,7 @@ class DocumentManagementController extends Controller
         $documents = collect();
         
         // Base query with company filter
-        $baseQuery = Document::with('status');
+        $baseQuery = Document::with(['status', 'attachments']);
         if (Schema::hasColumn('documents', 'company_id')) {
             $baseQuery->where('company_id', $company->id);
         } else {
@@ -538,14 +609,44 @@ class DocumentManagementController extends Controller
             if ($schedule->storage_limit_mb) {
                 // Calculate current storage usage with proper company filter
                 $storageUsage = 0;
-                if (Schema::hasColumn('documents', 'storage_size')) {
-                    $storageUsageQuery = clone $baseQuery;
-                    $storageUsage = $storageUsageQuery->sum('storage_size');
+                
+                // Get company user IDs for filtering
+                $companyUserIds = User::whereHas('companies', function($query) use ($company) {
+                    $query->where('company_accounts.id', $company->id);
+                })->pluck('id')->toArray();
+                
+                // Get all documents for this company
+                $allCompanyDocs = Document::whereIn('uploader', $companyUserIds)->get();
+                $documentIds = $allCompanyDocs->pluck('id')->toArray();
+                
+                // Calculate actual storage usage by checking file sizes
+                foreach ($allCompanyDocs as $document) {
+                    $docPath = $document->path ?? '';
+                    if ($docPath && Storage::disk('public')->exists($docPath)) {
+                        $size = Storage::disk('public')->size($docPath);
+                        $storageUsage += $size;
+                        
+                        // Update storage_size field for future reference if it exists
+                        if (Schema::hasColumn('documents', 'storage_size') && (!$document->storage_size || $document->storage_size != $size)) {
+                            $document->storage_size = $size;
+                            $document->save();
+                        }
+                    }
+                }
+                
+                // Add attachment sizes
+                $attachments = DocumentAttachment::whereIn('document_id', $documentIds)->get();
+                foreach ($attachments as $attachment) {
+                    $attachPath = $attachment->path ?? '';
+                    if ($attachPath && Storage::disk('public')->exists($attachPath)) {
+                        $size = Storage::disk('public')->size($attachPath);
+                        $storageUsage += $size;
+                    }
                 }
                 
                 $storageUsageMB = round($storageUsage / 1024 / 1024, 2);
                 
-                if ($storageUsageMB >= $schedule->storage_limit_mb) {
+                if ($storageUsageMB > $schedule->storage_limit_mb) {
                     // Get oldest documents first that aren't archived, until we get below the limit
                     $deleteQuery = clone $baseQuery;
                     $documentsToDelete = $deleteQuery->orderBy('created_at')->get();
@@ -558,7 +659,22 @@ class DocumentManagementController extends Controller
                             break;
                         }
                         
-                        $docSizeMB = $doc->storage_size ? ($doc->storage_size / 1024 / 1024) : 0;
+                        // Get actual document size from storage
+                        $docSize = 0;
+                        $docPath = $doc->path ?? '';
+                        if ($docPath && Storage::disk('public')->exists($docPath)) {
+                            $docSize = Storage::disk('public')->size($docPath);
+                        }
+                        
+                        // Add attachment sizes
+                        foreach ($doc->attachments as $attachment) {
+                            $attachPath = $attachment->path ?? '';
+                            if ($attachPath && Storage::disk('public')->exists($attachPath)) {
+                                $docSize += Storage::disk('public')->size($attachPath);
+                            }
+                        }
+                        
+                        $docSizeMB = $docSize / 1024 / 1024;
                         $currentSize -= $docSizeMB;
                         $storageDocuments->push($doc);
                     }
@@ -579,15 +695,33 @@ class DocumentManagementController extends Controller
         
         // Delete documents and log
         foreach ($documents as $document) {
-            DocumentAudit::logDocumentAction(
-                $document->id,
-                $user->id,
-                'scheduled-deletion',
-                'deleted',
-                'Document deleted by automatic deletion schedule'
-            );
-            
-            $document->delete();
+            try {
+                // Log before deletion
+                DocumentAudit::logDocumentAction(
+                    $document->id,
+                    $user->id,
+                    'scheduled-deletion',
+                    'deleted',
+                    'Document deleted by automatic deletion schedule'
+                );
+                
+                // Delete document file from storage
+                if ($document->path && Storage::disk('public')->exists($document->path)) {
+                    Storage::disk('public')->delete($document->path);
+                }
+                
+                // Delete attachment files from storage
+                foreach ($document->attachments as $attachment) {
+                    if ($attachment->path && Storage::disk('public')->exists($attachment->path)) {
+                        Storage::disk('public')->delete($attachment->path);
+                    }
+                }
+                
+                // Delete the document record (will cascade to attachments via foreign key)
+                $document->delete();
+            } catch (\Exception $e) {
+                \Log::error('Error deleting document in schedule: ' . $e->getMessage());
+            }
         }
         
         // Update last executed timestamp

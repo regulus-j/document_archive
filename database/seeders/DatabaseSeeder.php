@@ -21,6 +21,12 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Run feature seeder before plan seeder to ensure features exist
+        $this->call([
+            FeatureSeeder::class,
+            PlanSeeder::class,
+        ]);
+        
         // Assign company owners the admin role
         $companyOwners = User::whereHas('company')->get();
         foreach ($companyOwners as $owner) {

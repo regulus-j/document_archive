@@ -14,7 +14,23 @@
                 <!-- Desktop Navigation Links -->
                 <div class="hidden lg:block">
                     <div class="ml-10 flex items-baseline space-x-4">   
-                        @if(auth()->user()->hasRole('company-admin') && auth()->user()->company && auth()->user()->company->subscription && auth()->user()->company->subscription->status === 'active')
+                        @php
+                            $userCompany = auth()->user()->companies()->first();
+                            $hasActiveSubscription = false;
+                            
+                            // Check for trial period
+                            $trialEndDate = DB::table('company_users')
+                                ->where('user_id', auth()->id())
+                                ->value('trial_ends_at');
+                                
+                            // Check for active subscription or trial
+                            if (($trialEndDate && now()->lessThan($trialEndDate)) || 
+                                ($userCompany && App\Models\CompanySubscription::active()->where('company_id', $userCompany->id)->exists())) {
+                                $hasActiveSubscription = true;
+                            }
+                        @endphp
+                        
+                        @if(auth()->user()->hasRole('company-admin') && $hasActiveSubscription)
                             <x-nav-link 
                                 :href="route('reports.company-dashboard')" 
                                 :active="request()->routeIs('reports.company-dashboard')"
