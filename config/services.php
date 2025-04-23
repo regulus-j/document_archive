@@ -40,4 +40,11 @@ return [
         'public_key' => env('PAYMONGO_PUBLIC_KEY', ''), // Optional if you need it later
     ],
 
+    'mailgun' => [ 
+        'domain' => env('MAILGUN_DOMAIN'), 
+        'secret' => env('MAILGUN_SECRET'), 
+        'endpoint' => env('MAILGUN_ENDPOINT', 'api.mailgun.net'), 
+        'scheme' => 'https', 
+    ], 
+
 ];
