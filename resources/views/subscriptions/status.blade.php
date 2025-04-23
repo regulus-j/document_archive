@@ -83,7 +83,7 @@
                                                 @else
                                                     <span class="text-red-600 flex items-center">
                                                         <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 001.414-1.414L11.414 10l1.293-1.293a1 1 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 101.414 1.414L10 11.414l1.293 1.293a1 1 001.414-1.414L11.414 10l1.293-1.293a1 1 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
                                                         </svg>
                                                         Disabled
                                                     </span>
@@ -105,10 +105,18 @@
                                             
                                             @if(count($features) > 0)
                                                 @foreach($features as $feature)
-                                                    <li>{{ $feature }}</li>
+                                                    <li>
+                                                        @if(is_string($feature))
+                                                            {{ $feature }}
+                                                        @elseif(is_object($feature))
+                                                            {{ $feature->name ?? json_encode($feature) }}
+                                                        @else
+                                                            {{ json_encode($feature) }}
+                                                        @endif
+                                                    </li>
                                                 @endforeach
                                             @else
-                                                <li>{{ $subscription->plan->features ?? 'Basic features' }}</li>
+                                                <li>{{ is_string($subscription->plan->features ?? '') ? $subscription->plan->features : 'Basic features' }}</li>
                                             @endif
                                         </ul>
                                     </div>

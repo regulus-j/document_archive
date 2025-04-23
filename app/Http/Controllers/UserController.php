@@ -165,8 +165,11 @@ class UserController extends Controller
 
         $temp_pass = null;
 
+        // Fix company association by properly handling array or single value
+        $companyId = is_array($request->companies) ? $request->companies[0] : $request->companies;
+        
         CompanyUser::create([
-            'company_id' => $request->companies,
+            'company_id' => $companyId,
             'user_id'     => $user->id,
         ]);
 

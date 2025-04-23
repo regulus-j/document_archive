@@ -85,13 +85,16 @@ class AdminDashboardController extends Controller
             ->take(5)
             ->get();
 
-        // Fetch recent activities
-        $recentUserActivities = User::with('company')->latest()->take(5)->get()->map(function($user) {
-            $companyName = $user->company ? $user->company->company_name : 'No Company';
-            $companyId = $user->company ? $user->company->id : null;
+        // Fetch recent activities - FIX: Properly access company relationships
+        $recentUserActivities = User::with('companies')->latest()->take(5)->get()->map(function($user) {
+            // Use companies() relationship instead of company
+            $userCompany = $user->companies()->first();
+            $companyName = $userCompany ? $userCompany->company_name : 'No Company';
+            $companyId = $userCompany ? $userCompany->id : null;
             
             return [
                 'id' => $user->id,
+                'user_id' => $user->id, // Add explicit user_id for view links
                 'company_name' => $companyName,
                 'company_id' => $companyId,
                 'action' => 'User registered',
@@ -101,13 +104,16 @@ class AdminDashboardController extends Controller
             ];
         });
 
-        $recentDocumentActivities = Document::with('user.company')->latest()->take(5)->get()->map(function($document) {
+        $recentDocumentActivities = Document::with('user.companies')->latest()->take(5)->get()->map(function($document) {
             $user = $document->user;
-            $companyName = $user && $user->company ? $user->company->company_name : 'No Company';
-            $companyId = $user && $user->company ? $user->company->id : null;
+            // Use companies() relationship instead of company
+            $userCompany = $user && $user->companies()->first() ? $user->companies()->first() : null;
+            $companyName = $userCompany ? $userCompany->company_name : 'No Company';
+            $companyId = $userCompany ? $userCompany->id : null;
             
             return [
                 'id' => $document->id,
+                'document_id' => $document->id, // Add explicit document_id for view links
                 'company_name' => $companyName,
                 'company_id' => $companyId,
                 'action' => 'Document uploaded',

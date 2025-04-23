@@ -93,29 +93,18 @@
                             <p class="mt-1 text-sm text-gray-500">Select the features included in this plan</p>
                             
                             <div class="mt-4 space-y-4">
+                                @foreach($features as $feature)
                                 <div class="flex items-center">
-                                    <input type="checkbox" name="feature_1" id="feature_1" value="1" {{ old('feature_1') ? 'checked' : '' }}
+                                    <input type="checkbox" name="features[]" id="feature_{{ $feature->id }}" value="{{ $feature->id }}" {{ in_array($feature->id, old('features', [])) ? 'checked' : '' }}
                                         class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-                                    <label for="feature_1" class="ml-2 block text-sm font-medium text-gray-700">
-                                        Feature 1
+                                    <label for="feature_{{ $feature->id }}" class="ml-2 block text-sm font-medium text-gray-700">
+                                        {{ $feature->name }}
                                     </label>
+                                    @if($feature->description)
+                                    <span class="ml-2 text-xs text-gray-500">{{ $feature->description }}</span>
+                                    @endif
                                 </div>
-                                
-                                <div class="flex items-center">
-                                    <input type="checkbox" name="feature_2" id="feature_2" value="1" {{ old('feature_2') ? 'checked' : '' }}
-                                        class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-                                    <label for="feature_2" class="ml-2 block text-sm font-medium text-gray-700">
-                                        Feature 2
-                                    </label>
-                                </div>
-                                
-                                <div class="flex items-center">
-                                    <input type="checkbox" name="feature_3" id="feature_3" value="1" {{ old('feature_3') ? 'checked' : '' }}
-                                        class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-                                    <label for="feature_3" class="ml-2 block text-sm font-medium text-gray-700">
-                                        Feature 3
-                                    </label>
-                                </div>
+                                @endforeach
                             </div>
                         </div>
                     </div>

@@ -1787,4 +1787,96 @@ class ReportController extends Controller
             'workflow_counts' => $workflowCounts
         ];
     }
+
+    /**
+     * Office user dashboard view - accessible to all office members
+     * Similar to officeLeadDashboard but without requiring office lead status
+     */
+    public function officeUserDashboard(Request $request)
+    {
+        // Get the logged in user
+        $user = auth()->user();
+        
+        // Get the user's office(s)
+        $offices = $user->offices;
+        if ($offices->isEmpty()) {
+            return redirect()->route('dashboard')->with('error', 'You are not assigned to any office.');
+        }
+        
+        // Use the first office the user belongs to
+        $office = $offices->first();
+        
+        // Date range filter
+        $startDate = $request->filled('start_date') ? $request->input('start_date') : now()->subMonths(1)->format('Y-m-d');
+        $endDate = $request->filled('end_date') ? $request->input('end_date') : now()->format('Y-m-d');
+        
+        // Check for export requests
+        $exportFormat = $request->input('export_format');
+        
+        // Get office members
+        $officeMembers = $office->users()->get();
+        $memberIds = $officeMembers->pluck('id')->toArray();
+        
+        // Get office document statistics
+        $documentsUploaded = Document::whereIn('uploader', $memberIds)
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->count();
+        
+        $documentsUploadedToday = Document::whereIn('uploader', $memberIds)
+            ->whereDate('created_at', today())
+            ->count();
+        
+        $pendingWorkflows = DocumentWorkflow::whereIn('sender_id', $memberIds)
+            ->orWhereIn('recipient_id', $memberIds)
+            ->where('status', 'pending')
+            ->count();
+        
+        // Get document workflow statistics
+        $workflowStats = $this->getOfficeWorkflowStatistics($office->id, $memberIds, $startDate, $endDate);
+        
+        // Get member performance metrics
+        $memberPerformanceMetrics = $this->getMemberPerformanceMetrics($memberIds, $startDate, $endDate);
+        
+        // Get document category distribution for this office
+        $categoryDistribution = $this->getOfficeDocumentCategoryDistribution($memberIds);
+        
+        // Get document status distribution for this office
+        $statusDistribution = $this->getOfficeDocumentStatusDistribution($memberIds);
+        
+        // Get document volume trends for this office
+        $documentTrends = $this->getOfficeDocumentVolumeTrends($memberIds, $startDate, $endDate);
+        
+        // Handle exports if requested
+        if ($exportFormat === 'pdf') {
+            return $this->exportOfficeLeadDashboardToPdf(
+                $office, 
+                $officeMembers,
+                $documentsUploaded,
+                $documentsUploadedToday,
+                $pendingWorkflows,
+                $workflowStats,
+                $memberPerformanceMetrics,
+                $categoryDistribution,
+                $statusDistribution,
+                $documentTrends,
+                $startDate,
+                $endDate
+            );
+        }
+        
+        return view('reports.office-lead-dashboard', compact(
+            'office',
+            'officeMembers',
+            'documentsUploaded',
+            'documentsUploadedToday',
+            'pendingWorkflows',
+            'workflowStats',
+            'memberPerformanceMetrics',
+            'categoryDistribution',
+            'statusDistribution',
+            'documentTrends',
+            'startDate',
+            'endDate'
+        ));
+    }
 }
