@@ -79,33 +79,21 @@
             <!-- Filter Card -->
             <div
                 class="p-6 bg-white rounded-xl shadow-xl border border-blue-100 hover:shadow-2xl transition-shadow duration-300">
-                <form action="" method="GET" class="flex flex-col h-full">
+                <div class="flex flex-col h-full">
                     <h3 class="text-sm font-medium text-gray-600 mb-3">Quick Filter</h3>
                     <div class="flex-1">
-                        <select name="role"
+                        <select id="role-filter" name="role"
                             class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
                             <option value="">All Roles</option>
                             @if(isset($roles))
                                 @foreach($roles as $role)
-                                    <option value="{{ $role->id }}" {{ request('role') == $role->id ? 'selected' : '' }}>
+                                    <option value="{{ $role->name }}" {{ request('role') == $role->id ? 'selected' : '' }}>
                                         {{ $role->name }}</option>
                                 @endforeach
                             @endif
                         </select>
                     </div>
-                    <div class="mt-4">
-                        <button type="submit"
-                            class="w-full inline-flex justify-center items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-md transition-colors">
-                            <svg class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none">
-                                <path
-                                    d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z"
-                                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                </path>
-                            </svg>
-                            Apply Filter
-                        </button>
-                    </div>
-                </form>
+                </div>
             </div>
         </div>
 
@@ -122,7 +110,7 @@
                 </div>
                 <div class="flex items-center space-x-3">
                     <div class="relative hidden md:block">
-                        <input type="text"
+                        <input id="search-input" type="text"
                             class="w-64 pl-10 pr-4 py-2 text-sm bg-white border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
                             placeholder="Search users...">
                         <div class="absolute inset-y-0 left-0 flex items-center pl-3">
@@ -138,7 +126,7 @@
                 </div>
             </div>
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
+                <table id="users-table" class="min-w-full divide-y divide-gray-200">
                     <thead>
                         <tr>
                             <th scope="col"
@@ -305,4 +293,74 @@
                     class="font-medium">{{ $users->total() }}</span> users</div>
         </div>
     </div>
+
+    <!-- JavaScript for filtering -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('search-input');
+            const roleFilter = document.getElementById('role-filter');
+            const table = document.getElementById('users-table');
+            const rows = table.querySelectorAll('tbody tr');
+
+            // Function to filter the table rows
+            function filterTable() {
+                const searchTerm = searchInput.value.toLowerCase();
+                const selectedRole = roleFilter.value.toLowerCase();
+
+                rows.forEach(row => {
+                    const name = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+                    const email = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
+                    const company = row.querySelector('td:nth-child(4)').textContent.toLowerCase();
+                    const roleElements = row.querySelectorAll('td:nth-child(6) span');
+                    
+                    let matchesSearch = name.includes(searchTerm) || 
+                                       email.includes(searchTerm) || 
+                                       company.includes(searchTerm);
+                    
+                    let matchesRole = selectedRole === '' ? true : false;
+                    
+                    // Check if any of the user's roles match the selected role
+                    if (selectedRole !== '') {
+                        roleElements.forEach(roleElement => {
+                            if (roleElement.textContent.trim().toLowerCase() === selectedRole) {
+                                matchesRole = true;
+                            }
+                        });
+                    }
+
+                    // Show row only if it matches both search term and role filter
+                    if (matchesSearch && matchesRole) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                updateEmptyStateVisibility();
+            }
+
+            // Function to check if there are visible rows and show/hide empty state
+            function updateEmptyStateVisibility() {
+                const visibleRows = Array.from(rows).filter(row => row.style.display !== 'none');
+                const emptyState = document.querySelector('.p-8.text-center');
+                
+                if (emptyState) {
+                    if (visibleRows.length === 0) {
+                        emptyState.style.display = '';
+                    } else {
+                        emptyState.style.display = 'none';
+                    }
+                }
+            }
+
+            // Add event listeners
+            if (searchInput) {
+                searchInput.addEventListener('input', filterTable);
+            }
+            
+            if (roleFilter) {
+                roleFilter.addEventListener('change', filterTable);
+            }
+        });
+    </script>
 @endsection
