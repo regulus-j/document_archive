@@ -10,6 +10,7 @@ php artisan db:seed --class=PermissionTableSeeder
 php artisan db:seed --class=RolesSeeder
 php artisan db:seed --class=OfficeCompanyUser
 php artisan db:seed --class=CreateAdminUserSeeder
+php artisan db:seed --class=FeatureSeeder
 php artisan db:seed --class=PlanSeeder
 
 echo "Database migration and seeding completed!"
