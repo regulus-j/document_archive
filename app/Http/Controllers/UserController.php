@@ -155,13 +155,20 @@ class UserController extends Controller
 
         $roleNames = $user->roles->pluck('name')->implode(', ');
 
-        Mail::to($user->email)->send(new UserInvite(
-            $user->first_name,
-            $user->email,
-            $temp_pass,
-            $roleNames,
-            route('login')
-        ));
+        // Queue the email instead of sending it synchronously
+        try {
+            Mail::to($user->email)
+                ->queue(new UserInvite(
+                    $user->first_name,
+                    $user->email,
+                    $temp_pass,
+                    $roleNames,
+                    route('login')
+                ));
+        } catch (\Exception $e) {
+            \Log::error('Failed to queue invitation email: ' . $e->getMessage());
+            // Continue execution even if email queueing fails
+        }
 
         $temp_pass = null;
 
