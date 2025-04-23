@@ -208,6 +208,12 @@ Route::middleware('auth')->group(function () {
         Route::resource('offices', OfficeController::class);
     });
 
+    // Office user assignment routes
+    Route::get('offices/{office}/assign-users', [OfficeController::class, 'assignUsers'])->name('office.assign.users');
+    Route::post('offices/{office}/update-users', [OfficeController::class, 'updateAssignedUsers'])->name('office.users.update');
+    Route::post('offices/{office}/add-user', [OfficeController::class, 'addUserToOffice'])->name('office.users.add');
+    Route::post('offices/{office}/remove-user', [OfficeController::class, 'removeUserFromOffice'])->name('office.users.remove');
+
     Route::get('/admin/company-dashboard', [ReportController::class, 'companyDashboard'])->name('reports.company-dashboard');
 
     Route::prefix('reports')->group(function () {

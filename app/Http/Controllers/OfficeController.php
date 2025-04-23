@@ -163,5 +163,88 @@ class OfficeController extends Controller
         }
     }
 
+    /**
+     * Show form for assigning users to an office
+     */
+    public function assignUsers(Office $office)
+    {
+        // Get the current user's company
+        $company = auth()->user()->companies()->first();
+        
+        if (!$company) {
+            return redirect()->route('companies.create')
+                ->with('error', 'Please create a company first.');
+        }
+        
+        // Get all users from the company who are not already assigned to this office
+        $availableUsers = $company->employees()
+            ->whereDoesntHave('offices', function($query) use ($office) {
+                $query->where('offices.id', $office->id);
+            })
+            ->get(['id', 'first_name', 'last_name', 'email']);
+            
+        // Get users already assigned to this office
+        $assignedUsers = $office->users()->get(['users.id', 'first_name', 'last_name', 'email']);
+        
+        return view('offices.assign-users', compact('office', 'availableUsers', 'assignedUsers'));
+    }
+    
+    /**
+     * Assign users to an office
+     */
+    public function updateAssignedUsers(Request $request, Office $office)
+    {
+        $request->validate([
+            'users' => 'nullable|array',
+            'users.*' => 'exists:users,id'
+        ]);
+        
+        // Get selected users
+        $selectedUsers = $request->input('users', []);
+        
+        // Sync the selected users with the office
+        $office->users()->sync($selectedUsers);
+        
+        return redirect()->route('office.assign.users', $office->id)
+            ->with('success', 'Users assigned to office successfully.');
+    }
+
+    /**
+     * Add a single user to office
+     */
+    public function addUserToOffice(Request $request, Office $office)
+    {
+        $request->validate([
+            'user_id' => 'required|exists:users,id'
+        ]);
+        
+        // Attach the user to the office
+        $office->users()->attach($request->user_id);
+        
+        return redirect()->route('office.assign.users', $office->id)
+            ->with('success', 'User added to office successfully.');
+    }
+    
+    /**
+     * Remove a user from office
+     */
+    public function removeUserFromOffice(Request $request, Office $office)
+    {
+        $request->validate([
+            'user_id' => 'required|exists:users,id'
+        ]);
+        
+        // Check if user is office lead
+        if ($office->office_lead == $request->user_id) {
+            return redirect()->route('office.assign.users', $office->id)
+                ->with('error', 'Cannot remove the office leader. Please change the office leader first.');
+        }
+        
+        // Detach the user from the office
+        $office->users()->detach($request->user_id);
+        
+        return redirect()->route('office.assign.users', $office->id)
+            ->with('success', 'User removed from office successfully.');
+    }
 
 }
