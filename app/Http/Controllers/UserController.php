@@ -100,7 +100,16 @@ class UserController extends Controller
     public function create(): View
     {
         $userCompany = CompanyAccount::where('user_id', auth()->id())->get();
-        $roles = Role::pluck('name', 'name')->all();
+        
+        // Filter roles based on user permissions
+        if (auth()->user()->hasRole('super-admin')) {
+            // Super admins can see all roles
+            $roles = Role::pluck('name', 'name')->all();
+        } else {
+            // Others can't see the super-admin role
+            $roles = Role::where('name', '!=', 'super-admin')->pluck('name', 'name')->all();
+        }
+        
         $company = auth()->user()->companies()->first();
         $offices = Office::where('company_id', $company->id)->get();
 
@@ -181,9 +190,22 @@ class UserController extends Controller
     public function edit($id): View
     {
         $user = User::find($id);
-        $roles = Role::pluck('name', 'name')->all();
+        
+        // Filter roles based on user permissions
+        if (auth()->user()->hasRole('super-admin')) {
+            // Super admins can see all roles
+            $roles = Role::pluck('name', 'name')->all();
+        } else {
+            // Others can't see the super-admin role
+            $roles = Role::where('name', '!=', 'super-admin')->pluck('name', 'name')->all();
+        }
+        
         $userRoles = $user->roles->pluck('name', 'name')->all();
-        $offices = Office::pluck('name', 'id')->all();
+        
+        // Get offices from user's company only
+        $company = auth()->user()->companies()->first();
+        $offices = Office::where('company_id', $company->id)->pluck('name', 'id')->all();
+        
         $userOffices = $user->offices->pluck('id')->all();
         $userCompany = CompanyAccount::all();
 

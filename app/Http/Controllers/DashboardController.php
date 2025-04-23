@@ -30,6 +30,51 @@ class DashboardController extends Controller
             return redirect()->route('admin.dashboard');
         }
 
+        // Check if user is an office lead
+        $isOfficeLead = Office::where('office_lead', $user->id)->exists();
+        $ledOffice = null;
+        $officeMembers = collect();
+        $officeDocuments = collect();
+        $officeDocumentCount = 0;
+        $officeDocumentsTodayCount = 0;
+        $officePendingWorkflowsCount = 0;
+        
+        if ($isOfficeLead) {
+            $ledOffice = Office::where('office_lead', $user->id)->first();
+            if ($ledOffice) {
+                // Get office members
+                $officeMembers = $ledOffice->users()->get();
+                
+                // Get office document statistics - Using the correct column (from_office) instead of office_id
+                $officeDocuments = Document::whereIn('uploader', $officeMembers->pluck('id'))
+                    ->orWhereHas('transaction', function($query) use ($ledOffice) {
+                        $query->where('from_office', $ledOffice->id);
+                    })
+                    ->with('user', 'categories')
+                    ->latest()
+                    ->take(10)
+                    ->get();
+                    
+                $officeDocumentCount = Document::whereIn('uploader', $officeMembers->pluck('id'))
+                    ->orWhereHas('transaction', function($query) use ($ledOffice) {
+                        $query->where('from_office', $ledOffice->id);
+                    })
+                    ->count();
+                    
+                $officeDocumentsTodayCount = Document::whereIn('uploader', $officeMembers->pluck('id'))
+                    ->orWhereHas('transaction', function($query) use ($ledOffice) {
+                        $query->where('from_office', $ledOffice->id);
+                    })
+                    ->whereDate('created_at', today())
+                    ->count();
+                    
+                $officePendingWorkflowsCount = DocumentWorkflow::whereIn('sender_id', $officeMembers->pluck('id'))
+                    ->orWhereIn('recipient_id', $officeMembers->pluck('id'))
+                    ->where('status', 'pending')
+                    ->count();
+            }
+        }
+
         // ** Free Trial Check **
         $trialEndDate = DB::table('company_users')
             ->where('user_id', $user->id)
@@ -61,7 +106,8 @@ class DashboardController extends Controller
                     'countRecentDocs',
                     'countCompanyUsers',
                     'incomingDocuments',
-                    'countOffices'
+                    'countOffices',
+                    'isOfficeLead'
                 ))->with('info', 'Please set up your company profile first.');
             }
 
@@ -130,6 +176,13 @@ class DashboardController extends Controller
                 'incomingDocuments',
                 'countOffices',
                 'totalDocuments',
+                'isOfficeLead',
+                'ledOffice',
+                'officeMembers',
+                'officeDocuments',
+                'officeDocumentCount',
+                'officeDocumentsTodayCount',
+                'officePendingWorkflowsCount'
             ));
         } else {
             return view('dashboard-office-user', compact(
@@ -143,6 +196,13 @@ class DashboardController extends Controller
                 'countCompanyUsers',
                 'incomingDocuments',
                 'countOffices',
+                'isOfficeLead',
+                'ledOffice',
+                'officeMembers',
+                'officeDocuments',
+                'officeDocumentCount',
+                'officeDocumentsTodayCount',
+                'officePendingWorkflowsCount'
             ));
         }
     }
