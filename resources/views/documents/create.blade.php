@@ -192,7 +192,7 @@ $offices = $currentUserCompany
                                 name="from_office" 
                                 value="{{ auth()->user()->offices->first()->id }}">
                         </div>
-                        {{-- <!-- Recipient Office -->
+                        <!-- Recipient Office -->
                         <div class="space-y-2">
                             <label for="office_id" class="block text-sm font-medium text-gray-700">Recipient Office</label>
                             <select name="office_id" id="office_id"
@@ -218,7 +218,7 @@ $offices = $currentUserCompany
                                 @endif
                             </select>
                             <p class="text-xs text-gray-500">Select one or more recipients for this document</p>
-                        </div> --}}
+                        </div> 
                     </div>
                 </div>
 

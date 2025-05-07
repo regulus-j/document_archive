@@ -115,6 +115,17 @@
                             </x-nav-link>
 
                             <x-nav-link 
+                                :href="route('roles.index')" 
+                                :active="request()->routeIs('roles.index')"
+                                class="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 {{ request()->routeIs('roles.index') ? 'text-blue-600 border-b-2 border-blue-600' : '' }}">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+                                </svg>
+                                {{ __('Roles') }}
+                            </x-nav-link>
+
+
+                            <x-nav-link 
                                 :href="route('office.index')" 
                                 :active="request()->routeIs('office.index')"
                                 class="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 {{ request()->routeIs('office.index') ? 'text-blue-600 border-b-2 border-blue-600' : '' }}">
