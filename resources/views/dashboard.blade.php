@@ -5,7 +5,7 @@
                 {{ __('Dashboard') }}
             </h2>
             <p class="text-blue-100 mt-2">
-                {{ __("Welcome back, " . auth()->user()->first_name . "!") }}
+                {{ __("Welcome, " . auth()->user()->first_name . "!") }}
             </p>
         </div>
     </x-slot>
