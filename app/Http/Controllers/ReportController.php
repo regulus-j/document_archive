@@ -48,7 +48,91 @@ class ReportController extends Controller
         $reports = $query->latest('generated_at')->paginate(10);
         $users = User::all();
 
-        return view('reports.index', compact('reports', 'users'));
+
+        // Analytics
+
+        $startDate = $request->input('start_date') ?: now()->subMonth()->format('Y-m-d');
+        $endDate = $request->input('end_date') ?: now()->format('Y-m-d');
+        $userId = $request->input('user_id');
+        $officeId = $request->input('office_id');
+        $displayType = $request->input('display_type', 'table'); // Default to table view
+
+        if ($displayType === 'pdf') {
+            return $this->exportAnalyticsToPdf($startDate, $endDate, $userId, $officeId);
+        }
+
+        $averageTimeToReceiveMinutes = DocumentWorkflow::selectRaw('AVG(TIMESTAMPDIFF(MINUTE, created_at, received_at)) as avg_time')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->whereNotNull('received_at') // Ensure received_at is not null
+            ->when($userId, fn($q) => $q->where('recipient_id', $userId))
+            ->when($officeId, fn($q) =>
+                $q->whereHas('recipient.offices', fn($o) =>
+                    $o->where('offices.id', $officeId)
+                )
+            )
+            ->value('avg_time') ?? 0;
+
+        $averageTimeToReviewMinutes = DocumentWorkflow::selectRaw('AVG(TIMESTAMPDIFF(MINUTE, received_at, updated_at)) as avg_time')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->whereNotNull('received_at') // Ensure received_at is not null
+            ->whereNotNull('updated_at') // Ensure updated_at is not null
+            ->whereRaw('received_at <= updated_at') // Ensure received_at is before updated_at
+            ->when($userId, fn($q) => $q->where('recipient_id', $userId))
+            ->when($officeId, fn($q) =>
+                $q->whereHas('recipient.offices', fn($o) =>
+                    $o->where('offices.id', $officeId)
+                )
+            )
+            ->value('avg_time') ?? 0;
+
+        // Format time values as hours:minutes:seconds
+        $averageTimeToReceive = $this->formatTimeInMinutes($averageTimeToReceiveMinutes);
+        $averageTimeToReview = $this->formatTimeInMinutes($averageTimeToReviewMinutes);
+        
+        // For chart data, we need the raw minutes
+        $averageTimeToReceiveRaw = round($averageTimeToReceiveMinutes, 2);
+        $averageTimeToReviewRaw = round($averageTimeToReviewMinutes, 2);
+
+        $averageDocsForwarded = DocumentWorkflow::whereBetween('created_at', [$startDate, $endDate])
+            ->when($userId, fn($q) => $q->where('sender_id', $userId))
+            ->when($officeId, fn($q) =>
+                $q->whereHas('sender.offices', fn($o) =>
+                    $o->where('offices.id', $officeId)
+                )
+            )
+            ->count();
+
+        $documentsUploaded = Document::whereBetween('created_at', [$startDate, $endDate])
+            ->when($userId, fn($q) => $q->where('uploader', $userId))
+            ->count();
+
+        // Get collections for dropdowns
+        $company = CompanyAccount::where('user_id', auth()->id())->first();
+        if (!$company) {
+            \Log::warning('No company found for user: ' . auth()->id());
+            // Handle the case where no company exists
+        }
+
+        $users = $company ? $company->employees()->paginate(5) : collect();
+        $offices = $company ? Office::where('company_id', $company->id)->get() : collect();
+
+        // Get additional data for charts - monthly trends
+        $monthlyData = $this->getMonthlyAnalyticsChartData($startDate, $endDate, $userId, $officeId);
+
+        return view('reports.index', compact('reports', 'averageTimeToReceive',
+            'averageTimeToReview',
+            'averageTimeToReceiveRaw',
+            'averageTimeToReviewRaw',
+            'averageDocsForwarded',
+            'documentsUploaded',
+            'startDate',
+            'endDate',
+            'userId',
+            'officeId',
+            'users',
+            'offices',
+            'displayType',
+            'monthlyData'));
     }
 
     public function show(Report $report)
