@@ -63,7 +63,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            {{ $document->status->status }}
+                            {{ $document->status?->status ?? "N/A" }}
                         </span>
                     </div>
                 </div>
@@ -130,7 +130,7 @@
                         <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
                             <p class="text-sm font-medium text-gray-500 mb-1">Status</p>
                             <p class="text-base font-medium text-gray-900">
-                                {{ $document->status->status }}
+                                {{ $document->status?->status ?? "N/A" }}
                             </p>
                         </div>
                         <!-- Remarks Card -->
