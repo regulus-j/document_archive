@@ -12,5 +12,6 @@ php artisan db:seed --class=OfficeCompanyUser
 php artisan db:seed --class=CreateAdminUserSeeder
 php artisan db:seed --class=FeatureSeeder
 php artisan db:seed --class=PlanSeeder
+php artisan db:seed --class=DocumentCategories
 
 echo "Database migration and seeding completed!"
