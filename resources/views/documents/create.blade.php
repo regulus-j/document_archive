@@ -127,18 +127,8 @@ $offices = $currentUserCompany
                             </select>
                             <p class="text-xs text-gray-500">Select the appropriate document classification</p>
                         </div>
-                        <!-- Remarks -->
-                        <div class="space-y-2">
-                            <label for="remarks" class="block text-sm font-medium text-gray-700">Remarks</label>
-                            <textarea name="remarks" id="remarks" rows="3" maxlength="250"
-                                class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 transition-all"
-                                placeholder="Enter additional remarks (max 250 characters)"></textarea>
-                            <p class="text-xs text-gray-500"><span id="char-count">0</span>/250 characters</p>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- <!-- Purpose Section -->
+                       
+                 <!-- Purpose Section -->
                 <div class="border-b border-gray-200 pb-6">
                     <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600 mr-2" fill="none"
@@ -167,10 +157,10 @@ $offices = $currentUserCompany
             @endforeach
     </div>
     <p class="text-xs text-gray-500 mt-2">Select all purposes that apply to this document</p>
-</div> --}}
+</div> 
 
 <!-- Routing Section -->
-<div class="border-b border-gray-200 pb-6">
+<div class="md:col-span-2 border-t border-gray-200 pt-4 mt-4">
     <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600 mr-2" fill="none"
             viewBox="0 0 24 24" stroke="currentColor">
@@ -192,6 +182,7 @@ $offices = $currentUserCompany
                 name="from_office"
                 value="{{ auth()->user()->offices->first()->id }}">
         </div>
+         
         <!-- Recipient Office -->
         <div class="space-y-2">
             <label for="office_id" class="block text-sm font-medium text-gray-700">Recipient Office</label>
@@ -221,6 +212,8 @@ $offices = $currentUserCompany
         </div>
     </div>
 </div>
+</div>
+                     
 
 <!-- Document Upload Section -->
 <div class="border-b border-gray-200 pb-6">
