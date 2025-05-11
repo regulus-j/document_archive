@@ -1,4 +1,4 @@
-<x-app-layout>
+<!-- Deletion schedule feature removed -->
     <div class="min-h-screen bg-gradient-to-b from-blue-50 to-white p-4 md:p-8">
         <!-- Header Box -->
         <div class="bg-white rounded-xl shadow-xl mb-6 border border-blue-100 overflow-hidden">

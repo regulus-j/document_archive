@@ -40,15 +40,7 @@
                                 </svg>
                                 {{ __('Dashboard') }}
                             </x-nav-link>
-                            <x-nav-link 
-                                :href="route('archived-documents.index')" 
-                                :active="request()->routeIs('archived-documents.index')"
-                                class="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 {{ request()->routeIs('archived-documents.index') ? 'text-blue-600 border-b-2 border-blue-600' : '' }}">
-                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                {{ __('Archived Documents') }}
-                            </x-nav-link>
+
                         @else
                         <x-nav-link 
                         :href="route('dashboard')" 
