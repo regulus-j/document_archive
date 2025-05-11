@@ -25,20 +25,23 @@ class RoleController extends Controller
     {
         // If the user is a superadmin, show all roles
         if (auth()->user()->isSuperAdmin()) {
-            $roles = Role::orderBy('id', 'DESC')->paginate(5);
-        } 
-        // If the user is a company-admin, exclude specific roles
-        elseif (auth()->user()->hasRole('company-admin')) {
-            $roles = Role::whereNotIn('name', ['super-admin', 'user', 'company-admin'])
-                ->orderBy('id', 'DESC')
-                ->paginate(5);
-        } 
-        // For other roles, show all roles
-        else {
-            $roles = Role::orderBy('id', 'DESC')->paginate(5);
+            $query = Role::orderBy('id', 'DESC');
+            $filterRoles = Role::all();
+        } elseif (auth()->user()->hasRole('company-admin')) {
+            $query = Role::where('name', '!=', 'super-admin')->orderBy('id', 'DESC');
+            $filterRoles = Role::where('name', '!=', 'super-admin')->get();
+        } else {
+            $query = Role::query()->whereRaw('0=1'); // No roles
+            $filterRoles = collect();
         }
 
-        return view('roles.index', compact('roles'))
+        // Filtering by role name if requested
+        if ($request->filled('role_search')) {
+            $query->where('name', 'like', '%' . $request->input('role_search') . '%');
+        }
+        $roles = $query->paginate(5);
+
+        return view('roles.index', compact('roles', 'filterRoles'))
             ->with('i', ($request->input('page', 1) - 1) * 5);
     }
     public function create(): View

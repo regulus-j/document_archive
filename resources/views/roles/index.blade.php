@@ -105,12 +105,8 @@
                 <form action="" method="GET" class="flex flex-col h-full">
                     <h3 class="text-sm font-medium text-gray-600 mb-3">Quick Filter</h3>
                     <div class="flex-1">
-                        <select name="status"
-                            class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
-                            <option value="">All Status</option>
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
-                        </select>
+                        <input type="text" name="role_search" value="{{ request('role_search') }}" placeholder="Search roles by name..."
+                            class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm" />
                     </div>
                     <div class="mt-4">
                         <button type="submit"

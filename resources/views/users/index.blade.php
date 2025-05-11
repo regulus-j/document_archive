@@ -45,30 +45,16 @@
                         class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-[#0066FF] focus:border-[#0066FF] sm:text-sm">
                 </div>
                 <div>
-                    <label for="role" class="block text-sm font-medium text-gray-700 mb-1">{{ __('Role') }}</label>
-                    <select name="role" id="role"
+                    <label for="role_search" class="block text-sm font-medium text-gray-700 mb-1">{{ __('Role') }}</label>
+                    <input type="text" name="role_search" id="role_search" placeholder="Search by role name"
+                        value="{{ request('role_search') }}"
                         class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-[#0066FF] focus:border-[#0066FF] sm:text-sm">
-                        <option value="">{{ __('Select Role') }}</option>
-                        @foreach ($roles as $role)
-                            <option value="{{ $role->name }}" {{ request('role') == $role->name ? 'selected' : '' }}>
-                                {{ $role->name }}
-                            </option>
-                        @endforeach
-                    </select>
                 </div>
                 <div>
-                    <label for="team" class="block text-sm font-medium text-gray-700 mb-1">{{ __('Team') }}</label>
-                    <select name="team" id="team"
+                    <label for="team_search" class="block text-sm font-medium text-gray-700 mb-1">{{ __('Team') }}</label>
+                    <input type="text" name="team_search" id="team_search" placeholder="Search by team name"
+                        value="{{ request('team_search') }}"
                         class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-[#0066FF] focus:border-[#0066FF] sm:text-sm">
-                        <option value="">{{ __('Select Team') }}</option>
-                        @if(isset($teams))
-                            @foreach ($teams as $team)
-                                <option value="{{ $team->id }}" {{ request('team') == $team->id ? 'selected' : '' }}>
-                                    {{ $team->name }}
-                                </option>
-                            @endforeach
-                        @endif
-                    </select>
                 </div>
                 <div class="md:col-span-3">
                     <button type="submit"

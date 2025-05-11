@@ -39,8 +39,10 @@ class UserController extends Controller
         // Only super-admins can see the super-admin role in filters
         if (auth()->user()->hasRole('super-admin')) {
             $roles = Role::all();
-        } else {
+        } elseif (auth()->user()->hasRole('company-admin')) {
             $roles = Role::where('name', '!=', 'super-admin')->get();
+        } else {
+            $roles = Role::where('name', 'user')->get();
         }
 
         // Super-admin: see all users
@@ -83,8 +85,10 @@ class UserController extends Controller
         // Only super-admins can see the super-admin role in filters
         if (auth()->user()->hasRole('super-admin')) {
             $roles = Role::all();
-        } else {
+        } elseif (auth()->user()->hasRole('company-admin')) {
             $roles = Role::where('name', '!=', 'super-admin')->get();
+        } else {
+            $roles = Role::where('name', 'user')->get();
         }
 
         // Fetch teams for filter
@@ -121,16 +125,16 @@ class UserController extends Controller
             $query->where('email', 'like', '%' . $request->email . '%');
         }
 
-        if ($request->filled('role')) {
+        if ($request->filled('role_search')) {
             $query->whereHas('roles', function ($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->role . '%');
+                $q->where('name', 'like', '%' . $request->role_search . '%');
             });
         }
 
-        // Filter by team
-        if ($request->filled('team')) {
+        // Filter by team name (text search)
+        if ($request->filled('team_search')) {
             $query->whereHas('offices', function ($q) use ($request) {
-                $q->where('offices.id', $request->team);
+                $q->where('offices.name', 'like', '%' . $request->team_search . '%');
             });
         }
 
