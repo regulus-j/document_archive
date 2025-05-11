@@ -96,6 +96,14 @@ class Document extends Model
     }
 
     /**
+     * Get the user who archived the document
+     */
+    public function archivedBy()
+    {
+        return $this->belongsTo(User::class, 'archived_by');
+    }
+
+    /**
      * Get formatted file size
      */
     public function getFormattedSizeAttribute()
