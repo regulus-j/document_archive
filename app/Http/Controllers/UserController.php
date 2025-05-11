@@ -36,20 +36,29 @@ class UserController extends Controller
 
     public function index(Request $request): View
     {
-        $company = CompanyAccount::where('user_id', auth()->id())->first();
-        $users = $company ? $company->employees()->paginate(5) : collect();
+        // Only super-admins can see the super-admin role in filters
+        if (auth()->user()->hasRole('super-admin')) {
+            $roles = Role::all();
+        } else {
+            $roles = Role::where('name', '!=', 'super-admin')->get();
+        }
 
-        $roles = Role::all();
-
+        // Super-admin: see all users
         if (auth()->user()->hasRole('super-admin')) {
             return $this->showRegistered();
         }
 
+        // Company admin: see users in their company
         if (auth()->user()->isCompanyAdmin()) {
-            $companyId = auth()->user()->companies()->first()->id;
-            $users = User::whereHas('companies', function ($query) use ($companyId) {
-                $query->where('company_accounts.id', $companyId);
-            })->paginate(5);
+            $company = auth()->user()->companies()->first();
+            if ($company) {
+                $users = $company->employees()->paginate(5);
+            } else {
+                $users = collect();
+            }
+        } else {
+            // Regular user: see only themselves
+            $users = User::where('id', auth()->id())->paginate(5);
         }
 
         return view('users.index', compact('users', 'roles'))
@@ -71,8 +80,38 @@ class UserController extends Controller
      */
     public function search(Request $request): View
     {
-        $query = User::query();
-        $roles = Role::all();
+        // Only super-admins can see the super-admin role in filters
+        if (auth()->user()->hasRole('super-admin')) {
+            $roles = Role::all();
+        } else {
+            $roles = Role::where('name', '!=', 'super-admin')->get();
+        }
+
+        // Fetch teams for filter
+        if (auth()->user()->hasRole('super-admin')) {
+            $teams = \App\Models\Office::all();
+        } elseif (auth()->user()->isCompanyAdmin()) {
+            $company = auth()->user()->companies()->first();
+            $teams = $company ? $company->offices()->get() : collect();
+        } else {
+            $teams = auth()->user()->offices()->get();
+        }
+
+        // Super-admin: can search all users
+        if (auth()->user()->hasRole('super-admin')) {
+            $query = User::query();
+        } elseif (auth()->user()->isCompanyAdmin()) {
+            // Company admin: can search only users in their company
+            $company = auth()->user()->companies()->first();
+            if ($company) {
+                $query = $company->employees();
+            } else {
+                $query = User::whereRaw('1 = 0'); // No company, no results
+            }
+        } else {
+            // Regular user: can search only themselves
+            $query = User::where('id', auth()->id());
+        }
 
         if ($request->filled('name')) {
             $query->where('first_name', 'like', '%' . $request->name . '%');
@@ -88,9 +127,16 @@ class UserController extends Controller
             });
         }
 
+        // Filter by team
+        if ($request->filled('team')) {
+            $query->whereHas('offices', function ($q) use ($request) {
+                $q->where('offices.id', $request->team);
+            });
+        }
+
         $users = $query->paginate(5);
 
-        return view('users.index', compact('users', 'roles'))
+        return view('users.index', compact('users', 'roles', 'teams'))
             ->with('i', ($request->input('page', 1) - 1) * 5);
     }
 

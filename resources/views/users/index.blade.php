@@ -56,6 +56,20 @@
                         @endforeach
                     </select>
                 </div>
+                <div>
+                    <label for="team" class="block text-sm font-medium text-gray-700 mb-1">{{ __('Team') }}</label>
+                    <select name="team" id="team"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-[#0066FF] focus:border-[#0066FF] sm:text-sm">
+                        <option value="">{{ __('Select Team') }}</option>
+                        @if(isset($teams))
+                            @foreach ($teams as $team)
+                                <option value="{{ $team->id }}" {{ request('team') == $team->id ? 'selected' : '' }}>
+                                    {{ $team->name }}
+                                </option>
+                            @endforeach
+                        @endif
+                    </select>
+                </div>
                 <div class="md:col-span-3">
                     <button type="submit"
                         class="inline-flex items-center px-4 py-2 bg-[#EEF2FF] text-[#0066FF] text-sm font-medium rounded-md hover:bg-[#0066FF]/10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0066FF] transition-colors duration-150 shadow-sm">
@@ -108,6 +122,10 @@
                         </th>
                         <th scope="col"
                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {{ __('TEAM') }}
+                        </th>
+                        <th scope="col"
+                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             {{ __('ROLES') }}
                         </th>
                         <th scope="col"
@@ -127,6 +145,13 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 {{ $user->email }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                @if($user->teams && $user->teams->count())
+                                    {{ $user->teams->pluck('name')->join(', ') }}
+                                @else
+                                    <span class="text-gray-400 italic">No Team</span>
+                                @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 @foreach ($user->roles as $role)
