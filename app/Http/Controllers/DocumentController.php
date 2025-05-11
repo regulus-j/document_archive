@@ -10,6 +10,7 @@ use App\Models\DocumentTrackingNumber;
 use App\Models\DocumentTransaction;
 use App\Models\DocumentWorkflow;
 use App\Models\CompanyAccount;
+use App\Models\DocumentCategories;
 use App\Models\Office;
 use App\Models\User;
 use chillerlan\QRCode\QRCode;
@@ -60,9 +61,9 @@ class DocumentController extends Controller
             $workflows = DocumentWorkflow::with(['recipient', 'recipientOffice'])
                 ->where('document_id', $doc->id)
                 ->get();
-            
+
             $recipients = collect();
-            
+
             foreach ($workflows as $workflow) {
                 // Add user recipients
                 if ($workflow->recipient) {
@@ -73,7 +74,7 @@ class DocumentController extends Controller
                         'step_order' => $workflow->step_order
                     ]);
                 }
-                
+
                 // Add office recipients
                 if ($workflow->recipient_office && $workflow->recipientOffice) {
                     $recipients->push([
@@ -83,7 +84,7 @@ class DocumentController extends Controller
                     ]);
                 }
             }
-            
+
             $documentRecipients[$doc->id] = $recipients;
         }
 
@@ -93,20 +94,20 @@ class DocumentController extends Controller
     public function showArchive(Request $request): View
     {
         $search = $request->input('search');
-        
+
         $query = Document::with(['user', 'status', 'transaction.fromOffice', 'transaction.toOffice'])
-            ->whereHas('status', function($q) {
+            ->whereHas('status', function ($q) {
                 $q->where('status', 'archived');
             });
-        
+
         // Apply search if provided
         if ($search) {
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%");
             });
         }
-        
+
         // Filter by user's office if not company admin
         if (!auth()->user()->hasRole('company-admin')) {
             $userOfficeIds = auth()->user()->offices->pluck('id')->toArray();
@@ -114,7 +115,7 @@ class DocumentController extends Controller
                 $q->whereIn('offices.id', $userOfficeIds);
             });
         }
-        
+
         $documents = $query->latest()->paginate(5);
         $auditLogs = DocumentAudit::paginate(15);
 
@@ -129,6 +130,9 @@ class DocumentController extends Controller
     public function uploadController(Request $request)
     {
         \Log::info('uploadController called');
+
+        \Log::info("SEARCH ME");
+        \Log::info($request);
 
         //upload to database
         $request->validate([
@@ -147,7 +151,7 @@ class DocumentController extends Controller
             \Log::info('Starting document upload process');
             $companyId = auth()->user()->companies()->first()->id ?? 'default';
             $companyPath = $companyId;
-            
+
             $file = $request->file('upload');
             $fileName = time() . '_' . $file->getClientOriginalName();
             \Log::info('Uploading file', ['fileName' => $fileName]);
@@ -222,7 +226,7 @@ class DocumentController extends Controller
                 $document->status()->update(['status' => 'archived']);
                 \Log::info('Document status updated to archived', ['document_id' => $document->id]);
             }
-            
+
             if ($request->forward == '1') {
                 \Log::info('Redirecting to forward route', ['document_id' => $document->id]);
                 return redirect()->route('documents.forward', $document->id)
@@ -234,7 +238,6 @@ class DocumentController extends Controller
                     ->with('data', $data)
                     ->with('success', 'Document uploaded successfully');
             }
-
         } catch (Exception $e) {
             \Log::error('Document processing error in uploadController: ' . $e->getMessage());
             return redirect()->back()
@@ -246,18 +249,18 @@ class DocumentController extends Controller
     public function forwardDocument(Request $request, $id)
     {
         $document = Document::findOrFail($id);
-        
+
         // Get the companies this user belongs to
         $userCompanyIds = auth()->user()->companies()->pluck('company_id');
-        
+
         // Get users from these companies
-        $users = User::whereHas('companies', function($query) use ($userCompanyIds) {
+        $users = User::whereHas('companies', function ($query) use ($userCompanyIds) {
             $query->whereIn('company_id', $userCompanyIds);
         })->where('id', '!=', auth()->id())->get(); // Exclude the current user
-        
+
         // Get offices from these companies
         $offices = Office::whereIn('company_id', $userCompanyIds)->get();
-        
+
         return view('documents.forward', compact('document', 'offices', 'users'));
     }
 
@@ -321,7 +324,7 @@ class DocumentController extends Controller
                     if (!empty($qrResult)) {
                         // If QR code contains a tracking number
                         $documentTracking = DocumentTrackingNumber::where('tracking_number', $qrResult)->first();
-                        
+
                         if ($documentTracking) {
                             $document = Document::find($documentTracking->doc_id);
                             if ($document) {
@@ -346,9 +349,9 @@ class DocumentController extends Controller
                 $workflows = DocumentWorkflow::with(['recipient', 'recipientOffice'])
                     ->where('document_id', $doc->id)
                     ->get();
-                
+
                 $recipients = collect();
-                
+
                 foreach ($workflows as $workflow) {
                     // Add user recipients
                     if ($workflow->recipient) {
@@ -359,7 +362,7 @@ class DocumentController extends Controller
                             'step_order' => $workflow->step_order
                         ]);
                     }
-                    
+
                     // Add office recipients
                     if ($workflow->recipient_office && $workflow->recipientOffice) {
                         $recipients->push([
@@ -369,7 +372,7 @@ class DocumentController extends Controller
                         ]);
                     }
                 }
-                
+
                 $documentRecipients[$doc->id] = $recipients;
             }
 
@@ -381,7 +384,6 @@ class DocumentController extends Controller
                 'searchPerformed' => true,
                 'searchText' => $searchText,
             ]);
-
         } catch (Exception $e) {
             \Log::error('Search processing error: ' . $e->getMessage());
 
@@ -401,15 +403,7 @@ class DocumentController extends Controller
         $users = $company ? $company->employees()->paginate(10) : collect();
         $offices = Office::all();
 
-        $categories = [
-            1 => 'Letter',
-            2 => 'Memo',
-            3 => 'Reports',
-            4 => 'Proposal',
-            5 => 'Presentation',
-            6 => 'Others',
-            
-        ];
+        $categories = DocumentCategories::all();
 
         return view('documents.create', compact('offices', 'categories', 'users'));
     }
@@ -515,7 +509,6 @@ class DocumentController extends Controller
             return redirect()->route('documents.index')
                 ->with('data', $data)
                 ->with('success', 'Document uploaded successfully');
-
         } catch (Exception $e) {
             \Log::error('Document processing error: ' . $e->getMessage());
 
@@ -564,7 +557,6 @@ class DocumentController extends Controller
             }
 
             return $pdfContent;
-
         } catch (Exception $e) {
             \Log::error('PDF processing error: ' . $e->getMessage());
             \Log::error('PDF path: ' . $path);
@@ -595,12 +587,14 @@ class DocumentController extends Controller
     public function show(Document $document): View
     {
         // Check if the user can access this document
-        if (!auth()->user()->hasRole('super-admin') && 
+        if (
+            !auth()->user()->hasRole('super-admin') &&
             !auth()->user()->hasRole('company-admin') &&
             auth()->user()->id != $document->uploader &&
             !DocumentWorkflow::where('document_id', $document->id)
                 ->where('recipient_id', auth()->user()->id)
-                ->exists()) {
+                ->exists()
+        ) {
             abort(403, 'You do not have permission to view this document');
         }
 
@@ -623,7 +617,7 @@ class DocumentController extends Controller
                     'workflow' => $workflow
                 ];
             }
-            
+
             // Add office recipient if available
             if ($workflow->recipient_office && isset($workflow->recipientOffice->name)) {
                 $docRoute[$workflow->step_order][] = [
@@ -632,10 +626,11 @@ class DocumentController extends Controller
                     'workflow' => $workflow
                 ];
             }
-            
+
             // If neither recipient nor office, add placeholder
-            if ((!$workflow->recipient && !$workflow->recipient_office) || 
-                ($workflow->recipient_office && !isset($workflow->recipientOffice->name))) {
+            if ((!$workflow->recipient && !$workflow->recipient_office) ||
+                ($workflow->recipient_office && !isset($workflow->recipientOffice->name))
+            ) {
                 $docRoute[$workflow->step_order][] = [
                     'name' => 'Unassigned',
                     'type' => 'none',
@@ -647,7 +642,7 @@ class DocumentController extends Controller
         // Check if we should also fetch recipients from the document_recipients table
         if (empty($docRoute)) {
             $documentRecipients = $document->recipients()->with('offices')->get();
-            
+
             if ($documentRecipients->isNotEmpty()) {
                 foreach ($documentRecipients as $index => $recipient) {
                     $recipientName = trim(($recipient->first_name ?? '') . ' ' . ($recipient->last_name ?? ''));
@@ -747,7 +742,6 @@ class DocumentController extends Controller
 
             return redirect()->route('documents.index')
                 ->with('success', 'Document updated successfully');
-
         } catch (Exception $e) {
             \Log::error('Document update error: ' . $e->getMessage());
 
@@ -816,7 +810,6 @@ class DocumentController extends Controller
             }
 
             return response()->download($filePath);
-
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Error downloading file: ' . $e->getMessage());
         }
@@ -903,10 +896,10 @@ class DocumentController extends Controller
         DocumentWorkflow::where('document_id', $document->id)
             ->whereIn('status', ['pending', 'received'])
             ->update(['status' => 'cancelled']);
-        
+
         // Update document status
         $document->status()->update(['status' => 'cancelled']);
-        
+
         // Log action
         DocumentAudit::logDocumentAction(
             $document->id,
@@ -915,7 +908,7 @@ class DocumentController extends Controller
             'cancelled',
             'Document workflow cancelled'
         );
-        
+
         return redirect()->route('documents.index')
             ->with('success', 'Document workflow has been cancelled.');
     }

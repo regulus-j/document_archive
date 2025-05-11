@@ -15,8 +15,8 @@
                             </svg>
                         </div>
                         <div>
-                            <h1 class="text-2xl font-bold text-gray-800">{{ __('Offices') }}</h1>
-                            <p class="text-sm text-gray-500">Manage office locations and hierarchies</p>
+                            <h1 class="text-2xl font-bold text-gray-800">{{ __('Teams') }}</h1>
+                            <p class="text-sm text-gray-500">Manage Team locations and hierarchies</p>
                         </div>
                     </div>
                     <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
@@ -27,7 +27,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                             </svg>
-                            {{ __('Add New Office') }}
+                            {{ __('Add New Team') }}
                         </a>
                         <button id="viewToggle"
                             class="inline-flex items-center justify-center px-4 py-2 border border-blue-200 text-sm font-medium rounded-lg text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
@@ -45,7 +45,7 @@
             <!-- Search Input -->
             <div class="mb-6">
                 <div class="relative">
-                    <input type="text" id="officeSearch" placeholder="{{ __('Search offices...') }}"
+                    <input type="text" id="officeSearch" placeholder="{{ __('Search teams...') }}"
                         class="w-full pl-10 pr-4 py-2.5 rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 transition-all">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <svg class="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none"
@@ -93,7 +93,7 @@
                             <tr>
                                 <th scope="col"
                                     class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
-                                    {{ __('Office Name') }}
+                                    {{ __('Team Name') }}
                                 </th>
                                 <th scope="col"
                                     class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
@@ -144,7 +144,7 @@
                                                 @method('DELETE')
                                                 <button type="submit"
                                                     class="p-1.5 bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-100 transition-colors"
-                                                    onclick="return confirm('{{ __('Are you sure you want to delete this office?') }}')">
+                                                    onclick="return confirm('{{ __('Are you sure you want to delete this team?') }}')">
                                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
                                                         viewBox="0 0 24 24" stroke="currentColor">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -173,7 +173,7 @@
                                 </th>
                                 <th scope="col"
                                     class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
-                                    {{ __('Offices') }}
+                                    {{ __('Teams') }}
                                 </th>
                             </tr>
                         </thead>

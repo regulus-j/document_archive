@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="text-3xl font-bold text-gray-900 leading-tight">
-            {{ __('Office Dashboard') }}
+            {{ __('Team Dashboard') }}
         </h2>
     </x-slot>
 
@@ -58,7 +58,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                             d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                     </svg>
-                    {{ $ledOffice->name }} Office Statistics
+                    {{ $ledOffice->name }} Team Statistics
                 </h3>
                 
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -90,7 +90,7 @@
                 <!-- Recent Office Documents -->
                 @if($officeDocuments->count() > 0)
                 <div class="mt-6">
-                    <h4 class="text-lg font-medium text-gray-700 mb-3">Recent Office Documents</h4>
+                    <h4 class="text-lg font-medium text-gray-700 mb-3">Recent Team Documents</h4>
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
@@ -137,12 +137,12 @@
                                 <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z" />
                                 <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z" />
                             </svg>
-                            View Full Office Dashboard
+                            View Full Team Dashboard
                         </a>
                     </div>
                 </div>
                 @else
-                <div class="text-center text-gray-500 py-4">No recent office documents found</div>
+                <div class="text-center text-gray-500 py-4">No recent team documents found</div>
                 @endif
             </div>
             @endif

@@ -1,4 +1,3 @@
-<!-- register.blade.php -->
 <x-guest-layout>
     <div class="text-center mb-8">
         <link rel="icon" href="{{ asset('images/logo.png') }}" type="image/png" sizes="32x32">
@@ -6,33 +5,6 @@
         <p class="text-gray-500 text-sm">
             Create your account to get started
         </p>
-    </div>
-
-    <!-- Breadcrumbs -->
-    <div class="mb-8">
-        <div class="flex items-center justify-between relative">
-            <div class="w-full absolute top-1/2 h-0.5 bg-gray-200 -z-10"></div>
-            <div class="flex items-center justify-between w-full">
-                <div class="flex flex-col items-center">
-                    <div id="step1-indicator"
-                        class="w-10 h-10 rounded-full bg-blue-500 text-white flex items-center justify-center mb-2">1
-                    </div>
-                    <span class="text-sm font-medium">Personal</span>
-                </div>
-                <div class="flex flex-col items-center">
-                    <div id="step2-indicator"
-                        class="w-10 h-10 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center mb-2">2
-                    </div>
-                    <span class="text-sm font-medium">Company</span>
-                </div>
-                <div class="flex flex-col items-center">
-                    <div id="step3-indicator"
-                        class="w-10 h-10 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center mb-2">3
-                    </div>
-                    <span class="text-sm font-medium">Address</span>
-                </div>
-            </div>
-        </div>
     </div>
 
     <form method="POST" action="{{ route('register') }}" id="registrationForm">
@@ -101,86 +73,42 @@
             </div>
         </div>
 
-        <!-- Step 2: Company Information -->
+        <!-- Step 2: Verification Code -->
         <div id="step2" class="step-content hidden">
-            <h2 class="text-xl font-semibold mb-4">Company Information</h2>
+            <h2 class="text-xl font-semibold mb-4">Email Verification</h2>
             <div class="space-y-4">
-                <div>
-                    <x-input-label for="company_name" :value="__('Company Name')" class="text-gray-700" />
-                    <x-text-input id="company_name"
-                        class="mt-2 block w-full p-3 rounded-md border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-150"
-                        type="text" name="company_name" :value="old('company_name')" required />
-                    <x-input-error :messages="$errors->get('company_name')" class="mt-2" />
+                <div class="p-4 bg-blue-50 rounded-lg text-center">
+                    <p class="mb-3">We've sent a verification code to your email.</p>
+                    <p class="text-sm text-gray-600">Please check your inbox and enter the code below.</p>
                 </div>
-
+                
                 <div>
-                    <x-input-label for="registered_name" :value="__('Registered Name')" class="text-gray-700" />
-                    <x-text-input id="registered_name"
+                    <x-input-label for="verification_code" :value="__('Verification Code')" class="text-gray-700" />
+                    <x-text-input id="verification_code"
                         class="mt-2 block w-full p-3 rounded-md border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-150"
-                        type="text" name="registered_name" :value="old('registered_name')" required />
-                    <x-input-error :messages="$errors->get('registered_name')" class="mt-2" />
+                        type="text" name="verification_code" required />
+                    <x-input-error :messages="$errors->get('verification_code')" class="mt-2" />
                 </div>
-
-                <div>
-                    <x-input-label for="company_email" :value="__('Company Email')" class="text-gray-700" />
-                    <x-text-input id="company_email"
-                        class="mt-2 block w-full p-3 rounded-md border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-150"
-                        type="email" name="company_email" :value="old('company_email')" required />
-                    <x-input-error :messages="$errors->get('company_email')" class="mt-2" />
-                </div>
-
-                <div>
-                    <x-input-label for="company_phone" :value="__('Company Phone')" class="text-gray-700" />
-                    <x-text-input id="company_phone"
-                        class="mt-2 block w-full p-3 rounded-md border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-150"
-                        type="text" name="company_phone" :value="old('company_phone')" required />
-                    <x-input-error :messages="$errors->get('company_phone')" class="mt-2" />
+                
+                <div class="text-center">
+                    <button type="button" id="resendCode" class="text-blue-500 hover:underline text-sm">
+                        Resend verification code
+                    </button>
                 </div>
             </div>
         </div>
 
-        <!-- Step 3: Company Address -->
+        <!-- Step 3: Captcha -->
         <div id="step3" class="step-content hidden">
-            <h2 class="text-xl font-semibold mb-4">Company Address</h2>
+            <h2 class="text-xl font-semibold mb-4">Security Verification</h2>
             <div class="space-y-4">
-                <div>
-                    <x-input-label for="address" :value="__('Street Address')" class="text-gray-700" />
-                    <x-text-input id="address"
-                        class="mt-2 block w-full p-3 rounded-md border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-150"
-                        type="text" name="address" :value="old('address')" required />
-                    <x-input-error :messages="$errors->get('address')" class="mt-2" />
+                <div class="flex justify-center mb-4">
+                    <div class="g-recaptcha" data-sitekey="{{ env('RECAPTCHA_SITE_KEY') }}"></div>
+                    <x-input-error :messages="$errors->get('g-recaptcha-response')" class="mt-2" />
                 </div>
-
-                <div>
-                    <x-input-label for="city" :value="__('City')" class="text-gray-700" />
-                    <x-text-input id="city"
-                        class="mt-2 block w-full p-3 rounded-md border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-150"
-                        type="text" name="city" :value="old('city')" required />
-                    <x-input-error :messages="$errors->get('city')" class="mt-2" />
-                </div>
-
-                <div>
-                    <x-input-label for="state" :value="__('State')" class="text-gray-700" />
-                    <x-text-input id="state"
-                        class="mt-2 block w-full p-3 rounded-md border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-150"
-                        type="text" name="state" :value="old('state')" required />
-                    <x-input-error :messages="$errors->get('state')" class="mt-2" />
-                </div>
-
-                <div>
-                    <x-input-label for="zip_code" :value="__('ZIP Code')" class="text-gray-700" />
-                    <x-text-input id="zip_code"
-                        class="mt-2 block w-full p-3 rounded-md border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-150"
-                        type="text" name="zip_code" :value="old('zip_code')" required />
-                    <x-input-error :messages="$errors->get('zip_code')" class="mt-2" />
-                </div>
-
-                <div>
-                    <x-input-label for="country" :value="__('Country')" class="text-gray-700" />
-                    <x-text-input id="country"
-                        class="mt-2 block w-full p-3 rounded-md border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-150"
-                        type="text" name="country" :value="old('country')" required />
-                    <x-input-error :messages="$errors->get('country')" class="mt-2" />
+                
+                <div class="text-sm text-gray-600 text-center">
+                    <p>By registering, you agree to our <a href="#" class="text-blue-500 hover:underline">Terms of Service</a> and <a href="#" class="text-blue-500 hover:underline">Privacy Policy</a>.</p>
                 </div>
             </div>
         </div>
@@ -207,69 +135,148 @@
         </div>
     </form>
 
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            let currentStep = 1;
-            const totalSteps = 3;
-            const nextBtn = document.getElementById('nextBtn');
-            const prevBtn = document.getElementById('prevBtn');
-            const submitBtn = document.getElementById('submitBtn');
+    let currentStep = 1;
+    const totalSteps = 3;
+    const nextBtn = document.getElementById('nextBtn');
+    const prevBtn = document.getElementById('prevBtn');
+    const submitBtn = document.getElementById('submitBtn');
 
-            // Show the specified step
-            function showStep(step) {
-                // Hide all steps
-                document.querySelectorAll('.step-content').forEach(el => {
-                    el.classList.add('hidden');
-                });
-
-                // Show current step
-                document.getElementById(`step${step}`).classList.remove('hidden');
-
-                // Update breadcrumb indicators
-                for (let i = 1; i <= totalSteps; i++) {
-                    const indicator = document.getElementById(`step${i}-indicator`);
-                    if (i < step) {
-                        // Completed step
-                        indicator.classList.remove('bg-gray-200', 'text-gray-600', 'bg-blue-500');
-                        indicator.classList.add('bg-green-500', 'text-white');
-                        indicator.innerHTML = '✓';
-                    } else if (i === step) {
-                        // Current step
-                        indicator.classList.remove('bg-gray-200', 'text-gray-600', 'bg-green-500');
-                        indicator.classList.add('bg-blue-500', 'text-white');
-                        indicator.innerHTML = i;
-                    } else {
-                        // Future step
-                        indicator.classList.remove('bg-blue-500', 'text-white', 'bg-green-500');
-                        indicator.classList.add('bg-gray-200', 'text-gray-600');
-                        indicator.innerHTML = i;
-                    }
-                }
-
-                // Update buttons
-                prevBtn.classList.toggle('hidden', step === 1);
-                nextBtn.classList.toggle('hidden', step === totalSteps);
-                submitBtn.classList.toggle('hidden', step !== totalSteps);
-            }
-
-            // Handle next button click
-            nextBtn.addEventListener('click', function () {
-                if (currentStep < totalSteps) {
-                    currentStep++;
-                    showStep(currentStep);
-                }
-            });
-
-            // Handle previous button click
-            prevBtn.addEventListener('click', function () {
-                if (currentStep > 1) {
-                    currentStep--;
-                    showStep(currentStep);
-                }
-            });
-
-            // Initialize the form
-            showStep(1);
+    // Show the specified step
+    function showStep(step) {
+        // Hide all steps
+        document.querySelectorAll('.step-content').forEach(el => {
+            el.classList.add('hidden');
         });
+        
+        // Show the current step
+        document.getElementById('step' + step).classList.remove('hidden');
+        
+        // Update buttons
+        prevBtn.classList.toggle('hidden', step === 1);
+        nextBtn.classList.toggle('hidden', step === totalSteps);
+        submitBtn.classList.toggle('hidden', step !== totalSteps);
+    }
+
+    // Validate the current step
+    function validateStep(step) {
+        let isValid = true;
+        const errorMessages = [];
+        
+        if (step === 1) {
+            // Validate personal information fields
+            const requiredFields = ['first_name', 'last_name', 'email', 'password', 'password_confirmation'];
+            
+            requiredFields.forEach(field => {
+                const input = document.getElementById(field);
+                if (!input.value.trim()) {
+                    isValid = false;
+                    errorMessages.push(`${field.replace('_', ' ')} is required`);
+                    input.classList.add('border-red-500');
+                } else {
+                    input.classList.remove('border-red-500');
+                }
+            });
+            
+            // Validate email format
+            const email = document.getElementById('email');
+            if (email.value.trim() && !isValidEmail(email.value.trim())) {
+                isValid = false;
+                errorMessages.push('Please enter a valid email address');
+                email.classList.add('border-red-500');
+            }
+            
+            // Validate password match
+            const password = document.getElementById('password');
+            const passwordConfirmation = document.getElementById('password_confirmation');
+            if (password.value && passwordConfirmation.value && password.value !== passwordConfirmation.value) {
+                isValid = false;
+                errorMessages.push('Passwords do not match');
+                passwordConfirmation.classList.add('border-red-500');
+            }
+        } else if (step === 2) {
+            // Validate verification code
+            const verificationCode = document.getElementById('verification_code');
+            if (!verificationCode.value.trim()) {
+                isValid = false;
+                errorMessages.push('Verification code is required');
+                verificationCode.classList.add('border-red-500');
+            } else {
+                verificationCode.classList.remove('border-red-500');
+            }
+        }
+        
+        // Display error messages
+        const errorContainer = document.getElementById('validation-errors');
+        if (errorContainer) {
+            errorContainer.innerHTML = '';
+            
+            if (!isValid) {
+                errorMessages.forEach(message => {
+                    const errorElement = document.createElement('p');
+                    errorElement.className = 'text-red-500 text-sm mt-1';
+                    errorElement.textContent = message;
+                    errorContainer.appendChild(errorElement);
+                });
+                errorContainer.classList.remove('hidden');
+            } else {
+                errorContainer.classList.add('hidden');
+            }
+        }
+        
+        return isValid;
+    }
+    
+    // Email validation helper
+    function isValidEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
+
+    // Next button click
+    nextBtn.addEventListener('click', function() {
+        if (validateStep(currentStep) && currentStep < totalSteps) {
+            currentStep++;
+            showStep(currentStep);
+            document.getElementById('validation-errors').classList.add('hidden');
+        }
+    });
+
+    // Previous button click
+    prevBtn.addEventListener('click', function() {
+        if (currentStep > 1) {
+            currentStep--;
+            showStep(currentStep);
+            document.getElementById('validation-errors').classList.add('hidden');
+        }
+    });
+
+    // Resend code functionality
+    document.getElementById('resendCode')?.addEventListener('click', function() {
+        alert('Verification code resent. Please check your email.');
+        // Here you would typically make an AJAX call to resend the code
+    });
+
+    // Form submission validation
+    document.getElementById('registrationForm').addEventListener('submit', function(e) {
+        if (!validateStep(currentStep)) {
+            e.preventDefault();
+        }
+    });
+
+    // Initialize form
+    showStep(currentStep);
+    
+    // Add validation error container if it doesn't exist
+    if (!document.getElementById('validation-errors')) {
+        const errorContainer = document.createElement('div');
+        errorContainer.id = 'validation-errors';
+        errorContainer.className = 'mt-4 p-3 bg-red-50 rounded-lg hidden';
+        const form = document.getElementById('registrationForm');
+        form.insertBefore(errorContainer, form.querySelector('.flex.items-center.justify-between'));
+    }
+});
     </script>
 </x-guest-layout>
