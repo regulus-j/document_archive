@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\Http;
 
 class RegisteredUserController extends Controller
 {
@@ -31,14 +32,17 @@ class RegisteredUserController extends Controller
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'company_name' => ['required', 'string', 'max:255'],
-            'registered_name' => ['required', 'string', 'max:255'],
-            'company_email' => ['required', 'email', 'max:255'],
-            'company_phone' => ['required', 'string', 'max:20'],
-            'address' => ['required', 'string', 'max:255'],
-            'city' => ['required', 'string', 'max:255'],
-            'state' => ['required', 'string', 'max:255'],
-            'zip_code' => ['required', 'string', 'max:20'],
-            'country' => ['required', 'string', 'max:255'],
+            'g-recaptcha-response' => ['required', function ($attribute, $value, $fail) {
+                $response = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
+                    'secret' => env('RECAPTCHA_SECRET_KEY'),
+                    'response' => $value,
+                    'remoteip' => request()->ip(),
+                ]);
+                
+                if (!$response->json('success')) {
+                    $fail('The reCAPTCHA verification failed. Please try again.');
+                }
+            }],
         ]);
 
         $user = User::create([
@@ -56,22 +60,31 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
-        //pre-emptive code for company registration
+        // Generate verification code before redirecting to verification notice
+        $user->generateVerificationCode();
+
+        // Get registered_name or default to company_name if not provided
+        $registeredName = $request->registered_name ?: $request->company_name;
+        
+        // Get company_email or default to user's email if not provided
+        $companyEmail = $request->company_email ?: $request->email;
+        
+        // Company registration with required fields
         $company = CompanyAccount::create([
             'user_id' => auth()->id(),
             'company_name' => $request->company_name,
-            'registered_name' => $request->registered_name,
-            'company_email' => $request->company_email,
-            'company_phone' => $request->company_phone,
+            'registered_name' => $registeredName,
+            'company_email' => $companyEmail,
+            'company_phone' => $request->company_phone ?: '00000000000',
         ]);
 
         $companyAddress = CompanyAddress::create([
             'company_id' => $company->id,
-            'address' => $request->address,
-            'city' => $request->city,
-            'state' => $request->state,
-            'zip_code' => $request->zip_code,
-            'country' => $request->country,
+            'address' => $request->address ?: 'Default Address',
+            'city' => $request->city ?: 'Default City',
+            'state' => $request->state ?: 'Default State',
+            'zip_code' => $request->zip_code ?: '00000',
+            'country' => $request->country ?: 'Default Country',
         ]);
 
         CompanyUser::create([
@@ -79,7 +92,10 @@ class RegisteredUserController extends Controller
             'user_id' => $user->id,
         ]);
 
-        return redirect(route('dashboard', absolute: false));
+        return redirect()->intended(route('verification.notice'))
+            ->with('status', 'verification-link-sent');
+
+        // return redirect(route('dashboard', absolute: false));
     }
 }
 
