@@ -143,6 +143,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/create', [DocumentController::class, 'create'])->name('documents.create');
         Route::post('/', [DocumentController::class, 'uploadController'])->name('documents.store');
 
+        Route::get('/receive', [DocumentController::class, 'receiveIndex'])->name('documents.receive.index');
+
         // Static routes
         Route::get('/archive', [DocumentController::class, 'showArchive'])->name('documents.archive');
         Route::get('/released', [DocumentController::class, 'showReleased'])->name('documents.released');

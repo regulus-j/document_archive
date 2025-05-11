@@ -912,4 +912,25 @@ class DocumentController extends Controller
         return redirect()->route('documents.index')
             ->with('success', 'Document workflow has been cancelled.');
     }
+
+  /**
+ * Display the document receiving index page.
+ */
+public function receiveIndex(): View
+{
+    // Get documents that can be received by the current user
+    $userOfficeIds = auth()->user()->offices->pluck('id')->toArray();
+    
+    $documents = Document::with(['user', 'status', 'transaction.fromOffice', 'transaction.toOffice'])
+        ->whereHas('transaction', function($query) use ($userOfficeIds) {
+            $query->whereIn('to_office', $userOfficeIds);
+        })
+        ->whereHas('status', function($query) {
+            $query->where('id', '!=', 3); // Not completed
+        })
+        ->latest()
+        ->paginate(10);
+        
+    return view('documents.receive', compact('documents'));
+}
 }
