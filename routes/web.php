@@ -72,6 +72,7 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth'])->group(function () {
     Route::resource('addresses', AddressController::class);
     Route::get('/admin/users', [UserController::class, 'index'])->name('admin.users-index');
+    Route::get('/archived-documents', [\App\Http\Controllers\ArchivedDocumentController::class, 'index'])->middleware('role:company-admin')->name('archived-documents.index');
 });
 
 //--------------------------------------------------------------------------------------------------------------------
