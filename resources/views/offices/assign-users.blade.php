@@ -15,7 +15,7 @@
                             </svg>
                         </div>
                         <div>
-                            <h1 class="text-2xl font-bold text-gray-800">{{ __('Assign Users to Office') }}</h1>
+                            <h1 class="text-2xl font-bold text-gray-800">{{ __('Assign Users to Team') }}</h1>
                             <p class="text-sm text-gray-500">Manage users for: <span class="font-semibold">{{ $office->name }}</span></p>
                         </div>
                     </div>
@@ -29,7 +29,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                             </svg>
-                            {{ __('View Office') }}
+                            {{ __('View Team') }}
                         </a>
                         <a href="{{ route('office.index') }}"
                             class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
@@ -38,7 +38,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M11 17l-5-5m0 0l5-5m-5 5h12" />
                             </svg>
-                            {{ __('Back to Offices') }}
+                            {{ __('Back to Teams') }}
                         </a>
                     </div>
                 </div>
@@ -84,7 +84,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                             </svg>
-                            {{ __('Users in this Office') }} ({{ $assignedUsers->count() }})
+                            {{ __('Users in this Team') }} ({{ $assignedUsers->count() }})
                         </h2>
                     </div>
 
@@ -94,7 +94,7 @@
                                 <svg class="mx-auto h-12 w-12 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                                 </svg>
-                                <p class="mt-2">No users are currently assigned to this office.</p>
+                                <p class="mt-2">No users are currently assigned to this team.</p>
                             </div>
                         @else
                             <ul class="divide-y divide-gray-200 max-h-96 overflow-y-auto">
@@ -120,7 +120,7 @@
                                                     <input type="hidden" name="user_id" value="{{ $user->id }}">
                                                     <button type="submit"
                                                         class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                                                        onclick="return confirm('Are you sure you want to remove this user from the office?')">
+                                                        onclick="return confirm('Are you sure you want to remove this user from the team?')">
                                                         <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                                         </svg>
@@ -128,7 +128,7 @@
                                                 </form>
                                             @else
                                                 <span class="inline-flex items-center px-3 py-1 text-xs font-medium rounded shadow-sm text-white bg-green-500">
-                                                    Office Leader
+                                                    Team Leader
                                                 </span>
                                             @endif
                                         </div>
