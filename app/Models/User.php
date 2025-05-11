@@ -63,6 +63,12 @@ class User extends Authenticatable
         return $this->belongsToMany(Office::class);
     }
 
+    // Teams (alias for offices)
+    public function teams()
+    {
+        return $this->belongsToMany(Office::class);
+    }
+
 
 
 
