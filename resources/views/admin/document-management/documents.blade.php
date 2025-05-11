@@ -16,15 +16,17 @@
                         <p class="text-sm text-gray-500">View and manage your documents</p>
                     </div>
                 </div>
-                <button type="button" data-bs-toggle="modal" data-bs-target="#bulkDeleteModal"
-                    class="inline-flex items-center px-4 py-2 border border-rose-200 text-sm font-medium rounded-lg shadow-sm text-rose-700 bg-rose-50 hover:bg-rose-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500 transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                    Bulk Delete Documents
-                </button>
+                <div class="flex items-center space-x-3">
+                    <button type="button" data-bs-toggle="modal" data-bs-target="#bulkDeleteModal"
+                        class="inline-flex items-center px-4 py-2 border border-rose-200 text-sm font-medium rounded-lg shadow-sm text-rose-700 bg-rose-50 hover:bg-rose-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        Bulk Delete Documents
+                    </button>
+                </div>
             </div>
         </div>
 

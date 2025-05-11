@@ -166,6 +166,7 @@
                 </div>
             </div>
         </div>
+        @include('documents.partials.archive')
     </div>
 </div>
 
