@@ -17,9 +17,6 @@ class CompanyAccount extends Model
         'company_name',
         'registered_name',
         'company_email',
-        'company_phone',
-        'industry',
-        'company_size',
     ];
 
     // Custom validation rules
@@ -45,14 +42,15 @@ class CompanyAccount extends Model
             'company_name' => 'required|string|max:255',
             'registered_name' => 'required|string|max:255',
             'company_email' => 'required|email|max:255',
-            'company_phone' => 'required|string|max:20',
         ];
     }
 
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
-    }
+    
+    public function users()
+{
+    return $this->belongsToMany(User::class, 'company_users', 'company_id', 'user_id');
+}
+
 
     public function employees()
     {
@@ -91,7 +89,7 @@ class CompanyAccount extends Model
     public function userLimit()
     {
         // Check if there is currently a subscription
-        $subscription = $this->subscriptions()->with('plan.features')->latest()->first();
+        $subscription = $this->subscriptions()->with('plan.features')->first();
 
         if (!$subscription) {
             return 3;
@@ -118,7 +116,7 @@ class CompanyAccount extends Model
     public function teamLimit()
     {
         // Check if there is currently a subscription
-        $subscription = $this->subscriptions()->with('plan.features')->latest()->first();
+        $subscription = $this->subscriptions()->with('plan.features')->first();
 
         if (!$subscription) {
             return 1;
@@ -126,11 +124,11 @@ class CompanyAccount extends Model
 
         $plan = $subscription->plan;
         // Check which user limit feature the plan has
-        if ($plan->hasFeature('teams-20')) {
+        if ($plan->hasFeature('users-20')) {
             return 20;
-        } elseif ($plan->hasFeature('teams-10')) {
+        } elseif ($plan->hasFeature('users-10')) {
             return 10;
-        } elseif ($plan->hasFeature('teams-3')) {
+        } elseif ($plan->hasFeature('users-3')) {
             return 3;
         } else {
             // Fallback to free tier limit if no user limit feature found
