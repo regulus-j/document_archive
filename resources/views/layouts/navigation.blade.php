@@ -224,7 +224,7 @@
                 <div class="hidden lg:block">
                     <div class="flex items-center">
                         <div class="relative" style="z-index: 999;">
-                            <x-dropdown align="right" width="48">
+                            <x-dropdown align="right" width="54">
                                 <x-slot name="trigger">
                                     <button class="flex items-center text-sm font-medium text-gray-600 hover:text-blue-600 focus:outline-none focus:text-blue-600 rounded-md px-3 py-2">
                                         <div>{{ Auth::user()->first_name }} {{ Auth::user()->last_name }}</div>
@@ -236,7 +236,36 @@
                                     </button>
                                 </x-slot>
 
-                                <x-slot name="content">
+                                <x-slot name="content" class="w-full">
+                                <!-- User Info Section -->
+                                <div class="w-full px-3 py-2 border-b border-gray-100">
+                                    <div class="flex items-start space-x-2">
+                                        <!-- User Initials Badge -->
+                                        <div class="w-8 h-8 rounded-full bg-indigo-600 flex-shrink-0 flex items-center justify-center text-white text-xs">
+                                            {{ substr(Auth::user()->first_name, 0, 1) }}{{ substr(Auth::user()->last_name, 0, 1) }}
+                                        </div>
+                                        
+                                        <!-- User Details -->
+                                        <div class="min-w-0 flex-1">
+                                            <div class="text-sm font-medium text-gray-900 truncate leading-tight">
+                                                {{ Auth::user()->first_name }} {{ Auth::user()->last_name }}
+                                            </div>
+                                            <div class="text-xs text-gray-500 truncate leading-tight">
+                                                {{ Auth::user()->email }}
+                                            </div>
+                                            @if(Auth::user()->offices->isNotEmpty())
+                                            <div class="text-xs text-gray-400 truncate leading-tight">
+                                                {{ Auth::user()->offices->first()->name }}
+                                            </div>
+                                            @endif
+                                            @if(Auth::user()->hasRole('company-admin') && Auth::user()->company)
+                                            <div class="text-xs text-indigo-500 truncate leading-tight mt-1 font-medium">
+                                                {{ Auth::user()->company->company_name }}
+                                            </div>
+                                        @endif
+                                        </div>
+                                    </div>
+                                </div>
                                     <!-- Profile link is always shown -->
                                     <x-dropdown-link :href="route('profile.edit')" class="hover:bg-blue-50 hover:text-blue-600">
                                         {{ __('Profile') }}
