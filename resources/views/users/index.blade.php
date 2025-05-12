@@ -1,4 +1,3 @@
-
 @extends('layouts.app')
 
 @section('content')
@@ -16,6 +15,7 @@
                     <h1 class="text-xl font-semibold text-gray-900">{{ __('Users') }}</h1>
                 </div>
                 <div class="flex items-center space-x-3">
+                    @if($canAddUser)
                     <a href="{{ route('users.create') }}"
                         class="inline-flex items-center px-4 py-2 bg-[#0066FF] text-white text-sm font-medium rounded-md hover:bg-[#0052CC] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0066FF] transition-colors duration-150">
                         <svg class="h-5 w-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -24,7 +24,14 @@
                         </svg>
                         {{ __('Add New User') }}
                     </a>
+                    @else
+                    <p class="inline-flex items-center px-4 py-2 bg-[#0066ff8f] text-white text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors duration-150">
+                        Maximum Users Reached: {{$userLimit}}
+                    </p>
+                    @endif
+
                 </div>
+
             </div>
         </div>
 
@@ -70,23 +77,23 @@
         </div>
 
         @if (session('success'))
-            <div class="rounded-md bg-[#0066FF]/10 p-4 mb-8 shadow-md">
-                <div class="flex">
-                    <div class="flex-shrink-0">
-                        <svg class="h-5 w-5 text-[#0066FF]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                            fill="currentColor" aria-hidden="true">
-                            <path fill-rule="evenodd"
-                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                clip-rule="evenodd" />
-                        </svg>
-                    </div>
-                    <div class="ml-3">
-                        <p class="text-sm font-medium text-[#0066FF]">
-                            {{ session('success') }}
-                        </p>
-                    </div>
+        <div class="rounded-md bg-[#0066FF]/10 p-4 mb-8 shadow-md">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-[#0066FF]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                        fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                            clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium text-[#0066FF]">
+                        {{ session('success') }}
+                    </p>
                 </div>
             </div>
+        </div>
         @endif
 
         <!-- Users Table -->
@@ -122,48 +129,48 @@
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
                     @foreach($users ?? [] as $user)
-                        <tr class="hover:bg-gray-50 transition-colors duration-150">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {{ $loop->iteration }}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                {{ $user->first_name }} {{ $user->last_name }}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {{ $user->email }}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                @if($user->teams && $user->teams->count())
-                                    {{ $user->teams->pluck('name')->join(', ') }}
-                                @else
-                                    <span class="text-gray-400 italic">No Team</span>
-                                @endif
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                @foreach ($user->roles as $role)
-                                    <span
-                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#0066FF]/10 text-[#0066FF]">
-                                        {{ $role->name }}
-                                    </span>
-                                @endforeach
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                                <a href="{{ route('users.show', $user->id) }}" class="text-[#0066FF] hover:text-[#0052CC]">
-                                    {{ __('View') }}
-                                </a>
-                                <a href="{{ route('users.edit', $user->id) }}" class="text-[#0066FF] hover:text-[#0052CC]">
-                                    {{ __('Edit') }}
-                                </a>
-                                <form action="{{ route('users.destroy', $user->id) }}" method="POST" class="inline">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="text-red-600 hover:text-red-900"
-                                        onclick="return confirm('{{ __('Are you sure you want to delete this user?') }}')">
-                                        {{ __('Delete') }}
-                                    </button>
-                                </form>
-                            </td>
-                        </tr>
+                    <tr class="hover:bg-gray-50 transition-colors duration-150">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ $loop->iteration }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {{ $user->first_name }} {{ $user->last_name }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ $user->email }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            @if($user->teams && $user->teams->count())
+                            {{ $user->teams->pluck('name')->join(', ') }}
+                            @else
+                            <span class="text-gray-400 italic">No Team</span>
+                            @endif
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            @foreach ($user->roles as $role)
+                            <span
+                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#0066FF]/10 text-[#0066FF]">
+                                {{ $role->name }}
+                            </span>
+                            @endforeach
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                            <a href="{{ route('users.show', $user->id) }}" class="text-[#0066FF] hover:text-[#0052CC]">
+                                {{ __('View') }}
+                            </a>
+                            <a href="{{ route('users.edit', $user->id) }}" class="text-[#0066FF] hover:text-[#0052CC]">
+                                {{ __('Edit') }}
+                            </a>
+                            <form action="{{ route('users.destroy', $user->id) }}" method="POST" class="inline">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="text-red-600 hover:text-red-900"
+                                    onclick="return confirm('{{ __('Are you sure you want to delete this user?') }}')">
+                                    {{ __('Delete') }}
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
                     @endforeach
                 </tbody>
             </table>

@@ -6,6 +6,7 @@ use App\Mail\userInvite;
 use App\Models\Office;
 use App\Models\User;
 use App\Models\CompanyAccount;
+use App\Models\CompanySubscription;
 use App\Models\Plan;
 use App\Models\CompanyUser;
 use Illuminate\Http\RedirectResponse;
@@ -63,9 +64,15 @@ class UserController extends Controller
             $users = User::where('id', auth()->id())->paginate(5);
         }
 
-        return view('users.index', compact('users', 'roles'))
+        $userLimit = auth()->user()->companies()->first()->userLimit();
+        $canAddUser = auth()->user()->companies()->first()->canAddUser();
+
+
+        return view('users.index', compact('users', 'roles', 'userLimit', 'canAddUser'))
             ->with('i', ($request->input('page', 1) - 1) * 5);
     }
+
+
     public function showRegistered(): View
     {
         $users = User::with(['companies.subscriptions.plan'])
@@ -239,7 +246,7 @@ class UserController extends Controller
         ]);
 
         return redirect()->route('users.index')
-            ->with('success', 'User created successfully');
+            ->with('error', 'User created successfully');
     }
 
     /**
