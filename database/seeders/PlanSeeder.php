@@ -14,7 +14,7 @@ class PlanSeeder extends Seeder
      */
     public function run(): void
     {
-        // First create the plans
+        // Create the plans
         $basicPlan = Plan::firstOrCreate(
             ['plan_name' => 'Basic Plan'],
             [
@@ -45,28 +45,79 @@ class PlanSeeder extends Seeder
             ]
         );
 
-        // Get all features
-        $documentStorage = Feature::where('key', 'document-storage')->first();
-        $advancedSharing = Feature::where('key', 'advanced-sharing')->first();
-        $analytics = Feature::where('key', 'analytics')->first();
+        // Get user limit features
+        $users3 = Feature::where('key', 'users-3')->first();
+        $users10 = Feature::where('key', 'users-10')->first();
+        $users30 = Feature::where('key', 'users-30')->first();
+        $users100 = Feature::where('key', 'users-100')->first();
 
-        // Assign features to plans with proper data type handling
-        if ($documentStorage) {
-            $basicPlan->features()->syncWithoutDetaching([$documentStorage->id => ['enabled' => true]]);
-            $standardPlan->features()->syncWithoutDetaching([$documentStorage->id => ['enabled' => true]]);
-            $premiumPlan->features()->syncWithoutDetaching([$documentStorage->id => ['enabled' => true]]);
+        // Get team limit features
+        $teams1 = Feature::where('key', 'teams-1')->first();
+        $teams3 = Feature::where('key', 'teams-3')->first();
+        $teams10 = Feature::where('key', 'teams-10')->first();
+        $teams20 = Feature::where('key', 'teams-20')->first();
+
+        // Get storage limit features
+        $storage500mb = Feature::where('key', 'storage-500mb')->first();
+        $storage2gb = Feature::where('key', 'storage-2gb')->first();
+        $storage10gb = Feature::where('key', 'storage-10gb')->first();
+        $storage50gb = Feature::where('key', 'storage-50gb')->first();
+
+        // Assign features to Basic plan (10 users, 3 teams, 2GB)
+        if ($users10) {
+            $basicPlan->features()->syncWithoutDetaching([$users10->id => ['enabled' => true]]);
+        }
+        if ($teams3) {
+            $basicPlan->features()->syncWithoutDetaching([$teams3->id => ['enabled' => true]]);
+        }
+        if ($storage2gb) {
+            $basicPlan->features()->syncWithoutDetaching([$storage2gb->id => ['enabled' => true]]);
         }
 
-        if ($advancedSharing) {
-            $basicPlan->features()->syncWithoutDetaching([$advancedSharing->id => ['enabled' => false]]);
-            $standardPlan->features()->syncWithoutDetaching([$advancedSharing->id => ['enabled' => true]]);
-            $premiumPlan->features()->syncWithoutDetaching([$advancedSharing->id => ['enabled' => true]]);
+        // Assign features to Standard plan (30 users, 10 teams, 10GB)
+        if ($users30) {
+            $standardPlan->features()->syncWithoutDetaching([$users30->id => ['enabled' => true]]);
+        }
+        if ($teams10) {
+            $standardPlan->features()->syncWithoutDetaching([$teams10->id => ['enabled' => true]]);
+        }
+        if ($storage10gb) {
+            $standardPlan->features()->syncWithoutDetaching([$storage10gb->id => ['enabled' => true]]);
         }
 
-        if ($analytics) {
-            $basicPlan->features()->syncWithoutDetaching([$analytics->id => ['enabled' => false]]);
-            $standardPlan->features()->syncWithoutDetaching([$analytics->id => ['enabled' => false]]);
-            $premiumPlan->features()->syncWithoutDetaching([$analytics->id => ['enabled' => true]]);
+        // Assign features to Premium plan (100 users, 20 teams, 50GB)
+        if ($users100) {
+            $premiumPlan->features()->syncWithoutDetaching([$users100->id => ['enabled' => true]]);
         }
+        if ($teams20) {
+            $premiumPlan->features()->syncWithoutDetaching([$teams20->id => ['enabled' => true]]);
+        }
+        if ($storage50gb) {
+            $premiumPlan->features()->syncWithoutDetaching([$storage50gb->id => ['enabled' => true]]);
+        }
+
+        // Get additional features
+        // $documentStorage = Feature::where('key', 'document-storage')->first();
+        // $advancedSharing = Feature::where('key', 'advanced-sharing')->first();
+        // $analytics = Feature::where('key', 'analytics')->first();
+
+        // Assign additional features to plans
+        // if ($documentStorage) {
+        //     $basicPlan->features()->syncWithoutDetaching([$documentStorage->id => ['enabled' => true]]);
+        //     $standardPlan->features()->syncWithoutDetaching([$documentStorage->id => ['enabled' => true]]);
+        //     $premiumPlan->features()->syncWithoutDetaching([$documentStorage->id => ['enabled' => true]]);
+        // }
+
+        // if ($advancedSharing) {
+        //     $basicPlan->features()->syncWithoutDetaching([$advancedSharing->id => ['enabled' => false]]);
+        //     $standardPlan->features()->syncWithoutDetaching([$advancedSharing->id => ['enabled' => true]]);
+        //     $premiumPlan->features()->syncWithoutDetaching([$advancedSharing->id => ['enabled' => true]]);
+        // }
+
+        // if ($analytics) {
+        //     $basicPlan->features()->syncWithoutDetaching([$analytics->id => ['enabled' => false]]);
+        //     $standardPlan->features()->syncWithoutDetaching([$analytics->id => ['enabled' => false]]);
+        //     $premiumPlan->features()->syncWithoutDetaching([$analytics->id => ['enabled' => true]]);
+        // }
     }
 }
