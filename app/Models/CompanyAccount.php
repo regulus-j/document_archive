@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class CompanyAccount extends Model
 {
     use HasFactory;
-    
+
     protected $fillable = [
         'user_id',
         'company_name',
@@ -31,12 +31,12 @@ class CompanyAccount extends Model
                 'exists:users,id',
                 function ($attribute, $value, $fail) use ($userId) {
                     $query = self::where('user_id', $value);
-                    
+
                     // If updating an existing record, exclude the current record
                     if ($userId) {
                         $query->where('id', '!=', $userId);
                     }
-                    
+
                     if ($query->exists()) {
                         $fail('This user already owns a company.');
                     }
@@ -74,18 +74,46 @@ class CompanyAccount extends Model
     public function latestSubscriptionByStartDate(): HasOne
     {
         return $this->hasOne(CompanySubscription::class, 'company_id')
-                    ->orderBy('start_date', 'desc');
+            ->orderBy('start_date', 'desc');
     }
 
     public function latestSubscriptionByEndDate(): HasOne
     {
         return $this->hasOne(CompanySubscription::class, 'company_id')
-                    ->orderBy('end_date', 'desc');
+            ->orderBy('end_date', 'desc');
     }
 
     public function subscriptions(): HasMany
     {
         return $this->hasMany(CompanySubscription::class, 'company_id');
     }
-}
 
+    public function userLimit()
+    {
+        // Check if there is currently a subscription
+        $subscription = $this->subscriptions()->with('plan.features')->first();
+
+        if (!$subscription) {
+            return 3;
+        }
+
+        $plan = $subscription->plan;
+        // Check which user limit feature the plan has
+        if ($plan->hasFeature('users-100')) {
+            return 100;
+        } elseif ($plan->hasFeature('users-30')) {
+            return 30;
+        } elseif ($plan->hasFeature('users-10')) {
+            return 10;
+        } else {
+            // Fallback to free tier limit if no user limit feature found
+            return 3;
+        }
+    }
+    public function canAddUser()
+    {
+        return $this->employees->count() < $this->userLimit();
+    }
+    // $plan->hasFeature('teams-10');
+    // $plan->hasFeature('storage-2gb');
+}
