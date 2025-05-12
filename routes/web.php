@@ -20,6 +20,7 @@ use App\Http\Controllers\TrialController;
 use App\Http\Controllers\UserManualController;
 use App\Http\Controllers\UserManagedController;
 use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\NotificationController;
 
 
 Route::get('/', function () {
@@ -148,6 +149,7 @@ Route::middleware('auth')->group(function () {
 
         // Static routes
         Route::get('/archive', [DocumentController::class, 'showArchive'])->name('documents.archive');
+        Route::post('/archive/{document}', [DocumentController::class, 'archiveDocument'])->name('documents.archive.store');
         Route::get('/released', [DocumentController::class, 'showReleased'])->name('documents.released');
         Route::get('/pending', [DocumentController::class, 'showPending'])->name('documents.pending');
         Route::get('/complete', [DocumentController::class, 'showComplete'])->name('documents.complete');
@@ -194,6 +196,8 @@ Route::middleware('auth')->group(function () {
         Route::delete('/{document}/delete', [DocumentController::class, 'destroy'])->name('documents.destroy');
         Route::delete('/{document}/delete-attachment', [DocumentController::class, 'deleteAttachment'])->name('documents.attachments.destroy');
         Route::post('/documents/{document}/cancel', [DocumentController::class, 'cancelWorkflow'])->name('documents.cancel');
+        Route::post('/documents/{document}/recall', [DocumentController::class, 'recallDocument'])->name('documents.recall');
+        Route::post('/documents/{document}/resume', [DocumentController::class, 'resumeDocument'])->name('documents.resume');
 
         // Update status route
         // Route::get('/{document}/status', [DocumentController::class, 'confirmReleased'])->name('documents.confirmrelease');
@@ -315,3 +319,9 @@ Route::middleware(['auth', 'role:company-admin'])->prefix('admin/documents')->na
 // });
 
 require __DIR__ . '/auth.php';
+
+// Notifications
+Route::middleware('auth')->group(function () {
+    Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.read');
+});

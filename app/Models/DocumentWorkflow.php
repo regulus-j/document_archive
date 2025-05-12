@@ -21,6 +21,7 @@ class DocumentWorkflow extends Model
         'urgency',
         'due_date',
         'remarks',
+        'is_paused',
     ];
 
     public function document()
@@ -150,5 +151,22 @@ class DocumentWorkflow extends Model
         }
         
         return now()->startOfDay()->diffInDays($this->due_date, false);
+    }
+    
+    public function pause()
+    {
+        $this->is_paused = true;
+        $this->save();
+    }
+
+    public function resume()
+    {
+        $this->is_paused = false;
+        $this->save();
+    }
+
+    public function isPaused()
+    {
+        return $this->is_paused === true;
     }
 }

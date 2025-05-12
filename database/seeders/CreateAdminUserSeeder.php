@@ -24,19 +24,22 @@ class CreateAdminUserSeeder extends Seeder
                 'email' => 'superadmin@example.com',
                 'first_name' => 'SuperAdmin',
                 'last_name' => 'User',
-                'password' => Hash::make('password')
+                'password' => Hash::make('password'),
+                'email_verified_at' => now()
             ],
             [
                 'email' => 'admin@example.com',
                 'first_name' => 'Admin',
                 'last_name' => 'User',
-                'password' => Hash::make('password')
+                'password' => Hash::make('password'),
+                'email_verified_at' => now()
             ],
             [
                 'email' => 'user@example.com',
                 'first_name' => 'Regular',
                 'last_name' => 'User',
-                'password' => Hash::make('password')
+                'password' => Hash::make('password'),
+                'email_verified_at' => now()
             ],
         ];
 

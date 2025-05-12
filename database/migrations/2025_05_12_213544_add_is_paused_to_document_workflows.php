@@ -11,10 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('documents', function (Blueprint $table) {
-            //added purpose and claissification columns to documents table
-            $table->string('category')->nullable()->after('description');
-            $table->string('purpose')->nullable()->after('description');
+        Schema::table('document_workflows', function (Blueprint $table) {
+            $table->boolean('is_paused')->default(false)->after('status');
         });
     }
 
@@ -23,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('documents', function (Blueprint $table) {
-            //
+        Schema::table('document_workflows', function (Blueprint $table) {
+            $table->dropColumn('is_paused');
         });
     }
 };
