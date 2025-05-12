@@ -147,7 +147,10 @@ class UserController extends Controller
 
         $users = $query->paginate(5);
 
-        return view('users.index', compact('users', 'roles', 'teams'))
+        $userLimit = auth()->user()->companies()->first()->userLimit();
+        $canAddUser = auth()->user()->companies()->first()->canAddUser();
+
+        return view('users.index', compact('users', 'roles', 'teams', 'userLimit', 'canAddUser'))
             ->with('i', ($request->input('page', 1) - 1) * 5);
     }
 
