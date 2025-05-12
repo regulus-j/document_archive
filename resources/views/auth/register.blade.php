@@ -85,7 +85,7 @@
             </div>
 
             <div>
-                <x-input-label for="company_name" :value="__('Company Name')" class="text-gray-700" />
+                <x-input-label for="company_name" :value="__('Organization Name')" class="text-gray-700" />
                 <x-text-input id="company_name"
                     class="mt-2 block w-full p-3 rounded-md border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-150"
                     type="text" name="company_name" :value="old('company_name')" required
