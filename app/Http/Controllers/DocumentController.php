@@ -183,7 +183,7 @@ class DocumentController extends Controller
             }
 
             $document->status()->create([
-                'status' => 'pending',
+                'status' => 'uploaded',
             ]);
             \Log::info('Initial document status set to pending', ['document_id' => $document->id]);
 
@@ -226,7 +226,7 @@ class DocumentController extends Controller
             }
 
             // Log document creation
-            $this->logDocumentAction($document, 'created', 'pending', 'Document uploaded');
+            $this->logDocumentAction($document, 'created', null, 'Document uploaded');
             \Log::info('Document upload action logged', ['document_id' => $document->id]);
 
             $data = $this->generateTrackingSlip($document->id, auth()->id(), $tracking_number);
@@ -521,7 +521,7 @@ class DocumentController extends Controller
             }
 
             // Log document creation
-            $this->logDocumentAction($document, 'created', 'pending', 'Document uploaded');
+            $this->logDocumentAction($document, 'created', null, 'Document uploaded');
 
             $data = $this->generateTrackingSlip($document->id, auth()->id(), $tracking_number);
 
@@ -711,7 +711,6 @@ class DocumentController extends Controller
             'classification' => 'required|string',
             'purpose' => 'nullable|string',
             'category' => 'nullable|integer',
-            'from_office' => 'required|exists:offices,id',
             'main_document' => 'nullable|file|mimes:jpeg,png,jpg,gif,pdf,docx|max:10240',
             'attachments.*' => 'file|mimes:jpeg,png,jpg,gif,pdf,docx|max:10240',
             'archive' => 'nullable|string',
@@ -772,18 +771,6 @@ class DocumentController extends Controller
                     }
                     \Log::info('Document allowed viewers updated', ['document_id' => $document->id]);
                 }
-            }
-
-            // Update document transaction if forwarding is enabled
-            if ($request->has('to_office') && $request->forward == '1') {
-                $document->transaction()->updateOrCreate(
-                    ['doc_id' => $document->id],
-                    [
-                        'from_office' => $request->from_office,
-                        'to_office' => $request->to_office,
-                    ]
-                );
-                \Log::info('Document transaction updated', ['document_id' => $document->id]);
             }
 
             // Handle new attachments
