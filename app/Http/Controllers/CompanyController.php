@@ -59,7 +59,7 @@ class CompanyController extends Controller
             'company_name',
             'registered_name',
             'company_email',
-            'company_phone',
+
         ]);
 
         if($request->part == '2') {
@@ -81,11 +81,15 @@ class CompanyController extends Controller
     }
 
     public function show(CompanyAccount $company)
-    {
-        // Display the specified company with its address
-        $address = $company->addresses()->first();
-        return view('companies.show', compact('company', 'address'));
-    }
+{
+    $this->authorize('view', $company);
+
+    // Load users if not already eager-loaded
+    $company->load('users');
+
+    return view('companies.show', compact('company'));
+}
+
 
     public function edit(CompanyAccount $company)
     {
