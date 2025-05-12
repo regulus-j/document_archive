@@ -114,6 +114,34 @@ class CompanyAccount extends Model
     {
         return $this->employees->count() < $this->userLimit();
     }
-    // $plan->hasFeature('teams-10');
+
+    public function teamLimit()
+    {
+        // Check if there is currently a subscription
+        $subscription = $this->subscriptions()->with('plan.features')->first();
+
+        if (!$subscription) {
+            return 1;
+        }
+
+        $plan = $subscription->plan;
+        // Check which user limit feature the plan has
+        if ($plan->hasFeature('users-20')) {
+            return 20;
+        } elseif ($plan->hasFeature('users-10')) {
+            return 10;
+        } elseif ($plan->hasFeature('users-3')) {
+            return 3;
+        } else {
+            // Fallback to free tier limit if no user limit feature found
+            return 1;
+        }
+    }
+
+    public function canAddTeam()
+    {
+        return $this->offices->count() < $this->teamLimit();
+    }
+
     // $plan->hasFeature('storage-2gb');
 }
