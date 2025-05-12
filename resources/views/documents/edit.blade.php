@@ -128,6 +128,18 @@
                             required
                         >{{ old('description', $document->description) }}</textarea>
                     </div>
+                    
+                    <!-- Purpose -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1" for="purpose">Purpose</label>
+                        <textarea 
+                            name="purpose" 
+                            id="purpose"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            rows="3"
+                            placeholder="Enter document purpose"
+                        >{{ old('purpose', $document->purpose) }}</textarea>
+                    </div>
 
                     <!-- Classification -->
                     <div>
@@ -137,12 +149,54 @@
                             id="classification"
                             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                             required
+                            onchange="toggleAllowedViewers(this.value)"
                         >
                             <option value="">Select Classification</option>
+                            <option value="Public" {{ (old('classification', $document->classification) == 'Public') ? 'selected' : '' }}>Public</option>
+                            <option value="Private" {{ (old('classification', $document->classification) == 'Private') ? 'selected' : '' }}>Private</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Allowed Viewers (for Private classification) -->
+                    <div id="allowed-viewers-section" style="{{ (old('classification', $document->classification) == 'Private') ? '' : 'display: none;' }}">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Allowed Viewers</label>
+                        <div class="mt-2 space-y-2 max-h-60 overflow-y-auto border border-gray-200 rounded-md p-3">
+                            @foreach(\App\Models\User::where('id', '!=', auth()->id())->get() as $user)
+                                <div class="flex items-start">
+                                    <div class="flex items-center h-5">
+                                        <input 
+                                            type="checkbox" 
+                                            name="allowed_viewers[]" 
+                                            value="{{ $user->id }}" 
+                                            id="viewer-{{ $user->id }}"
+                                            {{ $document->allowedViewers->contains('user_id', $user->id) ? 'checked' : '' }}
+                                            class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300 rounded"
+                                        >
+                                    </div>
+                                    <div class="ml-3 text-sm">
+                                        <label for="viewer-{{ $user->id }}" class="font-medium text-gray-700">
+                                            {{ $user->first_name }} {{ $user->last_name }}
+                                        </label>
+                                        <p class="text-gray-500">{{ $user->email }}</p>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                    
+                    <!-- Category Selection -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1" for="category">Category</label>
+                        <select 
+                            name="category" 
+                            id="category"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                            <option value="">Select Category</option>
                             @foreach($categories as $id => $category)
                                 <option 
                                     value="{{ $id }}" 
-                                    {{ old('classification', $document->categories->first()->id ?? '') == $id ? 'selected' : '' }}
+                                    {{ old('category', $document->categories->first()->id ?? '') == $id ? 'selected' : '' }}
                                 >
                                     {{ $category }}
                                 </option>
@@ -222,11 +276,11 @@
                             <p class="text-gray-500 mb-4 p-3 bg-white rounded-md border border-gray-200">No file currently attached</p>
                         @endif
 
-                        <label class="block text-sm font-medium text-gray-700 mb-1 mt-4" for="upload">Upload New File</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-1 mt-4" for="main_document">Upload New File</label>
                         <input 
                             type="file" 
-                            name="upload" 
-                            id="upload"
+                            name="main_document" 
+                            id="main_document"
                             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 file:mr-4 file:rounded-md file:border-0 file:bg-blue-500 file:text-white file:px-4 file:py-2"
                             accept="jpeg,png,jpg,gif,pdf,docx"
                         >
@@ -274,6 +328,35 @@
                         @endif
                     </div>
 
+                    <!-- Archive and Forward options -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="flex items-center">
+                            <input 
+                                type="checkbox" 
+                                name="archive" 
+                                id="archive" 
+                                value="1" 
+                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                            >
+                            <label for="archive" class="ml-2 block text-sm text-gray-700">
+                                Archive this document
+                            </label>
+                        </div>
+                        
+                        <div class="flex items-center">
+                            <input 
+                                type="checkbox" 
+                                name="forward" 
+                                id="forward" 
+                                value="1" 
+                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                            >
+                            <label for="forward" class="ml-2 block text-sm text-gray-700">
+                                Forward after update
+                            </label>
+                        </div>
+                    </div>
+
                     <!-- Submit Button -->
                     <div class="text-center pt-4">
                         <button 
@@ -291,5 +374,16 @@
         </div>
     </div>
 </div>
+
+<script>
+function toggleAllowedViewers(classification) {
+    const allowedViewersSection = document.getElementById('allowed-viewers-section');
+    if (classification === 'Private') {
+        allowedViewersSection.style.display = 'block';
+    } else {
+        allowedViewersSection.style.display = 'none';
+    }
+}
+</script>
 @endsection
 

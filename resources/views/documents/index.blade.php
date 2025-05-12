@@ -35,8 +35,9 @@
         </div>
 
         <!-- Success/Error Messages -->
-        @if(session('success'))
-            <div class="mb-6 bg-white border-l-4 border-emerald-500 text-emerald-700 p-4 rounded-r-lg shadow-md" role="alert">
+        @if (session('success'))
+            <div class="mb-6 bg-white border-l-4 border-emerald-500 text-emerald-700 p-4 rounded-r-lg shadow-md"
+                role="alert">
                 <div class="flex">
                     <div class="flex-shrink-0">
                         <svg class="h-5 w-5 text-emerald-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
@@ -53,7 +54,7 @@
             </div>
         @endif
 
-        @if(session('error'))
+        @if (session('error'))
             <div class="mb-6 bg-white border-l-4 border-red-500 text-red-700 p-4 rounded-r-lg shadow-md" role="alert">
                 <div class="flex">
                     <div class="flex-shrink-0">
@@ -72,7 +73,7 @@
         @endif
 
         <!-- QR Code Modal -->
-        @if(session('data'))
+        @if (session('data'))
             <div class="fixed inset-0 flex items-center justify-center z-50">
                 <div class="bg-gray-900 bg-opacity-70 absolute inset-0"></div>
                 <div class="bg-white p-8 rounded-xl shadow-2xl z-10 max-w-md w-full">
@@ -92,8 +93,8 @@
                     <div class="flex justify-center space-x-4">
                         <a href="{{ session('data') }}" download="qr-code.png"
                             class="px-4 py-2 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-lg hover:from-emerald-600 hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 shadow-md transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-1" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-1" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                             </svg>
@@ -204,8 +205,8 @@
                                             class="w-full h-full object-contain"></video>
                                         <button type="button" id="capture-button"
                                             class="absolute bottom-4 left-1/2 transform -translate-x-1/2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-md transition-colors">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-1" fill="none"
-                                                viewBox="0 0 24 24" stroke="currentColor">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-1"
+                                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                     d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -239,8 +240,8 @@
                                     <span id="spinner" class="hidden mr-2">
                                         <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg"
                                             fill="none" viewBox="0 0 24 24">
-                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                                stroke-width="4"></circle>
+                                            <circle class="opacity-25" cx="12" cy="12" r="10"
+                                                stroke="currentColor" stroke-width="4"></circle>
                                             <path class="opacity-75" fill="currentColor"
                                                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
                                             </path>
@@ -300,20 +301,22 @@
                             <tbody class="bg-white divide-y divide-gray-200">
                                 @forelse ($documents as $document)
                                     <tr class="hover:bg-gray-50 transition-colors">
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $loop->iteration }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {{ $loop->iteration }}</td>
                                         <td class="px-6 py-4">
                                             <div class="flex flex-col space-y-2">
                                                 <div class="text-sm font-medium text-gray-900">{{ $document->title }}</div>
-                                                
+
                                                 <div class="flex items-center">
-                                                    <div class="flex-shrink-0 h-8 w-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold shadow-sm">
+                                                    <div
+                                                        class="flex-shrink-0 h-8 w-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold shadow-sm">
                                                         {{ substr($document->user->first_name, 0, 1) }}
                                                     </div>
                                                     <div class="ml-3 text-sm text-gray-700">
                                                         {{ $document->user->first_name . ' ' . $document->user->last_name }}
                                                     </div>
                                                 </div>
-                                                
+
                                                 <div class="flex flex-wrap gap-2 items-center">
                                                     @php
                                                         $statusColor = 'gray';
@@ -323,34 +326,40 @@
                                                             $statusColor = 'amber';
                                                         }
                                                     @endphp
-                                                    <span class="px-2.5 py-1 text-xs leading-5 font-semibold rounded-full bg-{{ $statusColor }}-100 text-{{ $statusColor }}-800">
+                                                    <span
+                                                        class="px-2.5 py-1 text-xs leading-5 font-semibold rounded-full bg-{{ $statusColor }}-100 text-{{ $statusColor }}-800">
                                                         {{ $document->status?->status ?? 'N/A' }}
                                                     </span>
-                                                    
+
                                                     <span class="text-xs text-gray-500">
-                                                        <span class="font-medium">From:</span> {{ $document->transaction?->fromOffice?->name ?? 'N/A' }}
+                                                        <span class="font-medium">From:</span>
+                                                        {{ $document->transaction?->fromOffice?->name ?? 'N/A' }}
                                                     </span>
-                                                    
+
                                                     <span class="text-xs text-gray-500">
                                                         <span class="font-medium">To:</span>
-                                                        @if(isset($documentRecipients[$document->id]) && count($documentRecipients[$document->id]) > 0)
-                                                            @foreach($documentRecipients[$document->id] as $recipient)
+                                                        @if (isset($documentRecipients[$document->id]) && count($documentRecipients[$document->id]) > 0)
+                                                            @foreach ($documentRecipients[$document->id] as $recipient)
                                                                 <span class="inline-flex items-center">
                                                                     {{ $recipient['name'] }}
-                                                                    @if(!$loop->last), @endif
+                                                                    @if (!$loop->last)
+                                                                        ,
+                                                                    @endif
                                                                 </span>
                                                             @endforeach
                                                         @else
                                                             N/A
                                                         @endif
                                                     </span>
-                                                    
+
                                                     <span class="text-xs text-gray-500">
-                                                        <span class="font-medium">Uploaded:</span> {{ $document->created_at->format('M d, Y H:i') }}
+                                                        <span class="font-medium">Uploaded:</span>
+                                                        {{ $document->created_at->format('M d, Y H:i') }}
                                                     </span>
-                                                    
+
                                                     <span class="text-xs text-gray-500">
-                                                        <span class="font-medium">Last Updated:</span> {{ $document->updated_at->format('M d, Y H:i') }}
+                                                        <span class="font-medium">Last Updated:</span>
+                                                        {{ $document->updated_at->format('M d, Y H:i') }}
                                                     </span>
                                                 </div>
                                             </div>
@@ -360,68 +369,87 @@
                                                 <a href="{{ route('documents.show', $document->id) }}"
                                                     class="p-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
                                                     title="View">
-                                                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                                        viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg"
+                                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2"
                                                             d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                                     </svg>
                                                 </a>
 
-                                                <a href="{{ route('documents.forward', $document->id) }}"
-                                                    class="p-1.5 bg-amber-50 text-amber-600 rounded-lg hover:bg-amber-100 transition-colors"
-                                                    title="Forward">
-                                                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                                        viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                            d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                                                    </svg>
-                                                </a>
-                                                
-                                                @can('document-edit')
-                                                    <a href="{{ route('documents.edit', $document->id) }}"
-                                                        class="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition-colors"
-                                                        title="Edit">
-                                                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                                            viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                        </svg>
-                                                    </a>
-                                                @endcan
-                                                @can('document-delete')
-                                                    <form action="{{ route('documents.destroy', $document->id) }}" method="POST"
-                                                        onsubmit="return confirm('Are you sure you want to delete this document?');"
-                                                        class="inline-block">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit"
-                                                            class="p-1.5 bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-100 transition-colors"
-                                                            title="Delete">
-                                                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                                                viewBox="0 0 24 24" stroke="currentColor">
+                                                @if ($document->user->id == auth()->user()->id)
+                                                    @if ($document->status->status == 'uploaded' || $document->status->status == 'pending')
+                                                        <a href="{{ route('documents.forward', $document->id) }}"
+                                                            class="p-1.5 bg-amber-50 text-amber-600 rounded-lg hover:bg-amber-100 transition-colors"
+                                                            title="Forward">
+                                                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg"
+                                                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                 <path stroke-linecap="round" stroke-linejoin="round"
                                                                     stroke-width="2"
-                                                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                                    d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                                                            </svg>
+                                                        </a>
+                                                    @elseif($document->status->status == 'forwarded')
+                                                        <a href="{{ route('documents.forward', $document->id) }}"
+                                                            class="p-1.5 bg-amber-50 text-amber-600 rounded-lg hover:bg-amber-100 transition-colors"
+                                                            title="Forward">
+                                                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg"
+                                                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    stroke-width="2"
+                                                                    d="M3 10h10a4 4 0 0 1 0 8H9m-6-4l4-4-4-4" />
+                                                            </svg>
+                                                        </a>
+                                                    @endif
+                                                    @endif
+
+                                                    @can('document-edit')
+                                                        <a href="{{ route('documents.edit', $document->id) }}"
+                                                            class="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition-colors"
+                                                            title="Update">
+                                                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg"
+                                                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    stroke-width="2"
+                                                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                                            </svg>
+                                                        </a>
+                                                    @endcan
+                                                    @can('document-delete')
+                                                        <form action="{{ route('documents.destroy', $document->id) }}"
+                                                            method="POST"
+                                                            onsubmit="return confirm('Are you sure you want to delete this document?');"
+                                                            class="inline-block">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="submit"
+                                                                class="p-1.5 bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-100 transition-colors"
+                                                                title="Delete">
+                                                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg"
+                                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                                        stroke-width="2"
+                                                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                                </svg>
+                                                            </button>
+                                                        </form>
+                                                    @endcan
+                                                    <form action="{{ route('documents.download', $document->id) }}"
+                                                        method="GET" class="inline-block">
+                                                        @csrf
+                                                        <button type="submit"
+                                                            class="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors"
+                                                            title="Download">
+                                                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg"
+                                                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    stroke-width="2"
+                                                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                                                             </svg>
                                                         </button>
                                                     </form>
-                                                @endcan
-                                                <form action="{{ route('documents.download', $document->id) }}" method="GET"
-                                                    class="inline-block">
-                                                    @csrf
-                                                    <button type="submit"
-                                                        class="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors"
-                                                        title="Download">
-                                                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                                            viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2"
-                                                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                                        </svg>
-                                                    </button>
-                                                </form>
                                             </div>
                                         </td>
                                     </tr>
@@ -429,13 +457,15 @@
                                     <tr>
                                         <td colspan="9" class="px-6 py-4 text-center text-sm text-gray-500">
                                             <div class="flex flex-col items-center justify-center py-6">
-                                                <svg class="h-12 w-12 text-gray-400 mb-3" xmlns="http://www.w3.org/2000/svg"
-                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <svg class="h-12 w-12 text-gray-400 mb-3"
+                                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                    stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                         d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                                 </svg>
                                                 <p class="text-gray-500 text-base">No documents found</p>
-                                                <p class="text-gray-400 text-sm mt-1">Try adjusting your search criteria</p>
+                                                <p class="text-gray-400 text-sm mt-1">Try adjusting your search criteria
+                                                </p>
                                             </div>
                                         </td>
                                     </tr>
@@ -491,54 +521,54 @@
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         @forelse($auditLogs as $log)
-                                            <tr class="hover:bg-gray-50 transition-colors">
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                    {{ $log->created_at->format('M d, Y H:i') }}
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700">
-                                                    {{ $log->document?->title ?? 'Deleted Document' }}
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap">
-                                                    <div class="flex items-center">
-                                                        <div
-                                                            class="flex-shrink-0 h-7 w-7 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold shadow-sm text-xs">
-                                                            {{ substr($log->user->first_name, 0, 1) }}
-                                                        </div>
-                                                        <div class="ml-3 text-sm text-gray-700">
-                                                            {{ $log->user->first_name }} {{ $log->user->last_name }}
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap">
-                                                    <span
-                                                        class="px-2.5 py-1 text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                                                        {{ $log->action }}
-                                                    </span>
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap">
-                                                    @php
-                                                        $statusColor = 'gray';
-                                                        if ($log->status == 'Approved') {
-                                                            $statusColor = 'emerald';
-                                                        } elseif ($log->status == 'Pending') {
-                                                            $statusColor = 'amber';
-                                                        } elseif ($log->status == 'Rejected') {
-                                                            $statusColor = 'rose';
-                                                        }
-                                                    @endphp
-                                                    <span
-                                                        class="px-2.5 py-1 text-xs leading-5 font-semibold rounded-full bg-{{ $statusColor }}-100 text-{{ $statusColor }}-800">
-                                                        {{ $log->status }}
-                                                    </span>
-                                                </td>
-                                                <td class="px-6 py-4 text-sm text-gray-500">{{ $log->details }}</td>
-                                            </tr>
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ $log->created_at->format('M d, Y H:i') }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700">
+                                    {{ $log->document?->title ?? 'Deleted Document' }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div
+                                            class="flex-shrink-0 h-7 w-7 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold shadow-sm text-xs">
+                                            {{ substr($log->user->first_name, 0, 1) }}
+                                        </div>
+                                        <div class="ml-3 text-sm text-gray-700">
+                                            {{ $log->user->first_name }} {{ $log->user->last_name }}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="px-2.5 py-1 text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                        {{ $log->action }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    @php
+                                        $statusColor = 'gray';
+                                        if ($log->status == 'Approved') {
+                                            $statusColor = 'emerald';
+                                        } elseif ($log->status == 'Pending') {
+                                            $statusColor = 'amber';
+                                        } elseif ($log->status == 'Rejected') {
+                                            $statusColor = 'rose';
+                                        }
+                                    @endphp
+                                    <span
+                                        class="px-2.5 py-1 text-xs leading-5 font-semibold rounded-full bg-{{ $statusColor }}-100 text-{{ $statusColor }}-800">
+                                        {{ $log->status }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-500">{{ $log->details }}</td>
+                            </tr>
                         @empty
                             <tr>
                                 <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">
                                     <div class="flex flex-col items-center justify-center py-6">
-                                        <svg class="h-12 w-12 text-gray-400 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                            viewBox="0 0 24 24" stroke="currentColor">
+                                        <svg class="h-12 w-12 text-gray-400 mb-3" xmlns="http://www.w3.org/2000/svg"
+                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                                         </svg>
@@ -558,7 +588,7 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('search-form');
             const imageInput = document.getElementById('image-input');
             const previewContainer = document.getElementById('preview-container');
@@ -575,7 +605,7 @@
 
             let stream = null;
 
-            imageInput.addEventListener('change', function (e) {
+            imageInput.addEventListener('change', function(e) {
                 const file = this.files[0];
                 if (file) {
                     if (file.size > 5 * 1024 * 1024) {
@@ -585,7 +615,7 @@
                     }
 
                     const reader = new FileReader();
-                    reader.onloadend = function () {
+                    reader.onloadend = function() {
                         previewImage.src = reader.result;
                         previewContainer.classList.remove('hidden');
                         if (!cameraContainer.classList.contains('hidden')) {
@@ -596,10 +626,12 @@
                 }
             });
 
-            cameraToggle.addEventListener('click', async function () {
+            cameraToggle.addEventListener('click', async function() {
                 if (cameraContainer.classList.contains('hidden')) {
                     try {
-                        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                        stream = await navigator.mediaDevices.getUserMedia({
+                            video: true
+                        });
                         cameraStream.srcObject = stream;
                         cameraContainer.classList.remove('hidden');
                         this.innerHTML = `
@@ -617,14 +649,16 @@
                 }
             });
 
-            captureButton.addEventListener('click', function () {
+            captureButton.addEventListener('click', function() {
                 const canvas = document.createElement('canvas');
                 canvas.width = cameraStream.videoWidth;
                 canvas.height = cameraStream.videoHeight;
                 canvas.getContext('2d').drawImage(cameraStream, 0, 0);
 
-                canvas.toBlob(function (blob) {
-                    const file = new File([blob], 'camera-capture.jpg', { type: 'image/jpeg' });
+                canvas.toBlob(function(blob) {
+                    const file = new File([blob], 'camera-capture.jpg', {
+                        type: 'image/jpeg'
+                    });
                     const dataTransfer = new DataTransfer();
                     dataTransfer.items.add(file);
                     imageInput.files = dataTransfer.files;
@@ -634,13 +668,13 @@
                 }, 'image/jpeg');
             });
 
-            form.addEventListener('submit', function () {
+            form.addEventListener('submit', function() {
                 submitButton.disabled = true;
                 spinner.classList.remove('hidden');
                 buttonText.textContent = 'Searching...';
             });
 
-            quickSearch.addEventListener('keyup', function () {
+            quickSearch.addEventListener('keyup', function() {
                 const searchField = filterField.value;
                 const searchText = this.value.toLowerCase();
                 const tableRows = document.querySelectorAll('tbody tr');
@@ -648,13 +682,26 @@
                 tableRows.forEach(row => {
                     let cellIndex;
                     switch (searchField) {
-                        case 'title': cellIndex = 1; break;
-                        case 'uploader': cellIndex = 2; break;
-                        case 'status': cellIndex = 3; break;
-                        case 'originating': cellIndex = 4; break;
-                        case 'recipient': cellIndex = 5; break;
-                        case 'description': cellIndex = 7; break;
-                        default: cellIndex = 1;
+                        case 'title':
+                            cellIndex = 1;
+                            break;
+                        case 'uploader':
+                            cellIndex = 2;
+                            break;
+                        case 'status':
+                            cellIndex = 3;
+                            break;
+                        case 'originating':
+                            cellIndex = 4;
+                            break;
+                        case 'recipient':
+                            cellIndex = 5;
+                            break;
+                        case 'description':
+                            cellIndex = 7;
+                            break;
+                        default:
+                            cellIndex = 1;
                     }
 
                     const cell = row.cells[cellIndex];
@@ -669,7 +716,7 @@
                 });
             });
 
-            window.clearImage = function () {
+            window.clearImage = function() {
                 imageInput.value = '';
                 previewImage.src = '#';
                 previewContainer.classList.add('hidden');

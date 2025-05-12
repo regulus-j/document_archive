@@ -709,61 +709,124 @@ class DocumentController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required',
             'classification' => 'required|string',
+            'purpose' => 'nullable|string',
+            'category' => 'nullable|integer',
             'from_office' => 'required|exists:offices,id',
-            'to_office' => 'required|exists:offices,id',
-            'remarks' => 'nullable|string|max:250',
-            'upload' => 'nullable|file|mimes:jpeg,png,jpg,gif,pdf,docx|max:10240',
+            'main_document' => 'nullable|file|mimes:jpeg,png,jpg,gif,pdf,docx|max:10240',
             'attachments.*' => 'file|mimes:jpeg,png,jpg,gif,pdf,docx|max:10240',
+            'archive' => 'nullable|string',
+            'forward' => 'nullable|string',
+            'allowed_viewers' => 'array',
+            'allowed_viewers.*' => 'integer',
         ]);
 
         try {
+            \Log::info('Starting document update process', ['document_id' => $document->id]);
+            
             // Update document basic information
             $document->update([
                 'title' => $request->title,
                 'description' => $request->description,
-                'remarks' => $request->remarks ?? null,
+                'classification' => $request->classification,
+                'purpose' => $request->purpose ?? null,
+                'category' => $request->category ?? null,
             ]);
+            \Log::info('Document basic info updated', ['document_id' => $document->id]);
+
+            $document->status()->update([
+                'status' => 'forwarded',
+            ]);
+            \Log::info('Document status updated to pending', ['document_id' => $document->id]);
 
             // Handle file upload if new file is provided
-            if ($request->hasFile('upload')) {
+            if ($request->hasFile('main_document')) {
                 Storage::disk('public')->delete($document->path);
-                $file = $request->file('upload');
+                $companyId = auth()->user()->companies()->first()->id ?? 'default';
+                $companyPath = $companyId;
+                
+                $file = $request->file('main_document');
                 $fileName = time() . '_' . $file->getClientOriginalName();
-                $filePath = $file->storeAs('documents', $fileName, 'public');
+                \Log::info('Uploading new file', ['fileName' => $fileName]);
+                $filePath = $file->storeAs($companyPath . '/documents', $fileName, 'public');
+                
                 $document->update(['path' => $filePath]);
+                \Log::info('Document file updated', ['document_id' => $document->id]);
             }
 
             // Update document categories
-            $document->categories()->sync([$request->classification]);
+            if ($request->has('category')) {
+                $document->categories()->detach();
+                $document->categories()->attach([$request->category]);
+                \Log::info('Document category updated', ['document_id' => $document->id, 'category_id' => $request->category]);
+            }
 
-            // Update document transaction
-            $document->transaction()->update([
-                'from_office' => $request->from_office,
-                'to_office' => $request->to_office,
-            ]);
+            // Update allowed viewers if classification is Private
+            if ($request->classification == 'Private') {
+                // Remove old viewers
+                $document->allowedViewers()->delete();
+                
+                // Add new viewers if provided
+                if ($request->has('allowed_viewers')) {
+                    foreach ($request->allowed_viewers as $userId) {
+                        $document->allowedViewers()->create(['user_id' => $userId]);
+                    }
+                    \Log::info('Document allowed viewers updated', ['document_id' => $document->id]);
+                }
+            }
+
+            // Update document transaction if forwarding is enabled
+            if ($request->has('to_office') && $request->forward == '1') {
+                $document->transaction()->updateOrCreate(
+                    ['doc_id' => $document->id],
+                    [
+                        'from_office' => $request->from_office,
+                        'to_office' => $request->to_office,
+                    ]
+                );
+                \Log::info('Document transaction updated', ['document_id' => $document->id]);
+            }
 
             // Handle new attachments
             if ($request->hasFile('attachments')) {
+                \Log::info('Processing new attachments', ['document_id' => $document->id]);
                 foreach ($request->file('attachments') as $attachment) {
+                    $companyId = auth()->user()->companies()->first()->id ?? 'default';
+                    $companyPath = $companyId;
                     $attachmentName = time() . '_' . $attachment->getClientOriginalName();
-                    $attachmentPath = $attachment->storeAs('attachments', $attachmentName, 'public');
+                    \Log::info('Uploading attachment', ['attachmentName' => $attachmentName]);
+                    $attachmentPath = $attachment->storeAs($companyPath . '/attachments', $attachmentName, 'public');
 
                     DocumentAttachment::create([
                         'document_id' => $document->id,
                         'filename' => $attachmentName,
                         'path' => $attachmentPath,
                     ]);
+                    \Log::info('Attachment record created', ['document_id' => $document->id, 'attachmentName' => $attachmentName]);
                 }
             }
 
-            // Log document update
-            $this->logDocumentAction($document, 'updated');
+            // Update document status if archive is checked
+            if ($request->archive == '1') {
+                $document->status()->update(['status' => 'archived']);
+                \Log::info('Document status updated to archived', ['document_id' => $document->id]);
+            }
 
-            return redirect()->route('documents.index')
-                ->with('success', 'Document updated successfully');
+            // Log document update
+            $this->logDocumentAction($document, 'updated', $document->status->status, 'Document updated');
+            \Log::info('Document update action logged', ['document_id' => $document->id]);
+
+            // Handle forward if enabled
+            if ($request->forward == '1') {
+                \Log::info('Redirecting to forward route', ['document_id' => $document->id]);
+                return redirect()->route('documents.forward', $document->id)
+                    ->with('success', 'Document updated successfully');
+            } else {
+                \Log::info('Redirecting to index route', ['document_id' => $document->id]);
+                return redirect()->route('documents.index')
+                    ->with('success', 'Document updated successfully');
+            }
         } catch (Exception $e) {
             \Log::error('Document update error: ' . $e->getMessage());
-
             return redirect()->back()
                 ->with('error', 'Error updating document: ' . $e->getMessage())
                 ->withInput();

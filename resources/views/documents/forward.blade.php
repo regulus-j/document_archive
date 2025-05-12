@@ -137,10 +137,9 @@
                                             <div
                                                 class="form-check flex items-center p-2 hover:bg-blue-50 rounded-md transition-colors">
                                                 <input
-                                                    class="form-checkbox office-checkbox h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                                                    type="checkbox" name="recipient_office_batch[0][]"
-                                                    id="step0_office{{ $office->id }}" value="{{ $office->id }}"
-                                                    data-office-id="{{ $office->id }}">
+                                                    class="form-radio office-radio h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                                    type="radio" name="recipient_batch[0]"
+                                                    id="step0_office{{ $office->id }}" value="office_{{ $office->id }}">
                                                 <label class="ml-2 text-gray-700 flex-grow cursor-pointer"
                                                     for="step0_office{{ $office->id }}">
                                                     {{ $office->name }}
@@ -165,9 +164,9 @@
                                             <div class="form-check flex items-center p-2 hover:bg-blue-50 rounded-md transition-colors user-item"
                                                 data-office-ids="{{ json_encode($user->offices->pluck('id')) }}">
                                                 <input
-                                                    class="form-checkbox user-checkbox h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                                                    type="checkbox" name="recipient_batch[0][]"
-                                                    id="step0_user{{ $user->id }}" value="{{ $user->id }}">
+                                                    class="form-radio user-radio h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                                    type="radio" name="recipient_batch[0]"
+                                                    id="step0_user{{ $user->id }}" value="user_{{ $user->id }}">
                                                 <label class="ml-2 text-gray-700 flex-grow cursor-pointer"
                                                     for="step0_user{{ $user->id }}">
                                                     {{ $user->first_name . ' ' . $user->last_name }}
@@ -261,7 +260,7 @@
     </div>
 
     <script>
-        let batchIndex = 1;
+        let batchIndex = 1; // This is used to give a unique starting point for cloned batch elements before updateBatchOrders standardizes them.
 
         function updateBatchOrders() {
             const batches = document.querySelectorAll('#batches-container .batch-group');
@@ -274,24 +273,19 @@
                 });
                 batch.querySelector('.step-order').value = index + 1;
 
-                // Update checkbox names & ids for each batch
-                const checkboxes = batch.querySelectorAll('input[type="checkbox"]');
-                checkboxes.forEach((checkbox) => {
-                    // Check if it's a user checkbox or office checkbox
-                    if (checkbox.classList.contains('user-checkbox')) {
-                        checkbox.name = "recipient_batch[" + index + "][]";
-                    } else if (checkbox.classList.contains('office-checkbox')) {
-                        checkbox.name = "recipient_office_batch[" + index + "][]";
-                    }
+                // Update radio button names & ids for each batch
+                const recipientRadios = batch.querySelectorAll('input[type="radio"].office-radio, input[type="radio"].user-radio');
+                recipientRadios.forEach((radio) => {
+                    radio.name = `recipient_batch[${index}]`; // Shared name for radio group in this batch
 
                     // Update id attribute to include the batch index
-                    const parts = checkbox.id.split('_');
-                    checkbox.id = 'step' + index + '_' + parts.slice(1).join('_');
+                    const parts = radio.id.split('_'); // e.g., step0_officeID or step0_userID
+                    radio.id = `step${index}_${parts.slice(1).join('_')}`; // e.g. step1_officeID
 
                     // Also update the corresponding label's "for" attribute
-                    const label = checkbox.nextElementSibling;
+                    const label = radio.nextElementSibling;
                     if (label && label.tagName.toLowerCase() === 'label') {
-                        label.htmlFor = checkbox.id;
+                        label.htmlFor = radio.id;
                     }
                 });
 
@@ -320,14 +314,10 @@
             const template = container.querySelector('.batch-group');
             const newBatch = template.cloneNode(true);
 
-            // Reset checkboxes in the new batch
-            const checkboxes = newBatch.querySelectorAll('input[type="checkbox"]');
-            checkboxes.forEach(cb => {
-                cb.checked = false;
-                const formCheck = cb.closest('.form-check');
-                if (formCheck) {
-                    formCheck.style.display = '';
-                }
+            // Reset radio buttons in the new batch
+            const radios = newBatch.querySelectorAll('input[type="radio"].office-radio, input[type="radio"].user-radio');
+            radios.forEach(radio => {
+                radio.checked = false;
             });
 
             // Reset select and input fields
@@ -341,23 +331,20 @@
                 input.value = '';
             });
 
-            // Show all users in the new batch
+            // Show all users in the new batch (if they were hidden by previous logic, though not relevant now)
             const userItems = newBatch.querySelectorAll('.user-item');
             userItems.forEach(userItem => {
-                userItem.style.display = '';
+                userItem.style.display = ''; // Ensure user items are visible
             });
+            
+            // Remove any validation errors from the cloned template
+            newBatch.querySelectorAll('.validation-error').forEach(el => el.remove());
 
             container.appendChild(newBatch);
-            batchIndex++;
+            // batchIndex++; // Not strictly needed here as updateBatchOrders re-indexes everything
             updateBatchOrders();
 
-            // Attach event listeners to the new batch's office checkboxes
-            const newOfficeCheckboxes = newBatch.querySelectorAll('.office-checkbox');
-            newOfficeCheckboxes.forEach(checkbox => {
-                checkbox.addEventListener('change', function(event) {
-                    filterUsersByOffice(event, newBatch);
-                });
-            });
+            // No need to attach filterUsersByOffice event listeners anymore
         }
 
         function validateForm() {
@@ -368,19 +355,19 @@
             document.querySelectorAll('.validation-error').forEach(el => el.remove());
 
             batches.forEach(batch => {
-                const batchIndex = batch.dataset.index;
-                const selectedOffices = batch.querySelectorAll('.office-checkbox:checked');
-                const selectedUsers = batch.querySelectorAll('.user-checkbox:checked');
+                const batchIdx = batch.dataset.index; // string value
+                const batchNumForDisplay = parseInt(batchIdx) + 1;
+                const recipientSelected = batch.querySelector(`input[name="recipient_batch[${batchIdx}]"]:checked`);
 
-                // Each batch must have at least one office OR one user selected
-                if (selectedOffices.length === 0 && selectedUsers.length === 0) {
+                // Each batch must have one recipient selected
+                if (!recipientSelected) {
                     isValid = false;
 
                     // Create and display error message
                     const errorMsg = document.createElement('div');
                     errorMsg.className = 'validation-error text-red-600 mt-2 mb-2';
-                    errorMsg.textContent = 'Please select at least one office or one user in this batch';
-
+                    errorMsg.textContent = `Please select one recipient (office or user) in Step ${batchNumForDisplay}.`;
+                    
                     // Insert error before the end of this batch
                     batch.appendChild(errorMsg);
                 }
@@ -389,39 +376,10 @@
             return isValid;
         }
 
-        function filterUsersByOffice(event, specificBatch = null) {
-            // Get the current batch that triggered the event
-            const currentBatch = specificBatch || (event ? event.target.closest('.batch-group') : null);
-            
-            if (!currentBatch) return;
-            
-            // Get selected offices in this batch
-            const selectedOfficeIds = Array.from(currentBatch.querySelectorAll('.office-checkbox:checked'))
-                .map(checkbox => checkbox.value);
-            
-            // Filter user items in this batch only
-            const userItems = currentBatch.querySelectorAll('.user-item');
-            userItems.forEach(userItem => {
-                const userOfficeIds = JSON.parse(userItem.dataset.officeIds);
-                
-                // If no offices are selected, show all users
-                if (selectedOfficeIds.length === 0) {
-                    userItem.style.display = '';
-                    return;
-                }
-                
-                // Check if the user belongs to any of the selected offices
-                const isVisible = selectedOfficeIds.some(officeId => 
-                    userOfficeIds.includes(parseInt(officeId)));
-                
-                // Show or hide the user item based on the filter
-                userItem.style.display = isVisible ? '' : 'none';
-            });
-        }
+        // filterUsersByOffice function is removed as it's no longer needed.
 
         function prepareFormData() {
             // This function is called on form submission
-            // Keeping it for compatibility with the original code
             return validateForm();
         }
 
@@ -435,16 +393,7 @@
                 }
             });
 
-            // Add event listeners to office checkboxes
-            const batches = document.querySelectorAll('.batch-group');
-            batches.forEach(batch => {
-                const officeCheckboxes = batch.querySelectorAll('.office-checkbox');
-                officeCheckboxes.forEach(checkbox => {
-                    checkbox.addEventListener('change', function(event) {
-                        filterUsersByOffice(event, batch);
-                    });
-                });
-            });
+            // Event listeners for office checkboxes to filter users are removed.
         });
     </script>
 @endsection

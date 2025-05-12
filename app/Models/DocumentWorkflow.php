@@ -60,6 +60,24 @@ class DocumentWorkflow extends Model
         $this->status = 'rejected';
         $this->save();
     }
+    
+    public function return()
+    {
+        $this->status = 'returned';
+        $this->save();
+    }
+    
+    public function refer()
+    {
+        $this->status = 'referred';
+        $this->save();
+    }
+    
+    public function forward()
+    {
+        $this->status = 'forwarded';
+        $this->save();
+    }
 
     public function changeStatus($action)
     {
@@ -72,7 +90,50 @@ class DocumentWorkflow extends Model
         return $this->status === 'pending';
     }
 
-    // New methods for urgency/due date functionality
+    public function isReceived() 
+    {
+        return $this->status === 'received';
+    }
+    
+    public function isApproved()
+    {
+        return $this->status === 'approved';
+    }
+    
+    public function isRejected()
+    {
+        return $this->status === 'rejected';
+    }
+    
+    public function isReturned()
+    {
+        return $this->status === 'returned';
+    }
+    
+    public function isReferred()
+    {
+        return $this->status === 'referred';
+    }
+    
+    public function isForwarded()
+    {
+        return $this->status === 'forwarded';
+    }
+    
+    public function canProcess()
+    {
+        return $this->status === 'received';
+    }
+    
+    public function canReceive()
+    {
+        return $this->status === 'pending';
+    }
+    
+    public function workflowActive()
+    {
+        return !in_array($this->status, ['rejected', 'returned', 'approved']);
+    }
     public function isOverdue()
     {
         if (!$this->due_date) {

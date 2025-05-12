@@ -239,7 +239,7 @@ class UserController extends Controller
         $temp_pass = null;
 
         // Fix company association by properly handling array or single value
-        $companyId = is_array($request->companies) ? $request->companies[0] : $request->companies;
+        $companyId = auth()->user()->companies()->first()->id;
 
         // If user is not a super admin, use their company
         if (!auth()->user()->hasRole('super-admin')) {
