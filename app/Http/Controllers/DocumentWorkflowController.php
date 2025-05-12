@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use App\Models\DocumentWorkflow;
 use App\Models\Document;
+use App\Models\User;
+use App\Models\CompanyUser;
 use App\Models\DocumentAttachment;
 use App\Models\DocumentAudit;
 use Illuminate\Support\Facades\Storage;
@@ -44,8 +46,8 @@ class DocumentWorkflowController extends Controller
         $document = Document::findOrFail($id);
 
         $request->validate([
-            'recipient_batch' => 'nullable|array',
-            'recipient_office_batch' => 'required|array',
+            'recipient_batch' => 'required|array',
+            'recipient_batch.*' => 'required|string',
             'step_order' => 'required|array',
             'purpose_batch' => 'required|array',
             'purpose_batch.*' => 'required|string|in:appropriate_action,dissemination,for_comment',
@@ -74,28 +76,25 @@ class DocumentWorkflowController extends Controller
         // Keep track of all recipient IDs to sync with document_recipients table
         $allRecipientIds = [];
         
-        foreach ($recipientBatches as $batchIndex => $recipients) {
-            if (empty($recipients)) {
+        foreach ($recipientBatches as $batchIndex => $recipientValue) {
+            if (empty($recipientValue)) {
                 continue;
             }
             
-            // Get the office IDs for this batch
-            $officeIds = $request->recipient_office_batch[$batchIndex] ?? [];
+            // Parse the recipient value to determine if it's an office or user
+            // Format: "office_ID" or "user_ID"
+            $parts = explode('_', $recipientValue);
+            $type = $parts[0];
+            $id = intval($parts[1]);
             
-            // Process each recipient
-            foreach ($recipients as $recipientId) {
-                // Add to all recipients for later syncing
+            if ($type === 'user') {
+                // It's a user recipient
+                $recipientId = $id;
                 $allRecipientIds[] = $recipientId;
                 
-                // Get the recipient's office ID (using the first selected office if multiple)
-                $recipientOfficeId = null;
-                if (!empty($officeIds)) {
-                    $recipientOfficeId = $officeIds[0]; // Use first office as default
-                } else {
-                    // Get the user's office ID as a fallback
-                    $user = \App\Models\User::find($recipientId);
-                    $recipientOfficeId = $user->office_id ?? 1; // Default to office ID 1 if no office is found
-                }
+                // Get the user's office ID as a fallback
+                $user = \App\Models\User::find($recipientId);
+                $recipientOfficeId = $user->office_id ?? 1; // Default to office ID 1 if no office is found
                 
                 DocumentWorkflow::create([
                     'tracking_number' => $trackingNumber,
@@ -111,28 +110,23 @@ class DocumentWorkflowController extends Controller
                     'urgency' => $request->urgency_batch[$batchIndex] ?? null,
                     'due_date' => $request->due_date_batch[$batchIndex] ?? null,
                 ]);
-            }
-        }
-        
-        // Process office-only workflows when no recipients are selected
-        $officeOnlyBatches = array_diff_key($request->recipient_office_batch, $recipientBatches);
-        foreach ($officeOnlyBatches as $batchIndex => $officeIds) {
-            if (empty($officeIds)) {
-                continue;
-            }
-            
-            // If only offices are selected (no specific users), create a workflow for the office manager
-            foreach ($officeIds as $officeId) {
+            } else if ($type === 'office') {
+                // It's an office recipient
+                $officeId = $id;
+                
                 DocumentWorkflow::create([
                     'tracking_number' => $trackingNumber,
                     'document_id' => $document->id,
                     'sender_id' => auth()->id(),
-                    'recipient_id' => null, // No specific recipient
+                    'recipient_id' => null, // No specific recipient for office
                     'recipient_office' => $officeId,
                     'step_order' => $request->step_order[$batchIndex],
                     'remarks' => $request->remarks[$batchIndex] ?? null,
                     'status' => 'pending',
                     'received_at' => null,
+                    'purpose' => $request->purpose_batch[$batchIndex] ?? null,
+                    'urgency' => $request->urgency_batch[$batchIndex] ?? null,
+                    'due_date' => $request->due_date_batch[$batchIndex] ?? null,
                 ]);
             }
         }
@@ -253,8 +247,30 @@ class DocumentWorkflowController extends Controller
     {
         $workflow = DocumentWorkflow::findOrFail($id);
         $document = $workflow->document;
+        
+        // Get company ID from document or authenticated user's first company
+        $companyId = $document->company_id ?? null;
+        
+        // If document doesn't have company_id, try to get it from the authenticated user
+        if (!$companyId) {
+            $userCompany = CompanyUser::where('user_id', auth()->id())->first();
+            $companyId = $userCompany ? $userCompany->company_id : null;
+        }
+        
+        // Default to empty collection if no company found
+        $companyUsers = collect();
+        
+        if ($companyId) {
+            // Get users from the same company via the pivot table
+            $companyUserIds = CompanyUser::where('company_id', $companyId)
+                ->where('user_id', '!=', auth()->id())
+                ->pluck('user_id');
+                
+            // Get the actual user objects
+            $companyUsers = User::whereIn('id', $companyUserIds)->get();
+        }
 
-        return view('documents.review', compact('workflow', 'document'));
+        return view('documents.review', compact('workflow', 'document', 'companyUsers'));
     }
 
     public function reviewSubmit(Request $request)
@@ -309,26 +325,168 @@ class DocumentWorkflowController extends Controller
             ->with('success', 'Review submitted successfully');
     }
 
-    public function changeStatus($workflow_id, $action = null)
+    public function returnWorkflow(Request $request, $id): RedirectResponse
     {
-        $workflow = DocumentWorkflow::where('tracking_number', $workflow_id)
-            ->where(function ($query) {
-                $query->where('sender_id', auth()->id())
-                    ->orWhere('recipient_id', auth()->id());
-            })
-            ->firstOrFail();
+        $request->validate([
+            'remarks' => 'required|string|max:1000',
+        ]);
 
-        if ($action === 'received' || $action === 'find') {
-            return route('document.show', $workflow->document_id);
+        $workflow = DocumentWorkflow::findOrFail($id);
+        $workflow->return();
+        $workflow->remarks = $request->remarks;
+        $workflow->save();
+
+        // Update document status to indicate it's returned to uploader
+        $document = Document::findOrFail($workflow->document_id);
+        $document->status()->update(['status' => 'returned']);
+
+        // Log with remarks
+        DocumentAudit::logDocumentAction(
+            $workflow->document_id,
+            auth()->id(),
+            'workflow',
+            'returned',
+            'Document returned to uploader: ' . $request->remarks
+        );
+
+        return redirect()->route('documents.index')
+            ->with('success', 'Document returned to uploader. The uploader will need to revise the document based on your remarks.');
+    }
+
+    public function referWorkflow(Request $request, $id): RedirectResponse
+    {
+        $request->validate([
+            'recipients' => 'required|array',
+            'recipients.*' => 'exists:users,id',
+            'remarks' => 'nullable|string|max:1000',
+        ]);
+
+        $workflow = DocumentWorkflow::findOrFail($id);
+        $document = Document::findOrFail($workflow->document_id);
+        
+        // Mark the current workflow as referred
+        $workflow->refer();
+        $workflow->remarks = $request->remarks ?? '';
+        $workflow->save();
+        
+        // Generate tracking number for new workflow stages
+        $trackingNumber = $this->createTrackingNumber($document, auth()->user());
+        
+        // Find the last step order used in existing workflow
+        $lastStepOrder = DocumentWorkflow::where('document_id', $document->id)
+            ->max('step_order');
+            
+        $newStepOrder = $lastStepOrder + 1;
+        
+        // Create new workflow entries for each additional recipient
+        foreach ($request->recipients as $recipientId) {
+            // Skip if trying to refer to self
+            if ($recipientId == auth()->id()) {
+                continue;
+            }
+            
+            // Get the user's office ID
+            $user = \App\Models\User::find($recipientId);
+            $recipientOfficeId = $user->office_id ?? null;
+            
+            DocumentWorkflow::create([
+                'tracking_number' => $trackingNumber,
+                'document_id' => $document->id,
+                'sender_id' => auth()->id(),
+                'recipient_id' => $recipientId,
+                'recipient_office' => $recipientOfficeId,
+                'step_order' => $newStepOrder,
+                'remarks' => $request->remarks ?? null,
+                'status' => 'pending',
+                'received_at' => null,
+            ]);
+            
+            // Update document_recipients table
+            \DB::table('document_recipients')->updateOrInsert(
+                ['document_id' => $document->id, 'recipient_id' => $recipientId],
+                ['created_at' => now(), 'updated_at' => now()]
+            );
         }
+        
+        // Log action
+        DocumentAudit::logDocumentAction(
+            $workflow->document_id,
+            auth()->id(),
+            'workflow',
+            'referred',
+            'Document referred to additional recipients: ' . ($request->remarks ? $request->remarks : 'No remarks')
+        );
 
-        if (!in_array($action, ['received', 'accepted', 'rejected'])) {
-            return redirect()->back()->with('Status', 'Invalid Status');
+        return redirect()->route('documents.index')
+            ->with('success', 'Document referred to additional recipients successfully.');
+    }
+
+    public function forwardFromWorkflow(Request $request, $id): RedirectResponse
+    {
+        $request->validate([
+            'recipients' => 'required|array',
+            'recipients.*' => 'exists:users,id',
+            'remarks' => 'nullable|string|max:1000',
+        ]);
+
+        $workflow = DocumentWorkflow::findOrFail($id);
+        $document = Document::findOrFail($workflow->document_id);
+        
+        // Keep the current workflow unchanged but mark as forwarded
+        $workflow->forward();
+        $workflow->remarks = $request->remarks ?? '';
+        $workflow->save();
+        
+        // Generate tracking number for new workflow stages
+        $trackingNumber = $this->createTrackingNumber($document, auth()->user());
+        
+        // Get the last step order for the document workflow
+        $lastStepOrder = DocumentWorkflow::where('document_id', $document->id)
+            ->max('step_order');
+            
+        $newStepOrder = $lastStepOrder + 1;
+        
+        // Create new workflow entries for each recipient
+        foreach ($request->recipients as $recipientId) {
+            // Skip if trying to forward to self
+            if ($recipientId == auth()->id()) {
+                continue;
+            }
+            
+            // Get the user's office ID
+            $user = \App\Models\User::find($recipientId);
+            $recipientOfficeId = $user->office_id ?? null;
+            
+            DocumentWorkflow::create([
+                'tracking_number' => $trackingNumber,
+                'document_id' => $document->id,
+                'sender_id' => auth()->id(),
+                'recipient_id' => $recipientId,
+                'recipient_office' => $recipientOfficeId,
+                'step_order' => $newStepOrder,
+                'remarks' => $request->remarks ?? null,
+                'status' => 'pending',
+                'received_at' => null,
+            ]);
+            
+            // Update document_recipients table
+            \DB::table('document_recipients')->updateOrInsert(
+                ['document_id' => $document->id, 'recipient_id' => $recipientId],
+                ['created_at' => now(), 'updated_at' => now()]
+            );
         }
+        
+        // Log action
+        DocumentAudit::logDocumentAction(
+            $workflow->document_id,
+            auth()->id(),
+            'workflow',
+            'forwarded',
+            'Document forwarded from review: ' . ($request->remarks ? $request->remarks : 'No remarks')
+        );
 
-        $workflow->changeStatus($action);
-
-        return redirect()->back()->with('success', 'Workflow status updated successfully');
+        return redirect()->route('documents.index')
+            ->with('success', 'Document forwarded to new recipients successfully.');
     }
 
     private function createTrackingNumber(Document $document, $user)

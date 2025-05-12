@@ -141,17 +141,45 @@
                                                         class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                                                         Received
                                                     </span>
+                                                @elseif($workflow->status === 'approved')
+                                                    <span
+                                                        class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                                        Approved
+                                                    </span>
+                                                @elseif($workflow->status === 'rejected')
+                                                    <span
+                                                        class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                                        Rejected
+                                                    </span>
+                                                @elseif($workflow->status === 'returned')
+                                                    <span
+                                                        class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-amber-100 text-amber-800">
+                                                        Returned
+                                                    </span>
+                                                @elseif($workflow->status === 'referred')
+                                                    <span
+                                                        class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                                        Referred
+                                                    </span>
+                                                @elseif($workflow->status === 'forwarded')
+                                                    <span
+                                                        class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
+                                                        Forwarded
+                                                    </span>
                                                 @elseif($workflow->status === 'completed')
                                                     <span
                                                         class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-indigo-100 text-indigo-800">
                                                         Completed
                                                     </span>
                                                 @else
-                                                    {{ $workflow->status }}
+                                                    <span
+                                                        class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                                        {{ ucfirst($workflow->status) }}
+                                                    </span>
                                                 @endif
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                                <div class="flex space-x-2">
+                                                <div class="flex flex-wrap space-x-2">
                                                     @if($workflow->sender_id != auth()->id())
                                                         {{-- Only show receive/review options if user is not the sender --}}
                                                         @if($workflow->status === 'pending')
@@ -162,6 +190,22 @@
                                                         @if($workflow->status === 'received')
                                                             <a href="{{ route('documents.review', $workflow->id) }}"
                                                                 class="text-green-500 hover:underline mr-2">Review</a>
+                                                        @endif
+                                                        
+                                                        @if($workflow->status === 'returned')
+                                                            <span class="text-amber-500 italic">Returned to uploader</span>
+                                                        @endif
+                                                        
+                                                        @if($workflow->status === 'rejected')
+                                                            <span class="text-red-500 italic">Rejected</span>
+                                                        @endif
+                                                        
+                                                        @if($workflow->status === 'referred')
+                                                            <span class="text-blue-500 italic">Referred to others</span>
+                                                        @endif
+                                                        
+                                                        @if($workflow->status === 'forwarded')
+                                                            <span class="text-purple-500 italic">Forwarded</span>
                                                         @endif
                                                     @else
                                                         {{-- Sender can only view document details --}}

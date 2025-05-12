@@ -167,6 +167,15 @@ Route::middleware('auth')->group(function () {
             
             Route::post('/{workflow}/reject', [DocumentWorkflowController::class, 'rejectWorkflow'])
                 ->name('documents.rejectWorkflow');
+                
+            Route::post('/{workflow}/return', [DocumentWorkflowController::class, 'returnWorkflow'])
+                ->name('documents.returnWorkflow');
+                
+            Route::post('/{workflow}/refer', [DocumentWorkflowController::class, 'referWorkflow'])
+                ->name('documents.referWorkflow');
+                
+            Route::post('/{workflow}/forward-from', [DocumentWorkflowController::class, 'forwardFromWorkflow'])
+                ->name('documents.forwardFromWorkflow');
             
             Route::get('/{workflow}/review', [DocumentWorkflowController::class, 'reviewDocument'])
                 ->name('documents.review');
