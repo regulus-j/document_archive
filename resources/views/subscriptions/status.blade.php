@@ -266,9 +266,11 @@
                                         / {{ $plan->billing_period ?? 'month' }}</p>
 
                                     <div class="mt-3">
-                                        <form action="{{ route('subscriptions.request-upgrade') }}" method="POST">
+                                        <!-- <form action="{{ route('subscriptions.request-upgrade') }}" method="POST">
                                             @csrf
-                                            <input type="hidden" name="plan_id" value="{{ $plan->id }}">
+                                            <input type="hidden" name="plan_id" value="{{ $plan->id }}"> -->
+                                        <a
+                                            href="{{ route('payment.generate', ['plan' => $plan->id]) }}/monthly">
                                             <button type="submit"
                                                 class="w-full px-3 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm rounded-lg shadow-sm transition duration-200">
                                                 <span class="flex items-center justify-center">
@@ -277,10 +279,13 @@
                                                         <path stroke-linecap="round" stroke-linejoin="round"
                                                             stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
                                                     </svg>
-                                                    Request Upgrade
+                                                    Upgrade
                                                 </span>
                                             </button>
-                                        </form>
+                                        </a>
+                                        <!-- </form> -->
+
+
                                     </div>
                                 </div>
                                 @endforeach
