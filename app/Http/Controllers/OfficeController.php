@@ -20,10 +20,8 @@ class OfficeController extends Controller
         }
 
         $offices = Office::where('company_id', $company->id)->get();
-        $teamLimit = $company->teamLimit();
-        $canAddTeam = $company->canAddTeam();
 
-        return view('offices.index', compact('offices', 'teamLimit', 'canAddTeam'));
+        return view('offices.index', compact('offices'));
     }
     /**
      * Show the form for creating a new resource.
