@@ -264,17 +264,20 @@ class SubscriptionController extends Controller
         // Get current active subscription
         $subscription = CompanySubscription::where('company_id', $company->id)
             ->where('status', 'active')
+            ->latest()
             ->first();
 
         if (!$subscription) {
             return redirect()->back()->with('error', 'No active subscription found.');
         }
 
-        // Send cancellation request notification to administrators
-        // This is a placeholder for actual notification logic
+        // Update subscription auto_renew to false
+        $subscription->update([
+            'auto_renew' => false
+        ]);
 
         return redirect()->back()
-            ->with('success', 'Your cancellation request has been submitted. An administrator will contact you shortly.');
+            ->with('success', 'Auto-renewal has been disabled. Your subscription will expire on ' . $subscription->end_date);
     }
 
     /**
