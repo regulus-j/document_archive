@@ -204,62 +204,6 @@
                         </select>
                     </div>
 
-                    <!-- From/To Office -->
-                    <div class="grid md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1" for="from_office">From Office</label>
-                            <select 
-                                name="from_office" 
-                                id="from_office"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                required
-                            >
-                                <option value="">Select From Office</option>
-                                @foreach($userOffice as $id => $name)
-                                    <option 
-                                        value="{{ $id }}" 
-                                        {{ old('from_office', optional($document->transaction)->from_office) == $id ? 'selected' : '' }}
-                                    >
-                                        {{ $name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1" for="to_office">To Office</label>
-                            <select 
-                                name="to_office" 
-                                id="to_office"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                required
-                            >
-                                <option value="">Select To Office</option>
-                                @foreach($offices as $office)
-                                    <option 
-                                        value="{{ $office->id }}" 
-                                        {{ old('to_office', optional($document->transaction)->to_office) == $office->id ? 'selected' : '' }}
-                                    >
-                                        {{ $office->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Remarks -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1" for="remarks">Remarks</label>
-                        <textarea 
-                            name="remarks" 
-                            id="remarks"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            rows="3"
-                            placeholder="Enter any additional remarks"
-                            maxlength="250"
-                        >{{ old('remarks', $document->remarks) }}</textarea>
-                    </div>
-
                     <!-- File Upload Section -->
                     <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
                         <label class="block text-sm font-medium text-gray-700 mb-3">Current File</label>
