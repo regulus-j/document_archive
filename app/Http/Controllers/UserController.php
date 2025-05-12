@@ -64,11 +64,8 @@ class UserController extends Controller
             $users = User::where('id', auth()->id())->paginate(5);
         }
 
-        $userLimit = auth()->user()->companies()->first()->userLimit();
-        $canAddUser = auth()->user()->companies()->first()->canAddUser();
 
-
-        return view('users.index', compact('users', 'roles', 'userLimit', 'canAddUser'))
+        return view('users.index', compact('users', 'roles'))
             ->with('i', ($request->input('page', 1) - 1) * 5);
     }
 
@@ -147,19 +144,21 @@ class UserController extends Controller
 
         $users = $query->paginate(5);
 
-        $userLimit = auth()->user()->companies()->first()->userLimit();
-        $canAddUser = auth()->user()->companies()->first()->canAddUser();
-
-        return view('users.index', compact('users', 'roles', 'teams', 'userLimit', 'canAddUser'))
+        return view('users.index', compact('users', 'roles', 'teams'))
             ->with('i', ($request->input('page', 1) - 1) * 5);
     }
 
     /**
      * Show the form for creating a new user.
      */
-    public function create(): View
+    public function create()
     {
-        $userCompany = CompanyAccount::where('user_id', auth()->id())->get();
+        $userCompany = auth()->user()->companies()->first();
+
+        if (!$userCompany->canAddUser()) {
+            return redirect()->route('users.index')
+                ->with('error', 'Max users reached, upgrade your plan to add more.');
+        }
 
         // Filter roles based on user permissions
         if (auth()->user()->hasRole('super-admin')) {
@@ -187,6 +186,13 @@ class UserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        $userCompany = auth()->user()->companies()->first();
+
+        if (!$userCompany->canAddUser()) {
+            return redirect()->route('users.index')
+                ->with('error', 'Max users reached, upgrade your plan to add more.');
+        }
+
         $temp_pass = Str::random(12);
 
         $request->validate([
