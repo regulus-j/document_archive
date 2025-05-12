@@ -10,13 +10,15 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Register any application services.
      */
-    public function register(): void
-    {
-        //
-        if (env(key: 'APP_ENV') === 'local' && request()->server(key: 'HTTP_X_FORWARDED_PROTO') === 'https') {
-            URL::forceScheme(scheme: 'https');
-        }
-    }
+   // In AppServiceProvider or any other provider
+   public function register(): void
+   {
+       // Binding the 'has.company' key to CompanyService
+       $this->app->bind('has.company', function ($app) {
+           return new CompanyService(); // Return an instance of the service
+       });
+   }
+
 
     /**
      * Bootstrap any application services.
