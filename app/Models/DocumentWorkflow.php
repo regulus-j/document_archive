@@ -17,6 +17,9 @@ class DocumentWorkflow extends Model
         'recipient_office',
         'step_order',
         'status',
+        'purpose',
+        'urgency',
+        'due_date',
         'remarks',
     ];
 
@@ -67,5 +70,24 @@ class DocumentWorkflow extends Model
     public function isPending()
     {
         return $this->status === 'pending';
+    }
+
+    // New methods for urgency/due date functionality
+    public function isOverdue()
+    {
+        if (!$this->due_date) {
+            return false;
+        }
+        
+        return now()->startOfDay()->gt($this->due_date);
+    }
+    
+    public function getDaysRemainingAttribute()
+    {
+        if (!$this->due_date) {
+            return null;
+        }
+        
+        return now()->startOfDay()->diffInDays($this->due_date, false);
     }
 }

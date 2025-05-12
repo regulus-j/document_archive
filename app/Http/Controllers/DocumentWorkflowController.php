@@ -47,6 +47,12 @@ class DocumentWorkflowController extends Controller
             'recipient_batch' => 'nullable|array',
             'recipient_office_batch' => 'required|array',
             'step_order' => 'required|array',
+            'purpose_batch' => 'required|array',
+            'purpose_batch.*' => 'required|string|in:appropriate_action,dissemination,for_comment',
+            'urgency_batch' => 'nullable|array',
+            'urgency_batch.*' => 'nullable|string|in:low,medium,high,critical',
+            'due_date_batch' => 'nullable|array',
+            'due_date_batch.*' => 'nullable|date|after_or_equal:today',
         ]);
 
         $document->status()->update(['status' => 'forwarded']);
@@ -101,6 +107,9 @@ class DocumentWorkflowController extends Controller
                     'remarks' => $request->remarks[$batchIndex] ?? null,
                     'status' => 'pending',
                     'received_at' => null,
+                    'purpose' => $request->purpose_batch[$batchIndex] ?? null,
+                    'urgency' => $request->urgency_batch[$batchIndex] ?? null,
+                    'due_date' => $request->due_date_batch[$batchIndex] ?? null,
                 ]);
             }
         }
