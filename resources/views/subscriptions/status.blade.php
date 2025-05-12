@@ -203,7 +203,7 @@
                                     </h4>
 
                                     <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-                                        @if($subscription->status === 'active')
+                                        @if($subscription->status === 'active' && $subscription->auto_renew)
                                         <form action="{{ route('subscriptions.request-cancellation') }}" method="POST"
                                             class="inline">
                                             @csrf
