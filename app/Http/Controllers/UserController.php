@@ -183,7 +183,7 @@ class UserController extends Controller
             'first_name' => 'required|string|max:255',
             'middle_name' => 'nullable|string|max:255', // Changed from string to nullable|string
             'last_name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
+            'email' => 'required|email|unique:users,email,NULL,id,deleted_at,NULL',
             'offices' => 'required|array',
             'offices.*' => 'exists:offices,id',
             'roles' => 'required',
@@ -292,7 +292,7 @@ class UserController extends Controller
             'first_name' => 'required|string|max:255',
             'middle_name' => 'nullable|string|max:255',
             'last_name' => 'required|string|max:255',
-            'email' => "required|email|unique:users,email,{$id}",
+            'email' => "required|email|unique:users,email,{$id},id,deleted_at,NULL",
             'roles' => 'required|array',
         ];
 
