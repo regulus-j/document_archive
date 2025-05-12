@@ -217,6 +217,7 @@ class SubscriptionController extends Controller
         $subscription = CompanySubscription::active()
             ->where('company_id', $company->id)
             ->with('plan')
+            ->latest()  // Order by start_date (newest first)
             ->first();
 
         // // If no active subscription, redirect to plan selection with parameter to prevent redirect loop
