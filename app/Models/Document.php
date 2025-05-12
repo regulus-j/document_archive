@@ -17,8 +17,10 @@ class Document extends Model
         'description',
         'content',
         'path',
-        'remarks',
         'storage_size',
+        'classification',
+        'purpose',
+        'category',
     ];
 
     protected $attributes = [
@@ -157,5 +159,10 @@ class Document extends Model
         }
         
         return $query;
+    }
+
+    public function allowedViewers()
+    {
+        return $this->hasMany(DocumentAllowedViewer::class, 'doc_id');
     }
 }

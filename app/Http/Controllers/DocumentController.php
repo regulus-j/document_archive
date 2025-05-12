@@ -130,21 +130,22 @@ class DocumentController extends Controller
     public function uploadController(Request $request)
     {
         \Log::info('uploadController called');
-
         \Log::info("SEARCH ME");
         \Log::info($request);
 
-        //upload to database
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required',
             'classification' => 'required|string',
+            'purpose' => 'nullable|string',
+            'category' => 'nullable|integer',
             'from_office' => 'required|exists:offices,id',
-            'remarks' => 'nullable|string|max:250',
-            'upload' => 'required|file', // 10MB max
-            'attachements.*' => 'file|mimes:jpeg,png,jpg,gif,pdf,docx|max:10240',
+            'main_document' => 'required|file',
+            'attachments.*' => 'file|mimes:jpeg,png,jpg,gif,pdf,docx|max:10240',
             'archive' => 'nullable|string',
             'forward' => 'nullable|string',
+            'allowed_viewers' => 'array',
+            'allowed_viewers.*' => 'integer',
         ]);
 
         try {
@@ -152,7 +153,7 @@ class DocumentController extends Controller
             $companyId = auth()->user()->companies()->first()->id ?? 'default';
             $companyPath = $companyId;
 
-            $file = $request->file('upload');
+            $file = $request->file('main_document');  // Changed from 'upload'
             $fileName = time() . '_' . $file->getClientOriginalName();
             \Log::info('Uploading file', ['fileName' => $fileName]);
             $filePath = $file->storeAs($companyPath . '/documents', $fileName, 'public');
@@ -161,15 +162,24 @@ class DocumentController extends Controller
                 'title' => $request->title,
                 'uploader' => auth()->id(),
                 'description' => $request->description,
+                'classification' => $request->classification,
+                'purpose' => $request->purpose ?? null,
+                'category' => $request->category ?? null,
                 'path' => $filePath,
-                'remarks' => $request->remarks ?? null,
             ]);
             \Log::info('Document created', ['document_id' => $document->id]);
 
             // Attach the document category - This fixes the categories not being assigned
-            if ($request->has('classification')) {
-                $document->categories()->attach([$request->classification]);
-                \Log::info('Document category assigned', ['document_id' => $document->id, 'category_id' => $request->classification]);
+            if ($request->has('category')) {
+                $document->categories()->attach([$request->category]);
+                \Log::info('Document category assigned', ['document_id' => $document->id, 'category_id' => $request->category]);
+            }
+
+            // Save allowed viewers if classification is Private and provided
+            if ($request->classification == 'Private' && $request->has('allowed_viewers')) {
+                foreach ($request->allowed_viewers as $userId) {
+                    $document->allowedViewers()->create(['user_id' => $userId]);
+                }
             }
 
             $document->status()->create([
@@ -398,17 +408,26 @@ class DocumentController extends Controller
      */
     public function create(): View
     {
-        $company = CompanyAccount::where('user_id', auth()->id())->first();
+        $currentUserCompany = auth()->user()->companies()->first();
+        $originatingOfficeId = auth()->user()->offices->first()->id ?? null;
+        $offices = $currentUserCompany
+            ? Office::where('company_id', $currentUserCompany->id)->where('id', '!=', $originatingOfficeId)->get()
+            : collect();
 
-        $users = $company ? $company->employees()->paginate(10) : collect();
-        $offices = Office::all();
+        // Fetch users from the same company, excluding the current user
+        $users = $currentUserCompany
+            ? User::whereHas('companies', function ($query) use ($currentUserCompany) {
+                $query->where('company_id', $currentUserCompany->id);
+            })->where('id', '!=', auth()->id())->with('offices')->get()
+            : collect();
 
         $categories = DocumentCategories::all();
 
-        return view('documents.create', compact('offices', 'categories', 'users'));
+        return view('documents.create', compact('offices', 'categories', 'users', 'originatingOfficeId', 'currentUserCompany'));
     }
 
     /**
+     * DEFUNCT, 
      * Store a newly created document in storage.
      */
     public function store(Request $request): RedirectResponse
@@ -819,9 +838,14 @@ class DocumentController extends Controller
     {
         // Retrieve the office abbreviation and document type
         $office = Office::findOrFail($officeId);
-        $documentType = DocumentCategory::find($documentTypeId) ?? 'GEN';
-
-        $prefix = strtoupper(substr($office->name, 0, 3)) . '-' . strtoupper(substr($documentType->category, 0, 3));
+        $documentType = DocumentCategory::find($documentTypeId);
+        
+        if ($documentType) {
+            $prefix = strtoupper(substr($office->name, 0, 3)) . '-' . strtoupper(substr($documentType->category, 0, 3));
+        } else {
+            // Use 'GEN' as fallback for document type abbreviation
+            $prefix = strtoupper(substr($office->name, 0, 3)) . '-GEN';
+        }
 
         do {
             // Define the characters to use for the random part
