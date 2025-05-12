@@ -168,7 +168,7 @@ class OfficeController extends Controller
             }
 
             $office->delete();
-            return redirect()->route('offices.index')->with('success', 'Office deleted successfully.');
+            return redirect()->route('office.index')->with('success', 'Office deleted successfully.');
         } catch (\Exception $e) {
             return back()->with('error', 'Error deleting office: ' . $e->getMessage());
         }
