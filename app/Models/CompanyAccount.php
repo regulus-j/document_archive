@@ -91,7 +91,7 @@ class CompanyAccount extends Model
     public function userLimit()
     {
         // Check if there is currently a subscription
-        $subscription = $this->subscriptions()->with('plan.features')->first();
+        $subscription = $this->subscriptions()->with('plan.features')->latest()->first();
 
         if (!$subscription) {
             return 3;
@@ -118,7 +118,7 @@ class CompanyAccount extends Model
     public function teamLimit()
     {
         // Check if there is currently a subscription
-        $subscription = $this->subscriptions()->with('plan.features')->first();
+        $subscription = $this->subscriptions()->with('plan.features')->latest()->first();
 
         if (!$subscription) {
             return 1;
@@ -126,11 +126,11 @@ class CompanyAccount extends Model
 
         $plan = $subscription->plan;
         // Check which user limit feature the plan has
-        if ($plan->hasFeature('users-20')) {
+        if ($plan->hasFeature('teams-20')) {
             return 20;
-        } elseif ($plan->hasFeature('users-10')) {
+        } elseif ($plan->hasFeature('teams-10')) {
             return 10;
-        } elseif ($plan->hasFeature('users-3')) {
+        } elseif ($plan->hasFeature('teams-3')) {
             return 3;
         } else {
             // Fallback to free tier limit if no user limit feature found
