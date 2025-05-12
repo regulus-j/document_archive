@@ -159,7 +159,19 @@
                                         </svg>
                                         Select Users
                                     </h3>
-                                    <div class="space-y-2 max-h-60 overflow-y-auto pr-2">
+                                    
+                                    <!-- Office Filter Dropdown -->
+                                    <div class="mb-3">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Filter by Office</label>
+                                        <select class="office-filter form-select w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                            <option value="all">All Offices</option>
+                                            @foreach ($offices as $office)
+                                                <option value="{{ $office->id }}">{{ $office->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="space-y-2 max-h-60 overflow-y-auto pr-2 user-list-container">
                                         @foreach ($users as $user)
                                             <div class="form-check flex items-center p-2 hover:bg-blue-50 rounded-md transition-colors user-item"
                                                 data-office-ids="{{ json_encode($user->offices->pluck('id')) }}">
@@ -244,6 +256,16 @@
                             </svg>
                             Add Batch
                         </button>
+                        <button type="button" id="remove-batch-btn"
+                            class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors hidden"
+                            onclick="removeLastBatch()">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-red-500" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            Remove Last Batch
+                        </button>
                         <button type="submit"
                             class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-md text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
                             onclick="prepareFormData()">
@@ -264,6 +286,11 @@
 
         function updateBatchOrders() {
             const batches = document.querySelectorAll('#batches-container .batch-group');
+            
+            // Show/hide the remove batch button based on number of batches
+            const removeBatchBtn = document.getElementById('remove-batch-btn');
+            removeBatchBtn.classList.toggle('hidden', batches.length <= 1);
+            
             batches.forEach((batch, index) => {
                 // Update data-index and step order label/hidden input fields
                 batch.dataset.index = index;
@@ -308,6 +335,18 @@
             });
         }
 
+        function removeLastBatch() {
+            const container = document.getElementById('batches-container');
+            const batches = container.querySelectorAll('.batch-group');
+            
+            // Don't remove if there's only one batch
+            if (batches.length > 1) {
+                const lastBatch = batches[batches.length - 1];
+                container.removeChild(lastBatch);
+                updateBatchOrders();
+            }
+        }
+
         function addBatch() {
             const container = document.getElementById('batches-container');
             // Clone the first batch-group as a template
@@ -331,20 +370,25 @@
                 input.value = '';
             });
 
-            // Show all users in the new batch (if they were hidden by previous logic, though not relevant now)
+            // Show all users in the new batch
             const userItems = newBatch.querySelectorAll('.user-item');
             userItems.forEach(userItem => {
-                userItem.style.display = ''; // Ensure user items are visible
+                userItem.style.display = 'flex'; // Ensure user items are visible
             });
             
             // Remove any validation errors from the cloned template
             newBatch.querySelectorAll('.validation-error').forEach(el => el.remove());
 
             container.appendChild(newBatch);
-            // batchIndex++; // Not strictly needed here as updateBatchOrders re-indexes everything
             updateBatchOrders();
-
-            // No need to attach filterUsersByOffice event listeners anymore
+            
+            // Add event listener for the office filter dropdown in the new batch
+            const officeFilter = newBatch.querySelector('.office-filter');
+            if (officeFilter) {
+                officeFilter.addEventListener('change', function() {
+                    filterUsersByOffice(this);
+                });
+            }
         }
 
         function validateForm() {
@@ -376,7 +420,35 @@
             return isValid;
         }
 
-        // filterUsersByOffice function is removed as it's no longer needed.
+        // Filter users by selected office
+        function filterUsersByOffice(selectElement) {
+            const batch = selectElement.closest('.batch-group');
+            const selectedOfficeId = selectElement.value;
+            const userItems = batch.querySelectorAll('.user-item');
+            
+            userItems.forEach(userItem => {
+                // Check if we should show all users or filter by office
+                if (selectedOfficeId === 'all') {
+                    userItem.style.display = 'flex';
+                } else {
+                    // Get the office IDs for this user
+                    const officeIds = JSON.parse(userItem.dataset.officeIds);
+                    
+                    // Show this user if they belong to the selected office
+                    if (officeIds.includes(parseInt(selectedOfficeId))) {
+                        userItem.style.display = 'flex';
+                    } else {
+                        userItem.style.display = 'none';
+                        
+                        // If a hidden user was selected, uncheck them
+                        const userRadio = userItem.querySelector('input[type="radio"]');
+                        if (userRadio && userRadio.checked) {
+                            userRadio.checked = false;
+                        }
+                    }
+                }
+            });
+        }
 
         function prepareFormData() {
             // This function is called on form submission
@@ -385,6 +457,9 @@
 
         // Add form validation on page load
         document.addEventListener('DOMContentLoaded', function() {
+            // Update batch order to initialize the remove button visibility
+            updateBatchOrders();
+            
             // Add form validation
             const form = document.querySelector('form');
             form.addEventListener('submit', function(event) {
@@ -393,7 +468,38 @@
                 }
             });
 
-            // Event listeners for office checkboxes to filter users are removed.
+            // Add event listeners for office filter dropdowns
+            document.querySelectorAll('.office-filter').forEach(filter => {
+                filter.addEventListener('change', function() {
+                    filterUsersByOffice(this);
+                });
+            });
+            
+            // Add event listeners for office radio buttons to uncheck user radio buttons when an office is selected
+            document.querySelectorAll('.office-radio').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    if (this.checked) {
+                        const batch = this.closest('.batch-group');
+                        const userRadios = batch.querySelectorAll('.user-radio');
+                        userRadios.forEach(userRadio => {
+                            userRadio.checked = false;
+                        });
+                    }
+                });
+            });
+            
+            // Add event listeners for user radio buttons to uncheck office radio buttons when a user is selected
+            document.querySelectorAll('.user-radio').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    if (this.checked) {
+                        const batch = this.closest('.batch-group');
+                        const officeRadios = batch.querySelectorAll('.office-radio');
+                        officeRadios.forEach(officeRadio => {
+                            officeRadio.checked = false;
+                        });
+                    }
+                });
+            });
         });
     </script>
 @endsection

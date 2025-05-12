@@ -62,7 +62,7 @@
                             fill="currentColor">
                             <path fill-rule="evenodd"
                                 d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                                clip-rule="evenodd" />
+                                clip-rule="evenodd">
                         </svg>
                     </div>
                     <div class="ml-3">
@@ -320,10 +320,18 @@
                                                 <div class="flex flex-wrap gap-2 items-center">
                                                     @php
                                                         $statusColor = 'gray';
-                                                        if ($document->status?->status == 'Approved') {
+                                                        $status = $document->status?->status ? strtolower($document->status->status) : '';
+                                                        
+                                                        if ($status == 'approved') {
                                                             $statusColor = 'emerald';
-                                                        } elseif ($document->status?->status == 'Pending') {
+                                                        } elseif ($status == 'pending') {
                                                             $statusColor = 'amber';
+                                                        } elseif ($status == 'forwarded') {
+                                                            $statusColor = 'blue';
+                                                        } elseif ($status == 'recalled') {
+                                                            $statusColor = 'purple';
+                                                        } elseif ($status == 'uploaded') {
+                                                            $statusColor = 'indigo';
                                                         }
                                                     @endphp
                                                     <span
@@ -379,8 +387,18 @@
                                                     </svg>
                                                 </a>
 
-                                                @if ($document->user->id == auth()->user()->id)
-                                                    @if ($document->status->status == 'uploaded' || $document->status->status == 'pending')
+                                                @php
+                                                    $status = '';
+                                                    if (isset($document->status) && $document->status && $document->status->status) {
+                                                        $status = strtolower(trim($document->status->status));
+                                                    }
+                                                    $isDocumentOwner = $document->user && $document->user->id == auth()->user()->id;
+                                                    // Always enable buttons for admin users
+                                                    $canManageDocument = $isDocumentOwner || auth()->user()->can('document-manage') || auth()->user()->can('document-edit');
+                                                @endphp
+                                                
+                                                @if ($canManageDocument)
+                                                    @if ($status == 'uploaded' || $status == 'pending')
                                                         <a href="{{ route('documents.forward', $document->id) }}"
                                                             class="p-1.5 bg-amber-50 text-amber-600 rounded-lg hover:bg-amber-100 transition-colors"
                                                             title="Forward">
@@ -391,21 +409,42 @@
                                                                     d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                                                             </svg>
                                                         </a>
-                                                    @elseif($document->status->status == 'forwarded')
-                                                        <a href="{{ route('documents.forward', $document->id) }}"
-                                                            class="p-1.5 bg-amber-50 text-amber-600 rounded-lg hover:bg-amber-100 transition-colors"
-                                                            title="Forward">
-                                                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg"
-                                                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                                    stroke-width="2"
-                                                                    d="M3 10h10a4 4 0 0 1 0 8H9m-6-4l4-4-4-4" />
-                                                            </svg>
-                                                        </a>
+                                                    @elseif($status == 'forwarded')
+                                                        <form action="{{ route('documents.recall', $document) }}" method="POST" class="inline-block">
+                                                            @csrf
+                                                            <button type="submit" 
+                                                                class="p-1.5 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-colors"
+                                                                title="Recall Document" 
+                                                                onclick="return confirm('Are you sure you want to recall this document? This will pause the workflow and notify all recipients.');">
+                                                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" 
+                                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" 
+                                                                        stroke-width="2" 
+                                                                        d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z" />
+                                                                </svg>
+                                                            </button>
+                                                        </form>
                                                     @endif
+                                                    
+                                                    @if(isset($document->status) && strtolower($document->status->status) === 'recalled' && ($document->uploader == auth()->id() || $document->user->id == auth()->user()->id || auth()->user()->can('document-manage')))
+                                                        <form action="{{ route('documents.resume', $document) }}" method="POST" class="inline-block">
+                                                            @csrf
+                                                            <button type="submit" 
+                                                                class="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition-colors"
+                                                                title="Resume Document" 
+                                                                onclick="return confirm('Are you sure you want to resume this document workflow? This will reactivate the workflow and notify all recipients.');">
+                                                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" 
+                                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" 
+                                                                        stroke-width="2" 
+                                                                        d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5" />
+                                                                </svg>
+                                                            </button>
+                                                        </form>
                                                     @endif
+                                                @endif
 
-                                                    @can('document-edit')
+                                                @can('document-edit')
                                                         <a href="{{ route('documents.edit', $document->id) }}"
                                                             class="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition-colors"
                                                             title="Update">
@@ -413,7 +452,7 @@
                                                                 fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                 <path stroke-linecap="round" stroke-linejoin="round"
                                                                     stroke-width="2"
-                                                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                                             </svg>
                                                         </a>
                                                     @endcan
@@ -450,6 +489,23 @@
                                                             </svg>
                                                         </button>
                                                     </form>
+
+                                                    @if ($document->status->status != 'archived')
+                                                        <form action="{{ route('documents.archive.store', $document) }}" method="POST" class="inline-block">
+                                                            @csrf
+                                                            <button type="submit"
+                                                                class="p-1.5 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
+                                                                title="Archive Document" 
+                                                                onclick="return confirm('Are you sure you want to archive this document? It will be moved to the archive section.');">
+                                                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg"
+                                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                                        stroke-width="2"
+                                                                        d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                                                                </svg>
+                                                            </button>
+                                                        </form>
+                                                    @endif
                                             </div>
                                         </td>
                                     </tr>

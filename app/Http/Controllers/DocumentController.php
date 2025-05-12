@@ -121,6 +121,7 @@ class DocumentController extends Controller
 
         return view('documents.archive', array_merge([
             'documents' => $documents,
+            'archivedDocuments' => $documents,
             'i' => (request()->input('page', 1) - 1) * 5,
             'search' => $search,
         ], compact('auditLogs')));
@@ -182,10 +183,12 @@ class DocumentController extends Controller
                 }
             }
 
+            // Set initial status based on whether document is being forwarded
+            $initialStatus = ($request->forward == '1') ? 'pending' : 'uploaded';
             $document->status()->create([
-                'status' => 'pending',
+                'status' => $initialStatus,
             ]);
-            \Log::info('Initial document status set to pending', ['document_id' => $document->id]);
+            \Log::info('Initial document status set to ' . $initialStatus, ['document_id' => $document->id]);
 
             $tracking_number = $this->generateTrackingNumber($request->from_office, $request->classification);
             \Log::info('Generated tracking number', ['tracking_number' => $tracking_number]);
@@ -815,6 +818,36 @@ class DocumentController extends Controller
             $this->logDocumentAction($document, 'updated', $document->status->status, 'Document updated');
             \Log::info('Document update action logged', ['document_id' => $document->id]);
 
+            // Notify all users who have received or forwarded this document (except current user)
+            $workflowUsers = 
+                \App\Models\DocumentWorkflow::where('document_id', $document->id)
+                    ->where(function($q) {
+                        $q->whereNotNull('recipient_id')->orWhereNotNull('sender_id');
+                    })
+                    ->get(['recipient_id', 'sender_id']);
+            $userIds = collect();
+            foreach ($workflowUsers as $row) {
+                if ($row->recipient_id && $row->recipient_id != auth()->id()) {
+                    $userIds->push($row->recipient_id);
+                }
+                if ($row->sender_id && $row->sender_id != auth()->id()) {
+                    $userIds->push($row->sender_id);
+                }
+            }
+            $userIds = $userIds->unique();
+            foreach ($userIds as $uid) {
+                \App\Models\Notifications::create([
+                    'user_id' => $uid,
+                    'type' => 'document_updated',
+                    'data' => json_encode([
+                        'document_id' => $document->id,
+                        'message' => 'A document you were involved with was updated.',
+                        'title' => $document->title,
+                        'updater' => auth()->user()->first_name . ' ' . auth()->user()->last_name,
+                    ]),
+                ]);
+            }
+
             // Handle forward if enabled
             if ($request->forward == '1') {
                 \Log::info('Redirecting to forward route', ['document_id' => $document->id]);
@@ -1019,5 +1052,135 @@ public function receiveIndex(): View
         ->paginate(10);
         
     return view('documents.receive', compact('documents'));
-}
+}    /**
+     * Recall a document, pause workflow, and notify recipients.
+     */
+    public function recallDocument(Request $request, Document $document)
+    {
+        // Only the document owner can recall
+        if ($document->uploader !== auth()->id()) {
+            return redirect()->back()->with('error', 'You are not authorized to recall this document.');
+        }
+
+        // Pause workflow: set a status or flag (e.g., 'recalled')
+        $document->status()->update(['status' => 'recalled']);
+
+        // Pause all associated workflows
+        $workflows = \App\Models\DocumentWorkflow::where('document_id', $document->id)->get();
+        foreach ($workflows as $workflow) {
+            $workflow->pause();
+        }
+
+        // Notify all recipients in the workflow
+        foreach ($workflows as $workflow) {
+            if ($workflow->recipient_id) {
+                \App\Models\Notifications::create([
+                    'user_id' => $workflow->recipient_id,
+                    'type' => 'document_recall',
+                    'data' => json_encode([
+                        'message' => 'A document you are a recipient of has been recalled and the workflow is paused.',
+                        'title' => $document->title,
+                        'document_id' => $document->id,
+                        'recalled_by' => auth()->user()->first_name . ' ' . auth()->user()->last_name,
+                    ]),
+                ]);
+            }
+        }
+
+        // Log the recall action
+        \App\Models\DocumentAudit::logDocumentAction(
+            $document->id, 
+            auth()->id(),
+            'recall', 
+            'recalled', 
+            'Document recalled and workflow paused'
+        );
+
+        return redirect()->back()->with('success', 'Document has been recalled and workflow paused. Recipients have been notified.');
+    }
+
+    /**
+     * Resume a recalled document and its workflow.
+     */
+    public function resumeDocument(Request $request, Document $document)
+    {
+        // Only the document owner can resume
+        if ($document->uploader !== auth()->id()) {
+            return redirect()->back()->with('error', 'You are not authorized to resume this document.');
+        }
+
+        // Check if the document was recalled
+        if ($document->status->status !== 'recalled') {
+            return redirect()->back()->with('error', 'This document is not in a recalled state.');
+        }
+
+        // Set document status back to active
+        $document->status()->update(['status' => 'forwarded']);
+
+        // Resume all associated workflows
+        $workflows = \App\Models\DocumentWorkflow::where('document_id', $document->id)->get();
+        foreach ($workflows as $workflow) {
+            $workflow->resume();
+        }
+
+        // Notify all recipients in the workflow
+        foreach ($workflows as $workflow) {
+            if ($workflow->recipient_id) {
+                \App\Models\Notifications::create([
+                    'user_id' => $workflow->recipient_id,
+                    'type' => 'document_resumed',
+                    'data' => json_encode([
+                        'message' => 'A document that was previously recalled has been resumed. The workflow is now active again.',
+                        'title' => $document->title,
+                        'document_id' => $document->id,
+                        'resumed_by' => auth()->user()->first_name . ' ' . auth()->user()->last_name,
+                    ]),
+                ]);
+            }
+        }
+
+        // Log the resume action
+        \App\Models\DocumentAudit::logDocumentAction(
+            $document->id,
+            auth()->id(),
+            'resume', 
+            'forwarded', 
+            'Document workflow resumed'
+        );
+
+        return redirect()->back()->with('success', 'Document workflow has been resumed. Recipients have been notified.');
+    }
+
+    /**
+     * Archive a document
+     * 
+     * @param Document $document
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function archiveDocument(Document $document)
+    {
+        // Check if the user has permission to archive the document
+        if (auth()->user()->id !== $document->user_id && !auth()->user()->hasRole('company-admin')) {
+            return redirect()->route('documents.index')
+                ->with('error', 'You do not have permission to archive this document.');
+        }
+
+        // Update the document status to archived
+        $document->status()->update(['status' => 'archived']);
+
+        // Create an audit log
+        DocumentAudit::create([
+            'document_id' => $document->id,
+            'user_id' => auth()->id(),
+            'action' => 'Archived',
+            'status' => 'Archived',
+            'details' => 'Document was archived'
+        ]);
+
+        // Log the action
+        \Log::info('Document archived', ['document_id' => $document->id, 'user_id' => auth()->id()]);
+
+        return redirect()->route('documents.index')
+            ->with('success', 'Document has been archived successfully.');
+    }
 }

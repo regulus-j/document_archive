@@ -110,6 +110,18 @@ class DocumentWorkflowController extends Controller
                     'urgency' => $request->urgency_batch[$batchIndex] ?? null,
                     'due_date' => $request->due_date_batch[$batchIndex] ?? null,
                 ]);
+
+                // Notify the user recipient
+                \App\Models\Notifications::create([
+                    'user_id' => $recipientId,
+                    'type' => 'document_forwarded',
+                    'data' => json_encode([
+                        'document_id' => $document->id,
+                        'message' => 'A document has been forwarded to you.',
+                        'title' => $document->title,
+                        'sender' => auth()->user()->first_name . ' ' . auth()->user()->last_name,
+                    ]),
+                ]);
             } else if ($type === 'office') {
                 // It's an office recipient
                 $officeId = $id;
@@ -174,7 +186,39 @@ class DocumentWorkflowController extends Controller
             $logMessage
         );
 
-        return redirect()->back()->with('success', 'Document workflow approved');
+        // Notify next recipient (if any)
+        $nextWorkflow = \App\Models\DocumentWorkflow::where('document_id', $workflow->document_id)
+            ->where('step_order', '>', $workflow->step_order)
+            ->orderBy('step_order')
+            ->first();
+        if ($nextWorkflow && $nextWorkflow->recipient_id && $nextWorkflow->recipient_id != auth()->id()) {
+            \App\Models\Notifications::create([
+                'user_id' => $nextWorkflow->recipient_id,
+                'type' => 'document_next_step',
+                'data' => json_encode([
+                    'document_id' => $workflow->document_id,
+                    'message' => 'A document is now assigned to you in the workflow.',
+                    'title' => $workflow->document->title,
+                    'from' => auth()->user()->first_name . ' ' . auth()->user()->last_name,
+                ]),
+            ]);
+        }
+        // Notify previous sender (if any)
+        if ($workflow->sender_id && $workflow->sender_id != auth()->id()) {
+            \App\Models\Notifications::create([
+                'user_id' => $workflow->sender_id,
+                'type' => 'document_next_step',
+                'data' => json_encode([
+                    'document_id' => $workflow->document_id,
+                    'message' => 'A document you forwarded has moved to the next step.',
+                    'title' => $workflow->document->title,
+                    'to' => $nextWorkflow && $nextWorkflow->recipient_id ? $nextWorkflow->recipient->first_name . ' ' . $nextWorkflow->recipient->last_name : null,
+                ]),
+            ]);
+        }
+
+        return redirect()->route('documents.index')
+            ->with('success', 'Document workflow approved');
     }
 
     public function rejectWorkflow(Request $request, $id): RedirectResponse
@@ -400,12 +444,18 @@ class DocumentWorkflowController extends Controller
                 'status' => 'pending',
                 'received_at' => null,
             ]);
-            
-            // Update document_recipients table
-            \DB::table('document_recipients')->updateOrInsert(
-                ['document_id' => $document->id, 'recipient_id' => $recipientId],
-                ['created_at' => now(), 'updated_at' => now()]
-            );
+
+            // Notify the referred user
+            \App\Models\Notifications::create([
+                'user_id' => $recipientId,
+                'type' => 'document_referred',
+                'data' => json_encode([
+                    'document_id' => $document->id,
+                    'message' => 'A document has been referred to you.',
+                    'title' => $document->title,
+                    'sender' => auth()->user()->first_name . ' ' . auth()->user()->last_name,
+                ]),
+            ]);
         }
         
         // Log action
@@ -468,12 +518,18 @@ class DocumentWorkflowController extends Controller
                 'status' => 'pending',
                 'received_at' => null,
             ]);
-            
-            // Update document_recipients table
-            \DB::table('document_recipients')->updateOrInsert(
-                ['document_id' => $document->id, 'recipient_id' => $recipientId],
-                ['created_at' => now(), 'updated_at' => now()]
-            );
+
+            // Notify the forwarded user
+            \App\Models\Notifications::create([
+                'user_id' => $recipientId,
+                'type' => 'document_forwarded',
+                'data' => json_encode([
+                    'document_id' => $document->id,
+                    'message' => 'A document has been forwarded to you.',
+                    'title' => $document->title,
+                    'sender' => auth()->user()->first_name . ' ' . auth()->user()->last_name,
+                ]),
+            ]);
         }
         
         // Log action
@@ -499,5 +555,24 @@ class DocumentWorkflowController extends Controller
         $numberPart = str_pad($document->id, 6, '0', STR_PAD_LEFT);
 
         return "{$officeCode}-{$uploadDate}-{$numberPart}";
+    }
+
+    // Method to handle receipt confirmation
+    public function confirmReceipt(Request $request)
+    {
+        $request->validate([
+            'document_id' => 'required|exists:documents,id',
+        ]);
+
+        $document = Document::findOrFail($request->input('document_id'));
+
+        // Update the workflow status to 'received'
+        $workflow = $document->workflow;
+        if ($workflow) {
+            $workflow->status = 'received';
+            $workflow->save();
+        }
+
+        return redirect()->route('documents.receive.index')->with('success', 'Document status updated to received.');
     }
 }

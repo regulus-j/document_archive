@@ -86,12 +86,16 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                             <a href="{{ route('documents.show', $document->id) }}" class="text-indigo-600 hover:text-indigo-900 mr-3">View</a>
-                                            <form method="POST" action="{{ route('documents.receive.confirm', $document->id) }}" class="inline">
-                                                @csrf
-                                                <button type="submit" class="text-green-600 hover:text-green-900 hover:underline">
-                                                    Receive
-                                                </button>
-                                            </form>
+                                            @if ($document->workflow->status !== 'received')
+                                                <form method="POST" action="{{ route('documents.receive.confirm', $document->id) }}" class="inline">
+                                                    @csrf
+                                                    <button type="submit" class="text-green-600 hover:text-green-900 hover:underline">
+                                                        Receive
+                                                    </button>
+                                                </form>
+                                            @else
+                                                <span class="text-green-600 font-semibold">Received</span>
+                                            @endif
                                         </td>
                                     </tr>
                                 @endforeach
