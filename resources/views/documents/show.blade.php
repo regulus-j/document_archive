@@ -504,7 +504,7 @@
             </div>
         </div>
 
-        <!-- Audit Logs Card -->
+        <!-- Audit Logs Card
         <div class="bg-white rounded-xl shadow-xl overflow-hidden border border-blue-100 mb-8">
             <div class="p-6 border-b border-gray-200">
                 <h2 class="text-xl font-semibold text-gray-800 flex items-center">
@@ -566,7 +566,7 @@
             <div class="px-6 py-4 border-t border-gray-200">
                 {{ $auditLogs->links() }}
             </div>
-        </div>
+        </div>-->
 
     </div>
 </div>
