@@ -49,6 +49,10 @@
                     <!-- Timeline Items -->
                     <div class="space-y-8 relative">
                         @php
+                            // Sort audit logs by created_at timestamp in descending order
+                            $sortedLogs = $auditLogs->sortByDesc('created_at');
+
+                            // Define status colors
                             $statusColors = [
                                 'created' => ['bg' => 'bg-green-500', 'text' => 'text-green-800', 'light' => 'bg-green-100'],
                                 'pending' => ['bg' => 'bg-yellow-500', 'text' => 'text-yellow-800', 'light' => 'bg-yellow-100'],
@@ -91,12 +95,35 @@
                             }
                         @endphp
 
-                        @foreach($auditLogs as $log)
+                        @php
+                            $currentStep = 1;
+                            $totalSteps = $sortedLogs->count();
+                        @endphp
+
+                        @foreach($sortedLogs as $log)
                             <div class="flex items-start relative">
                                 <!-- Timeline Point -->
-                                <div class="flex-shrink-0 w-12">
-                                    <div class="{{ isset($log->action) ? (isset($statusColors[strtolower($log->action)]) ? $statusColors[strtolower($log->action)]['bg'] : 'bg-gray-500') : 'bg-gray-500' }} h-4 w-4 rounded-full border-4 border-white shadow"></div>
+                                <div class="flex-shrink-0 w-12 flex flex-col items-center">
+                                    <div class="relative">
+                                        @php
+                                            $dotColor = match(strtolower($log->status ?? '')) {
+                                                'pending' => 'yellow',
+                                                'approved' => 'green',
+                                                'rejected' => 'red',
+                                                'received' => 'blue',
+                                                'forwarded' => 'purple',
+                                                'returned' => 'amber',
+                                                'completed' => 'indigo',
+                                                'needs_revision' => 'amber',
+                                                'cancelled' => 'gray',
+                                                'draft' => 'gray',
+                                                default => 'gray'
+                                            };
+                                        @endphp
+                                        <div class="bg-{{ $dotColor }}-500 h-4 w-4 rounded-full border-4 border-white shadow"></div>
+                                    </div>
                                 </div>
+
                                 <!-- Timeline Content -->
                                 <div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
                                     <div>
@@ -104,10 +131,29 @@
                                             <span class="font-medium">
                                                 {{ $log->user ? $log->user->first_name . ' ' . $log->user->last_name : 'System' }}
                                             </span>
-                                            {{ strtolower($log->action ?? 'updated') }} the document
+                                            @if($log->action === 'created')
+                                                created the document
+                                            @elseif($log->action === 'updated')
+                                                updated the document
+                                            @elseif($log->action === 'forwarded')
+                                                forwarded the document
+                                            @elseif($log->action === 'received')
+                                                received the document
+                                            @elseif($log->action === 'reviewed')
+                                                reviewed the document
+                                            @elseif($log->action === 'approved')
+                                                approved the document
+                                            @elseif($log->action === 'rejected')
+                                                rejected the document
+                                            @elseif($log->action === 'returned')
+                                                returned the document
+                                            @else
+                                                {{ strtolower($log->action ?? 'updated') }} the document
+                                            @endif
+
                                             @if($log->status)
                                                 <span class="px-2 py-1 text-xs font-semibold rounded-full {{ getStatusColor($log->status, 'light') }} {{ getStatusColor($log->status, 'text') }} ml-2">
-                                                    {{ $log->status }}
+                                                    {{ ucfirst($log->status) }}
                                                 </span>
                                             @endif
                                         </p>
@@ -120,6 +166,7 @@
                                     </div>
                                 </div>
                             </div>
+                            @php $currentStep++; @endphp
                         @endforeach
                     </div>
                 </div>
@@ -128,8 +175,12 @@
                 <div class="mt-6 pt-6 border-t border-gray-200">
                     <div class="flex justify-between items-center">
                         <h4 class="text-sm font-medium text-gray-500">Current Status</h4>
-                        <span class="px-3 py-1 rounded-full text-sm font-medium {{ getStatusColor($document->status?->status ?? null, 'light') }} {{ getStatusColor($document->status?->status ?? null, 'text') }}">
-                            {{ $document->status?->status ?? 'Pending' }}
+                        @php
+                            $latestLog = $sortedLogs->first();
+                            $currentStatus = $latestLog ? $latestLog->status : ($document->status?->status ?? 'Pending');
+                        @endphp
+                        <span class="px-3 py-1 rounded-full text-sm font-medium {{ getStatusColor($currentStatus, 'light') }} {{ getStatusColor($currentStatus, 'text') }}">
+                            {{ ucfirst($currentStatus) }}
                         </span>
                     </div>
                 </div>
@@ -459,12 +510,7 @@
                                 {{ $log->user->first_name }} {{ $log->user->last_name }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                <span class="px-2 py-1 text-xs font-semibold rounded-full
-                                                                                @if($log->action === 'created') bg-green-100 text-green-800
-                                                                                @elseif($log->action === 'updated') bg-yellow-100 text-yellow-800
-                                                                                @elseif($log->action === 'deleted') bg-red-100 text-red-800
-                                                                                    @else bg-blue-100 text-blue-800
-                                                                                @endif">
+                                <span class="px-2 py-1 text-xs font-semibold rounded-full {{ getStatusColor($log->status, 'light') }} {{ getStatusColor($log->status, 'text') }}">
                                     {{ ucfirst($log->action) }}
                                 </span>
                             </td>
