@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class RegisteredUserController extends Controller
 {
@@ -33,12 +34,17 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'company_name' => ['required', 'string', 'max:255'],
             'g-recaptcha-response' => ['required', function ($attribute, $value, $fail) {
+                // Temporarily disable reCAPTCHA verification in local development
+                if (env('APP_ENV') === 'local') {
+                    return; // Skip verification in local development
+                }
+
                 $response = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
                     'secret' => env('RECAPTCHA_SECRET_KEY'),
                     'response' => $value,
                     'remoteip' => request()->ip(),
                 ]);
-                
+
                 if (!$response->json('success')) {
                     $fail('The reCAPTCHA verification failed. Please try again.');
                 }
@@ -65,10 +71,10 @@ class RegisteredUserController extends Controller
 
         // Get registered_name or default to company_name if not provided
         $registeredName = $request->registered_name ?: $request->company_name;
-        
+
         // Get company_email or default to user's email if not provided
         $companyEmail = $request->company_email ?: $request->email;
-        
+
         // Company registration with required fields
         $company = CompanyAccount::create([
             'user_id' => auth()->id(),
