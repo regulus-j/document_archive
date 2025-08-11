@@ -136,7 +136,11 @@
                                             @elseif($log->action === 'updated')
                                                 updated the document
                                             @elseif($log->action === 'forwarded')
-                                                forwarded the document
+                                                @php
+                                                    $workflowEntry = $workflows->where('id', $log->workflow_id)->first();
+                                                    $recipientOffice = $workflowEntry->recipientOffice->name ?? null;
+                                                @endphp
+                                                forwarded the document to {{ $recipientOffice ?? 'another office' }}
                                             @elseif($log->action === 'received')
                                                 received the document
                                             @elseif($log->action === 'reviewed')
@@ -148,7 +152,11 @@
                                             @elseif($log->action === 'returned')
                                                 returned the document
                                             @else
-                                                {{ strtolower($log->action ?? 'updated') }} the document
+                                                @php
+                                                    $action = strtolower($log->action ?? 'updated');
+                                                    $action = str_replace('workflow', 'processed', $action);
+                                                @endphp
+                                                {{ $action }} the document
                                             @endif
 
                                             @if($log->status)
@@ -338,7 +346,7 @@
                                 <tr>
                                     <th
                                         class="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">
-                                        Receive Order</th>
+                                        Processing Order</th>
                                     <th
                                         class="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">
                                         Recipient</th>
