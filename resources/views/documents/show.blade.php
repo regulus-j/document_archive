@@ -31,6 +31,111 @@
             </div>
         </div>
 
+        <!-- Progress Tracking Card -->
+        <div class="bg-white rounded-xl shadow-xl mb-6 border border-blue-100 overflow-hidden">
+            <div class="p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                    </svg>
+                    Document Progress
+                </h3>
+
+                <!-- Timeline -->
+                <div class="relative">
+                    <!-- Progress Line -->
+                    <div class="absolute h-full w-0.5 bg-gray-200 left-6 top-0"></div>
+
+                    <!-- Timeline Items -->
+                    <div class="space-y-8 relative">
+                        @php
+                            $statusColors = [
+                                'created' => ['bg' => 'bg-green-500', 'text' => 'text-green-800', 'light' => 'bg-green-100'],
+                                'pending' => ['bg' => 'bg-yellow-500', 'text' => 'text-yellow-800', 'light' => 'bg-yellow-100'],
+                                'received' => ['bg' => 'bg-blue-500', 'text' => 'text-blue-800', 'light' => 'bg-blue-100'],
+                                'approved' => ['bg' => 'bg-green-500', 'text' => 'text-green-800', 'light' => 'bg-green-100'],
+                                'rejected' => ['bg' => 'bg-red-500', 'text' => 'text-red-800', 'light' => 'bg-red-100'],
+                                'returned' => ['bg' => 'bg-amber-500', 'text' => 'text-amber-800', 'light' => 'bg-amber-100'],
+                                'forwarded' => ['bg' => 'bg-purple-500', 'text' => 'text-purple-800', 'light' => 'bg-purple-100'],
+                                'completed' => ['bg' => 'bg-indigo-500', 'text' => 'text-indigo-800', 'light' => 'bg-indigo-100'],
+                                'uploaded' => ['bg' => 'bg-green-500', 'text' => 'text-green-800', 'light' => 'bg-green-100'],
+                                'needs_revision' => ['bg' => 'bg-amber-500', 'text' => 'text-amber-800', 'light' => 'bg-amber-100'],
+                                'cancelled' => ['bg' => 'bg-gray-500', 'text' => 'text-gray-800', 'light' => 'bg-gray-100'],
+                                'draft' => ['bg' => 'bg-gray-500', 'text' => 'text-gray-800', 'light' => 'bg-gray-100']
+                            ];
+
+                            // Helper function to get status color with fallback
+                            function getStatusColor($status, $type) {
+                                global $statusColors;
+                                if (!isset($statusColors) || !is_array($statusColors)) {
+                                    // Fallback colors if $statusColors is not available
+                                    return $type === 'bg' ? 'bg-gray-500' : ($type === 'light' ? 'bg-gray-100' : 'text-gray-800');
+                                }
+
+                                $defaultColors = [
+                                    'bg' => 'bg-gray-500',
+                                    'light' => 'bg-gray-100',
+                                    'text' => 'text-gray-800'
+                                ];
+
+                                if ($status === null) {
+                                    return $defaultColors[$type] ?? $defaultColors['bg'];
+                                }
+
+                                $status = strtolower($status);
+                                if (!isset($statusColors[$status])) {
+                                    return $defaultColors[$type] ?? $defaultColors['bg'];
+                                }
+
+                                return $statusColors[$status][$type] ?? $defaultColors[$type] ?? $defaultColors['bg'];
+                            }
+                        @endphp
+
+                        @foreach($auditLogs as $log)
+                            <div class="flex items-start relative">
+                                <!-- Timeline Point -->
+                                <div class="flex-shrink-0 w-12">
+                                    <div class="{{ isset($log->action) ? (isset($statusColors[strtolower($log->action)]) ? $statusColors[strtolower($log->action)]['bg'] : 'bg-gray-500') : 'bg-gray-500' }} h-4 w-4 rounded-full border-4 border-white shadow"></div>
+                                </div>
+                                <!-- Timeline Content -->
+                                <div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
+                                    <div>
+                                        <p class="text-sm text-gray-800">
+                                            <span class="font-medium">
+                                                {{ $log->user ? $log->user->first_name . ' ' . $log->user->last_name : 'System' }}
+                                            </span>
+                                            {{ strtolower($log->action ?? 'updated') }} the document
+                                            @if($log->status)
+                                                <span class="px-2 py-1 text-xs font-semibold rounded-full {{ getStatusColor($log->status, 'light') }} {{ getStatusColor($log->status, 'text') }} ml-2">
+                                                    {{ $log->status }}
+                                                </span>
+                                            @endif
+                                        </p>
+                                        @if($log->details)
+                                            <p class="text-sm text-gray-500 mt-0.5">{{ $log->details }}</p>
+                                        @endif
+                                    </div>
+                                    <div class="text-right text-sm whitespace-nowrap text-gray-500">
+                                        <time datetime="{{ $log->created_at }}">{{ $log->created_at->format('M d, Y H:i') }}</time>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                <!-- Current Status -->
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                    <div class="flex justify-between items-center">
+                        <h4 class="text-sm font-medium text-gray-500">Current Status</h4>
+                        <span class="px-3 py-1 rounded-full text-sm font-medium {{ getStatusColor($document->status?->status ?? null, 'light') }} {{ getStatusColor($document->status?->status ?? null, 'text') }}">
+                            {{ $document->status?->status ?? 'Pending' }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Error Message -->
         @if(session('error'))
         <div class="bg-white border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-r-lg shadow-md" role="alert">
