@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class RegisteredUserController extends Controller
 {
@@ -69,10 +70,10 @@ class RegisteredUserController extends Controller
 
         // Get registered_name or default to company_name if not provided
         $registeredName = $request->registered_name ?: $request->company_name;
-        
+
         // Get company_email or default to user's email if not provided
         $companyEmail = $request->company_email ?: $request->email;
-        
+
         // Company registration with required fields
         $company = CompanyAccount::create([
             'user_id' => auth()->id(),
