@@ -33,18 +33,22 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'company_name' => ['required', 'string', 'max:255'],
             'g-recaptcha-response' => ['required', function ($attribute, $value, $fail) {
+                // Temporarily disable reCAPTCHA verification in local development
+                if (env('APP_ENV') === 'local') {
+                    return; // Skip verification in local development
+                }
+
                 $response = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
                     'secret' => env('RECAPTCHA_SECRET_KEY'),
                     'response' => $value,
                     'remoteip' => request()->ip(),
                 ]);
-                
+
                 if (!$response->json('success')) {
                     $fail('The reCAPTCHA verification failed. Please try again.');
                 }
             }],
         ]);
-
         $user = User::create([
             'first_name' => $request->first_name,
             'middle_name' => $request->middle_name,
