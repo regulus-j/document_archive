@@ -65,8 +65,21 @@
                             @php
                                 $latestLog = $sortedLogs->first();
                                 $currentStatus = $latestLog ? $latestLog->status : ($document->status?->status ?? 'Pending');
+                                $currentDotColor = match(strtolower($currentStatus)) {
+                                    'pending' => 'yellow',
+                                    'approved' => 'green',
+                                    'rejected' => 'red',
+                                    'received' => 'blue',
+                                    'forwarded' => 'purple',
+                                    'returned' => 'amber',
+                                    'completed' => 'indigo',
+                                    'needs_revision' => 'amber',
+                                    'cancelled' => 'gray',
+                                    'draft' => 'gray',
+                                    default => 'gray'
+                                };
                             @endphp
-                            <span class="px-3 py-1 rounded-full text-sm font-medium {{ getStatusColor($currentStatus, 'light') }} {{ getStatusColor($currentStatus, 'text') }}">
+                            <span class="px-3 py-1 rounded-full text-sm font-medium bg-{{ $currentDotColor }}-500 text-white">
                                 {{ ucfirst($currentStatus) }}
                             </span>
                         </div>
@@ -195,7 +208,7 @@
                                             @endif
 
                                             @if($log->status)
-                                                <span class="px-2 py-1 text-xs font-semibold rounded-full {{ getStatusColor($log->status, 'light') }} {{ getStatusColor($log->status, 'text') }} ml-2">
+                                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-{{ $dotColor }}-500 text-white ml-2">
                                                     {{ ucfirst($log->status) }}
                                                 </span>
                                             @endif
