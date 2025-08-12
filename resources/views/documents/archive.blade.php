@@ -23,7 +23,7 @@
                         </div>
                         <p class="mt-1 text-sm text-gray-600">Search archived documents</p>
                     </div>
-                    
+
                     <div class="p-6">
                         <!-- Archive Search Form -->
                         <form action="{{ route('documents.archive') }}" method="GET" class="space-y-5 mb-6">
@@ -159,7 +159,7 @@
                             </tbody>
                         </table>
                     </div>
-                    
+
                     <div class="p-6 border-t border-gray-200">
                         {{ $documents->links() }}
                     </div>
@@ -186,7 +186,7 @@
             }
 
             startScannerButton.textContent = 'Stop Scanner';
-            
+
             html5QrCode = new Html5Qrcode("qr-reader");
             html5QrCode.start(
                 { facingMode: "environment" },
@@ -198,11 +198,11 @@
                     // QR code detected - submit tracking number search form
                     const trackingInput = document.getElementById('tracking-number');
                     trackingInput.value = decodedText;
-                    
+
                     // Stop scanning
                     html5QrCode.stop().then(() => {
                         startScannerButton.textContent = 'Start Scanner';
-                        
+
                         // Submit the form
                         document.querySelector('form[action*="trackingNumber-search"]').submit();
                     });
