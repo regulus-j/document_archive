@@ -28,11 +28,11 @@
                     <tr class="hover:bg-gray-50">
                         <td class="px-4 py-2 border-t">{{ $document->title }}</td>
                         <td class="px-4 py-2 border-t">{{ $document->uploader->name ?? 'Unknown' }}</td>
-                        <td class="px-4 py-2 border-t">{{ $document->archived_at->format('Y-m-d H:i') }}</td>
+                        <td class="px-4 py-2 border-t">{{ $document->archived_at ? $document->archived_at->format('Y-m-d H:i') : 'N/A' }}</td>
                         <td class="px-4 py-2 border-t">{{ Str::limit($document->description, 50) }}</td>
                         <td class="px-4 py-2 border-t">
                             <a href="{{ route('documents.restore', $document->id) }}" class="text-blue-600 hover:underline">Restore</a>
-                            <form action="{{ route('documents.delete', $document->id) }}" method="POST" class="inline-block ml-2">
+                            <form action="{{ route('documents.destroy', $document->id) }}" method="POST" class="inline-block ml-2">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="text-red-600 hover:underline">Delete</button>

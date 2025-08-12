@@ -191,25 +191,25 @@
                                                             <a href="{{ route('documents.review', $workflow->id) }}"
                                                                 class="text-green-500 hover:underline mr-2">Review</a>
                                                         @endif
-                                                        
-                                                        @if($workflow->status === 'returned')
+
+                                                        {{-- @if($workflow->status === 'returned')
                                                             <span class="text-amber-500 italic">Returned to uploader</span>
-                                                        @endif
-                                                        
-                                                        @if($workflow->status === 'rejected')
+                                                        @endif --}}
+
+                                                        {{-- @if($workflow->status === 'rejected')
                                                             <span class="text-red-500 italic">Rejected</span>
-                                                        @endif
-                                                        
-                                                        @if($workflow->status === 'referred')
+                                                        @endif --}}
+
+                                                        {{-- @if($workflow->status === 'referred')
                                                             <span class="text-blue-500 italic">Referred to others</span>
-                                                        @endif
-                                                        
-                                                        @if($workflow->status === 'forwarded')
+                                                        @endif --}}
+
+                                                        {{-- @if($workflow->status === 'forwarded')
                                                             <span class="text-purple-500 italic">Forwarded</span>
-                                                        @endif
-                                                    @else
+                                                        @endif --}}
+                                                    {{-- @else --}}
                                                         {{-- Sender can only view document details --}}
-                                                        <span class="text-gray-500 italic">Forwarded by you</span>
+                                                        {{-- <span class="text-gray-500 italic">Forwarded by you</span> --}}
                                                     @endif
 
                                                     {{-- Everyone can view document details --}}
