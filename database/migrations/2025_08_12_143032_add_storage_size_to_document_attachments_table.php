@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('document_workflows', function (Blueprint $table) {
-            $table->boolean('is_paused')->default(false);
+        Schema::table('document_attachments', function (Blueprint $table) {
+            //
         });
     }
 
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('document_workflows', function (Blueprint $table) {
-            $table->dropColumn('is_paused');
+        Schema::table('document_attachments', function (Blueprint $table) {
+            //
         });
     }
 };
