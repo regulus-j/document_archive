@@ -249,43 +249,32 @@
                         <div>
                             <label for="attachments" class="block text-sm font-medium text-gray-700 mb-2">Upload
                                 Attachments</label>
-                            <div id="attachments-container" class="mt-1 flex flex-col gap-4">
-                                <!-- Initial attachments input -->
-                                <div
-                                    class="flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-blue-400 transition-colors">
-                                    <div class="space-y-1 text-center w-full">
-                                        <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none"
-                                            viewBox="0 0 48 48" aria-hidden="true">
-                                            <path
-                                                d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                                        </svg>
-                                        <div class="flex text-sm text-gray-600 justify-center">
-                                            <label for="attachments"
-                                                class="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
-                                                <span>Upload attachments</span>
-                                                <input id="attachments" name="attachments[]" type="file" multiple
-                                                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" class="sr-only">
-                                            </label>
-                                            <p class="pl-1">or drag and drop</p>
-                                        </div>
-                                        <p class="text-xs text-gray-500">PDF, DOC, DOCX, JPG, JPEG, PNG up to 10MB each</p>
-                                    </div>
-                                </div>
-                                <!-- File list to display selected attachments -->
-                                <ul class="file-list mt-2 space-y-2"></ul>
-                            </div>
-                            <div class="mt-2 flex items-center">
-                                <button type="button" id="add-attachment"
-                                    class="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none"
-                                        viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            <div class="flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-blue-400 transition-colors">
+                                <div class="space-y-1 text-center w-full">
+                                    <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none"
+                                        viewBox="0 0 48 48" aria-hidden="true">
+                                        <path
+                                            d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                                     </svg>
-                                    Add Another Attachment
-                                </button>
-                                <span class="text-xs text-gray-500 ml-2">(Maximum 5 attachments)</span>
+                                    <div class="flex text-sm text-gray-600 justify-center">
+                                        <label for="attachments"
+                                            class="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
+                                            <span>Upload attachments</span>
+                                            <input id="attachments" name="attachments[]" type="file" multiple
+                                                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" class="sr-only">
+                                        </label>
+                                        <p class="pl-1">or drag and drop</p>
+                                    </div>
+                                    <p class="text-xs text-gray-500">PDF, DOC, DOCX, JPG, JPEG, PNG up to 10MB each (Maximum 5 attachments)</p>
+                                </div>
+                            </div>
+                            <!-- Attachment Files Preview -->
+                            <div id="attachment-files-preview" class="hidden mt-4">
+                                <h4 class="text-sm font-medium text-gray-700 mb-2">Selected Attachments</h4>
+                                <ul id="attachment-files-list" class="divide-y divide-gray-200 border border-gray-200 rounded-md overflow-hidden bg-white">
+                                    <!-- Selected files will be displayed here -->
+                                </ul>
                             </div>
                         </div>
                     </div>
@@ -328,8 +317,134 @@
         </form>
     </div>
 
+    <!-- Popup Notification Styles -->
+    <style>
+        .popup-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+            max-width: 500px;
+            padding: 16px 20px;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            transform: translateX(100%);
+            transition: transform 0.3s ease-in-out;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        
+        .popup-notification.show {
+            transform: translateX(0);
+        }
+        
+        .popup-notification.success {
+            background: linear-gradient(45deg, #10b981, #059669);
+            color: white;
+            border-left: 4px solid #047857;
+        }
+        
+        .popup-notification.error {
+            background: linear-gradient(45deg, #ef4444, #dc2626);
+            color: white;
+            border-left: 4px solid #b91c1c;
+        }
+        
+        .popup-notification .popup-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .popup-notification .popup-icon {
+            margin-right: 12px;
+            width: 24px;
+            height: 24px;
+        }
+        
+        .popup-notification .popup-message {
+            flex: 1;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .popup-notification .popup-close {
+            margin-left: 12px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            line-height: 1;
+        }
+        
+        .popup-notification .popup-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+    </style>
+
+    <script>
+        // Function to show popup notifications
+        function showPopup(message, type = 'success') {
+            // Remove any existing popups
+            const existingPopups = document.querySelectorAll('.popup-notification');
+            existingPopups.forEach(popup => popup.remove());
+            
+            // Create popup element
+            const popup = document.createElement('div');
+            popup.className = `popup-notification ${type}`;
+            
+            const iconSvg = type === 'success' 
+                ? '<svg class="popup-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>'
+                : '<svg class="popup-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
+            
+            popup.innerHTML = `
+                <div class="popup-content">
+                    ${iconSvg}
+                    <span class="popup-message">${message}</span>
+                    <button class="popup-close" onclick="closePopup(this)">&times;</button>
+                </div>
+            `;
+            
+            // Add to body
+            document.body.appendChild(popup);
+            
+            // Show popup
+            setTimeout(() => popup.classList.add('show'), 100);
+            
+            // Auto close after 5 seconds
+            setTimeout(() => closePopup(popup.querySelector('.popup-close')), 5000);
+        }
+        
+        // Function to close popup
+        function closePopup(closeBtn) {
+            const popup = closeBtn.closest('.popup-notification');
+            popup.classList.remove('show');
+            setTimeout(() => popup.remove(), 300);
+        }
+    </script>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Show popup notifications for session messages
+            @if(session('success'))
+                showPopup('{{ session('success') }}', 'success');
+            @endif
+            
+            @if(session('error'))
+                showPopup('{{ session('error') }}', 'error');
+            @endif
+            
+            @if($errors->any())
+                showPopup('Please check the form for errors.', 'error');
+            @endif
+            
             // --- File upload feedback logic ---
 
             // Main document feedback
@@ -347,133 +462,93 @@
                 });
             }
 
-            // Attachments feedback
+            // Attachments feedback - Enhanced version with file list and sizes
             const attachmentsInput = document.getElementById('attachments');
-            const fileList = document.querySelector('.file-list');
-            const addAttachmentBtn = document.getElementById('add-attachment');
-            let attachmentFiles = [];
-
-            function updateAttachmentList() {
-                fileList.innerHTML = '';
-                attachmentFiles.forEach((file, idx) => {
-                    const li = document.createElement('li');
-                    li.className = "flex items-center justify-between bg-gray-100 rounded px-2 py-1";
-                    li.innerHTML = `<span class="truncate text-sm">${file.name}</span>
-                        <button type="button" class="text-red-500 text-xs remove-attachment" data-idx="${idx}">Remove</button>`;
-                    fileList.appendChild(li);
-                });
-                // Disable add button if 5 files
-                if (attachmentFiles.length >= 5) {
-                    addAttachmentBtn.disabled = true;
-                    addAttachmentBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                } else {
-                    addAttachmentBtn.disabled = false;
-                    addAttachmentBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                }
-            }
-
+            const attachmentPreview = document.getElementById('attachment-files-preview');
+            const attachmentList = document.getElementById('attachment-files-list');
+            
             if (attachmentsInput) {
                 attachmentsInput.addEventListener('change', function() {
-                    let filesArr = Array.from(attachmentsInput.files);
-                    let availableSlots = 5 - attachmentFiles.length;
-                    if (filesArr.length > availableSlots) {
-                        filesArr = filesArr.slice(0, availableSlots);
+                    console.log('Attachments selected:', this.files.length);
+                    
+                    // Simple validation for max 5 files
+                    if (this.files.length > 5) {
+                        alert('Maximum 5 attachments allowed. Please select fewer files.');
+                        this.value = '';
+                        attachmentPreview.classList.add('hidden');
+                        return;
                     }
-                    // Prevent duplicate files by name
-                    filesArr = filesArr.filter(f => !attachmentFiles.some(existing => existing.name === f.name && existing.size === f.size));
-                    attachmentFiles = attachmentFiles.concat(filesArr);
-                    updateAttachmentList();
-                    attachmentsInput.value = '';
-                });
-            }
-
-            // Remove attachment handler
-            fileList.addEventListener('click', function(e) {
-                if (e.target.classList.contains('remove-attachment')) {
-                    const idx = parseInt(e.target.getAttribute('data-idx'));
-                    attachmentFiles.splice(idx, 1);
-                    updateAttachmentList();
-                }
-            });
-
-            // Add another attachment triggers file input
-            if (addAttachmentBtn && attachmentsInput) {
-                addAttachmentBtn.addEventListener('click', function() {
-                    if (attachmentFiles.length < 5) {
-                        attachmentsInput.click();
-                    }
-                });
-            }
-
-            // --- Form submission handling ---
-            // Add notification div at the top of the form
-            const notificationDiv = document.createElement('div');
-            notificationDiv.id = 'form-notification';
-            notificationDiv.className = 'fixed top-4 right-4 z-50 transform transition-transform duration-300 translate-x-full';
-            document.body.appendChild(notificationDiv);
-
-            document.querySelector('form').addEventListener('submit', function(event) {
-                event.preventDefault();
-                const form = event.target;
-                const formData = new FormData(form);
-                const submitButton = form.querySelector('button[type="submit"]');
-
-                // Disable submit button and show loading state
-                submitButton.disabled = true;
-                submitButton.innerHTML = `
-                    <svg class="animate-spin h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Submitting...`;
-
-                // Remove previous attachments from FormData
-                formData.delete('attachments[]');
-                // Add current attachments
-                attachmentFiles.forEach(file => {
-                    formData.append('attachments[]', file);
-                });
-
-                fetch(form.action, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'application/json'
-                    }
-                })
-                .then(response => {
-                    if (response.ok) {
-                        showNotification('success', 'Document successfully created! Redirecting...');
-                        setTimeout(() => {
-                            window.location.href = "{{ route('documents.index') }}";
-                        }, 1500);
-                    } else {
-                        return response.json().then(data => {
-                            const errorMessage = data.message || 'An error occurred while creating the document.';
-                            showNotification('error', errorMessage);
-                            // Reset submit button
-                            submitButton.disabled = false;
-                            submitButton.innerHTML = `
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-                                </svg>
-                                Submit Document`;
+                    
+                    // Display selected files with names and sizes
+                    if (this.files.length > 0) {
+                        attachmentList.innerHTML = '';
+                        
+                        Array.from(this.files).forEach((file, index) => {
+                            const fileSize = formatFileSize(file.size);
+                            const fileIcon = getFileIcon(file.name);
+                            
+                            const li = document.createElement('li');
+                            li.className = 'flex items-center justify-between p-3 hover:bg-gray-50';
+                            li.innerHTML = `
+                                <div class="flex items-center">
+                                    ${fileIcon}
+                                    <div class="ml-3">
+                                        <div class="text-sm font-medium text-gray-900">${file.name}</div>
+                                        <div class="text-xs text-gray-500">${fileSize}</div>
+                                    </div>
+                                </div>
+                                <button type="button" onclick="removeAttachmentFile(${index})" class="text-red-500 hover:text-red-700 text-sm">
+                                    <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            `;
+                            attachmentList.appendChild(li);
                         });
+                        
+                        attachmentPreview.classList.remove('hidden');
+                    } else {
+                        attachmentPreview.classList.add('hidden');
                     }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showNotification('error', 'An unexpected error occurred. Please try again.');
-                    // Reset submit button
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = `
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-                        </svg>
-                        Submit Document`;
                 });
-            });
+            }
+            
+            // Helper function to format file sizes
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+            
+            // Helper function to get file type icon
+            function getFileIcon(filename) {
+                const ext = filename.split('.').pop().toLowerCase();
+                const iconClass = 'h-5 w-5 text-gray-400';
+                
+                switch(ext) {
+                    case 'pdf':
+                        return `<svg class="${iconClass}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                </svg>`;
+                    case 'doc':
+                    case 'docx':
+                        return `<svg class="${iconClass}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>`;
+                    case 'jpg':
+                    case 'jpeg':
+                    case 'png':
+                        return `<svg class="${iconClass}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>`;
+                    default:
+                        return `<svg class="${iconClass}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>`;
+                }
+            }
 
             // Classification change handling
             const classification = document.getElementById('classification');
@@ -504,30 +579,45 @@
                     });
                 });
             }
-
-            // Notification helper function
-            function showNotification(type, message) {
-                const notificationDiv = document.getElementById('form-notification');
-                const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
-
-                notificationDiv.className = `fixed top-4 right-4 z-50 p-4 rounded-lg text-white ${bgColor} transform transition-transform duration-300 shadow-lg flex items-center`;
-                notificationDiv.innerHTML = `
-                    ${type === 'success'
-                        ? '<svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>'
-                        : '<svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'
+            
+            // Form submission handling
+            const form = document.querySelector('form');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    const submitBtn = form.querySelector('button[type="submit"]');
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = `
+                            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Uploading Document...
+                        `;
                     }
-                    <span>${message}</span>`;
-
-                // Show notification
-                setTimeout(() => {
-                    notificationDiv.style.transform = 'translateX(0)';
-                }, 100);
-
-                // Hide notification after 5 seconds
-                setTimeout(() => {
-                    notificationDiv.style.transform = 'translateX(100%)';
-                }, 5000);
+                });
             }
         });
+    </script>
+    
+    <script>
+    // Global function to remove individual attachment file
+    function removeAttachmentFile(index) {
+        const attachmentsInput = document.getElementById('attachments');
+        const dt = new DataTransfer();
+        
+        // Re-add all files except the one to remove
+        Array.from(attachmentsInput.files).forEach((file, i) => {
+            if (i !== index) {
+                dt.items.add(file);
+            }
+        });
+        
+        // Update the input files
+        attachmentsInput.files = dt.files;
+        
+        // Trigger change event to update the preview
+        attachmentsInput.dispatchEvent(new Event('change'));
+    }
     </script>
 @endsection

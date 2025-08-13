@@ -336,6 +336,8 @@ class DocumentWorkflowController extends Controller
                     'document_id' => $workflow->document->id,
                     'filename' => $attachmentName,
                     'path' => $attachmentPath,
+                    'storage_size' => $attachment->getSize(),
+                    'mime_type' => $attachment->getMimeType(),
                 ]);
             }
         }
