@@ -14,6 +14,9 @@ class DocumentAttachment extends Model
         'document_id',
         'filename',
         'path',
+        'route_id',
+        'storage_size',
+        'mime_type',
     ];
 
     public function document()

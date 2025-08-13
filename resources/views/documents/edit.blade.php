@@ -97,7 +97,7 @@
 
         <!-- Main Form -->
         <div class="bg-white rounded-xl shadow-xl overflow-hidden border border-blue-100">
-            <form action="{{ route('documents.update', $document->id) }}" method="POST" enctype="multipart/form-data" class="p-6">
+            <form id="editForm" action="{{ route('documents.update', $document->id) }}" method="POST" enctype="multipart/form-data" class="p-6" onsubmit="console.log('Form submitting...', this.method, this.action, new FormData(this));">
                 @csrf
                 @method('PUT')
 
@@ -293,11 +293,20 @@
                         <input 
                             type="file" 
                             name="attachments[]" 
+                            id="attachments"
                             multiple
                             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 file:mr-4 file:rounded-md file:border-0 file:bg-blue-500 file:text-white file:px-4 file:py-2"
                             accept="jpeg,png,jpg,gif,pdf,docx"
                         >
                         <p class="mt-2 text-xs text-gray-500">You can upload multiple attachments (Max: 10MB each).</p>
+                        
+                        <!-- New Attachment Files Preview -->
+                        <div id="new-attachment-files-preview" class="hidden mt-4">
+                            <h4 class="text-sm font-medium text-gray-700 mb-2">New Attachments to Upload</h4>
+                            <ul id="new-attachment-files-list" class="divide-y divide-gray-200 border border-gray-200 rounded-md overflow-hidden bg-white">
+                                <!-- Selected files will be displayed here -->
+                            </ul>
+                        </div>
 
                         @if($document->attachments->count())
                             <div class="mt-4">
@@ -305,22 +314,27 @@
                                 <ul class="divide-y divide-gray-200 border border-gray-200 rounded-md overflow-hidden bg-white">
                                     @foreach($document->attachments as $attachment)
                                         <li class="flex items-center justify-between p-3 hover:bg-gray-50">
-                                            <a href="{{ asset('storage/' . $attachment->path) }}" class="text-blue-500 hover:text-blue-600 hover:underline flex items-center" target="_blank">
+                                            <div class="flex items-center">
                                                 <svg class="h-4 w-4 text-gray-500 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                                 </svg>
-                                                {{ $attachment->filename }}
-                                            </a>
-                                            <form action="{{ route('documents.attachments.destroy', $attachment->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this attachment?');">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="text-red-500 hover:text-red-700 flex items-center">
-                                                    <svg class="h-4 w-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                    </svg>
-                                                    Delete
-                                                </button>
-                                            </form>
+                                                <div>
+                                                    <a href="{{ asset('storage/' . $attachment->path) }}" class="text-blue-500 hover:text-blue-600 hover:underline" target="_blank">
+                                                        {{ $attachment->filename }}
+                                                    </a>
+                                                    @if($attachment->size)
+                                                        <div class="text-xs text-gray-500">
+                                                            {{ number_format($attachment->size / 1024, 2) }} KB
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                            <button type="button" onclick="deleteAttachment({{ $document->id }}, {{ $attachment->id }})" class="text-red-500 hover:text-red-700 flex items-center">
+                                                <svg class="h-4 w-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
+                                                Delete
+                                            </button>
                                         </li>
                                     @endforeach
                                 </ul>
@@ -375,6 +389,118 @@
     </div>
 </div>
 
+<!-- Popup Notification Styles -->
+<style>
+    .popup-notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+        max-width: 500px;
+        padding: 16px 20px;
+        border-radius: 8px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        transform: translateX(100%);
+        transition: transform 0.3s ease-in-out;
+        font-family: system-ui, -apple-system, sans-serif;
+    }
+    
+    .popup-notification.show {
+        transform: translateX(0);
+    }
+    
+    .popup-notification.success {
+        background: linear-gradient(45deg, #10b981, #059669);
+        color: white;
+        border-left: 4px solid #047857;
+    }
+    
+    .popup-notification.error {
+        background: linear-gradient(45deg, #ef4444, #dc2626);
+        color: white;
+        border-left: 4px solid #b91c1c;
+    }
+    
+    .popup-notification .popup-content {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .popup-notification .popup-icon {
+        margin-right: 12px;
+        width: 24px;
+        height: 24px;
+    }
+    
+    .popup-notification .popup-message {
+        flex: 1;
+        font-size: 14px;
+        font-weight: 500;
+    }
+    
+    .popup-notification .popup-close {
+        margin-left: 12px;
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        color: white;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        line-height: 1;
+    }
+    
+    .popup-notification .popup-close:hover {
+        background: rgba(255, 255, 255, 0.3);
+    }
+</style>
+
+<script>
+// Function to show popup notifications
+function showPopup(message, type = 'success') {
+    // Remove any existing popups
+    const existingPopups = document.querySelectorAll('.popup-notification');
+    existingPopups.forEach(popup => popup.remove());
+    
+    // Create popup element
+    const popup = document.createElement('div');
+    popup.className = `popup-notification ${type}`;
+    
+    const iconSvg = type === 'success' 
+        ? '<svg class="popup-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>'
+        : '<svg class="popup-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
+    
+    popup.innerHTML = `
+        <div class="popup-content">
+            ${iconSvg}
+            <span class="popup-message">${message}</span>
+            <button class="popup-close" onclick="closePopup(this)">&times;</button>
+        </div>
+    `;
+    
+    // Add to body
+    document.body.appendChild(popup);
+    
+    // Show popup
+    setTimeout(() => popup.classList.add('show'), 100);
+    
+    // Auto close after 5 seconds
+    setTimeout(() => closePopup(popup.querySelector('.popup-close')), 5000);
+}
+
+// Function to close popup
+function closePopup(closeBtn) {
+    const popup = closeBtn.closest('.popup-notification');
+    popup.classList.remove('show');
+    setTimeout(() => popup.remove(), 300);
+}
+
 <script>
 function toggleAllowedViewers(classification) {
     const allowedViewersSection = document.getElementById('allowed-viewers-section');
@@ -383,6 +509,180 @@ function toggleAllowedViewers(classification) {
     } else {
         allowedViewersSection.style.display = 'none';
     }
+}
+
+// Function to delete attachment via JavaScript
+function deleteAttachment(documentId, attachmentId) {
+    if (confirm('Are you sure you want to delete this attachment?')) {
+        // Create a temporary form to submit the DELETE request
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/documents/${documentId}/delete-attachment?attachment_id=${attachmentId}`;
+        
+        // Add CSRF token
+        const csrfField = document.createElement('input');
+        csrfField.type = 'hidden';
+        csrfField.name = '_token';
+        csrfField.value = document.querySelector('meta[name="csrf-token"]').content;
+        form.appendChild(csrfField);
+        
+        // Add method override for DELETE
+        const methodField = document.createElement('input');
+        methodField.type = 'hidden';
+        methodField.name = '_method';
+        methodField.value = 'DELETE';
+        form.appendChild(methodField);
+        
+        // Submit the form
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Ensure form submits with proper method override
+document.addEventListener('DOMContentLoaded', function() {
+    // Show popup notifications for session messages
+    @if(session('success'))
+        showPopup('{{ session('success') }}', 'success');
+    @endif
+    
+    @if(session('error'))
+        showPopup('{{ session('error') }}', 'error');
+    @endif
+    
+    @if($errors->any())
+        showPopup('Please check the form for errors.', 'error');
+    @endif
+
+    const editForm = document.getElementById('editForm');
+    if (editForm) {
+        editForm.addEventListener('submit', function(e) {
+            // Ensure _method field exists and is set to PUT
+            let methodField = editForm.querySelector('input[name="_method"]');
+            if (!methodField) {
+                methodField = document.createElement('input');
+                methodField.type = 'hidden';
+                methodField.name = '_method';
+                methodField.value = 'PUT';
+                editForm.appendChild(methodField);
+            } else {
+                methodField.value = 'PUT';
+            }
+            console.log('Form submitting with method override:', methodField.value);
+            
+            // Disable submit button and show loading state
+            const submitBtn = editForm.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = `
+                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Updating Document...
+                `;
+            }
+        });
+    }
+    
+    // Enhanced attachments preview functionality
+    const attachmentsInput = document.getElementById('attachments');
+    const newAttachmentPreview = document.getElementById('new-attachment-files-preview');
+    const newAttachmentList = document.getElementById('new-attachment-files-list');
+    
+    if (attachmentsInput) {
+        attachmentsInput.addEventListener('change', function() {
+            console.log('New attachments selected:', this.files.length);
+            
+            // Display selected files with names and sizes
+            if (this.files.length > 0) {
+                newAttachmentList.innerHTML = '';
+                
+                Array.from(this.files).forEach((file, index) => {
+                    const fileSize = formatFileSize(file.size);
+                    const fileIcon = getFileIcon(file.name);
+                    
+                    const li = document.createElement('li');
+                    li.className = 'flex items-center justify-between p-3 hover:bg-gray-50';
+                    li.innerHTML = `
+                        <div class="flex items-center">
+                            ${fileIcon}
+                            <div class="ml-3">
+                                <div class="text-sm font-medium text-gray-900">${file.name}</div>
+                                <div class="text-xs text-gray-500">${fileSize}</div>
+                            </div>
+                        </div>
+                        <button type="button" onclick="removeNewAttachmentFile(${index})" class="text-red-500 hover:text-red-700 text-sm">
+                            <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    `;
+                    newAttachmentList.appendChild(li);
+                });
+                
+                newAttachmentPreview.classList.remove('hidden');
+            } else {
+                newAttachmentPreview.classList.add('hidden');
+            }
+        });
+    }
+});
+
+// Helper function to format file sizes
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// Helper function to get file type icon
+function getFileIcon(filename) {
+    const ext = filename.split('.').pop().toLowerCase();
+    const iconClass = 'h-5 w-5 text-gray-400';
+    
+    switch(ext) {
+        case 'pdf':
+            return `<svg class="${iconClass}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>`;
+        case 'doc':
+        case 'docx':
+            return `<svg class="${iconClass}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>`;
+        case 'jpg':
+        case 'jpeg':
+        case 'png':
+            return `<svg class="${iconClass}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>`;
+        default:
+            return `<svg class="${iconClass}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>`;
+    }
+}
+
+// Function to remove individual new attachment file
+function removeNewAttachmentFile(index) {
+    const attachmentsInput = document.getElementById('attachments');
+    const dt = new DataTransfer();
+    
+    // Re-add all files except the one to remove
+    Array.from(attachmentsInput.files).forEach((file, i) => {
+        if (i !== index) {
+            dt.items.add(file);
+        }
+    });
+    
+    // Update the input files
+    attachmentsInput.files = dt.files;
+    
+    // Trigger change event to update the preview
+    attachmentsInput.dispatchEvent(new Event('change'));
 }
 </script>
 @endsection

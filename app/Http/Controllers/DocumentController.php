@@ -223,6 +223,8 @@ class DocumentController extends Controller
                         'document_id' => $document->id,
                         'filename' => $attachmentName,
                         'path' => $attachmentPath,
+                        'storage_size' => $attachment->getSize(),
+                        'mime_type' => $attachment->getMimeType(),
                     ]);
                     \Log::info('Attachment record created', ['document_id' => $document->id, 'attachmentName' => $attachmentName]);
                 }
@@ -519,6 +521,10 @@ class DocumentController extends Controller
 
                         'path' => $attachmentPath,
 
+                        'storage_size' => $attachment->getSize(),
+
+                        'mime_type' => $attachment->getMimeType(),
+
                     ]);
                 }
             }
@@ -803,6 +809,8 @@ class DocumentController extends Controller
                         'document_id' => $document->id,
                         'filename' => $attachmentName,
                         'path' => $attachmentPath,
+                        'storage_size' => $attachment->getSize(),
+                        'mime_type' => $attachment->getMimeType(),
                     ]);
                     \Log::info('Attachment record created', ['document_id' => $document->id, 'attachmentName' => $attachmentName]);
                 }
@@ -879,10 +887,11 @@ class DocumentController extends Controller
             ->with('success', 'Document deleted successfully');
     }
 
-    public function deleteAttachment($id)
+    public function deleteAttachment(Request $request, $documentId)
     {
-        $attachment = DocumentAttachment::findOrFail($id);
-        $document = Document::findOrFail($attachment->document_id);
+        $attachmentId = $request->query('attachment_id');
+        $attachment = DocumentAttachment::findOrFail($attachmentId);
+        $document = Document::findOrFail($documentId);
         $real_status = $document->status()->get();
 
         // Delete the file from storage
