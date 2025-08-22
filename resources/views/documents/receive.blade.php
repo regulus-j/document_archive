@@ -74,19 +74,25 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="text-sm text-gray-900">{{ $document->transaction->fromOffice->name ?? 'N/A' }}</div>
-                                            <div class="text-sm text-gray-500">{{ $document->user->name ?? 'Unknown' }}</div>
+                                            <div class="text-sm text-gray-500">{{ $document->user->name ?? $document->user->first_name . ' ' . $document->user->last_name ?? 'Unknown' }}</div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-{{ $document->status->color }}-100 text-{{ $document->status->color }}-800">
-                                                {{ $document->status->name }}
-                                            </span>
+                                            @if($document->status)
+                                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-{{ $document->status->color }}-100 text-{{ $document->status->color }}-800">
+                                                    {{ $document->status->name }}
+                                                </span>
+                                            @else
+                                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                                    No Status
+                                                </span>
+                                            @endif
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {{ $document->transaction->created_at->format('M d, Y h:i A') }}
+                                            {{ $document->transaction ? $document->transaction->created_at->format('M d, Y h:i A') : 'N/A' }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                             <a href="{{ route('documents.show', $document->id) }}" class="text-indigo-600 hover:text-indigo-900 mr-3">View</a>
-                                            @if ($document->workflow->status !== 'received')
+                                            @if ($document->workflow && $document->workflow->status !== 'received')
                                                 <form method="POST" action="{{ route('documents.receive.confirm', $document->id) }}" class="inline">
                                                     @csrf
                                                     <button type="submit" class="text-green-600 hover:text-green-900 hover:underline">

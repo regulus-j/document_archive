@@ -310,10 +310,10 @@
                                                 <div class="flex items-center">
                                                     <div
                                                         class="flex-shrink-0 h-8 w-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold shadow-sm">
-                                                        {{ substr($document->user->first_name, 0, 1) }}
+                                                        {{ $document->user?->first_name ? substr($document->user->first_name, 0, 1) : 'N' }}
                                                     </div>
                                                     <div class="ml-3 text-sm text-gray-700">
-                                                        {{ $document->user->first_name . ' ' . $document->user->last_name }}
+                                                        {{ ($document->user?->first_name ?? 'Unknown') . ' ' . ($document->user?->last_name ?? 'User') }}
                                                     </div>
                                                 </div>
 
@@ -341,7 +341,7 @@
 
                                                     <span class="text-xs text-gray-500">
                                                         <span class="font-medium">From:</span>
-                                                        {{ $document->transaction?->fromOffice?->name ?? 'N/A' }}
+                                                        {{ $document->transaction?->fromOffice?->name ?? $document->user?->offices?->first()?->name ?? 'N/A' }}
                                                     </span>
 
                                                     <span class="text-xs text-gray-500">
@@ -415,7 +415,7 @@
                                                             <button type="submit" 
                                                                 class="p-1.5 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-colors"
                                                                 title="Recall Document" 
-                                                                onclick="return confirm('Are you sure you want to recall this document? This will pause the workflow and notify all recipients.');">
+                                                                onclick="return handleRecallDocument(this.form);">
                                                                 <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" 
                                                                     fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                     <path stroke-linecap="round" stroke-linejoin="round" 
@@ -432,7 +432,7 @@
                                                             <button type="submit" 
                                                                 class="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition-colors"
                                                                 title="Resume Document" 
-                                                                onclick="return confirm('Are you sure you want to resume this document workflow? This will reactivate the workflow and notify all recipients.');">
+                                                                onclick="return handleResumeDocument(this.form);">
                                                                 <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" 
                                                                     fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                     <path stroke-linecap="round" stroke-linejoin="round" 
@@ -447,7 +447,8 @@
                                                 @can('document-edit')
                                                         <a href="{{ route('documents.edit', $document->id) }}"
                                                             class="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition-colors"
-                                                            title="Update">
+                                                            title="
+                                                            ">
                                                             <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg"
                                                                 fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -459,7 +460,7 @@
                                                     @can('document-delete')
                                                         <form action="{{ route('documents.destroy', $document->id) }}"
                                                             method="POST"
-                                                            onsubmit="return confirm('Are you sure you want to delete this document?');"
+                                                            onsubmit="return handleDeleteDocument(this);"
                                                             class="inline-block">
                                                             @csrf
                                                             @method('DELETE')
@@ -496,7 +497,7 @@
                                                             <button type="submit"
                                                                 class="p-1.5 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
                                                                 title="Archive Document" 
-                                                                onclick="return confirm('Are you sure you want to archive this document? It will be moved to the archive section.');">
+                                                                onclick="return handleArchiveDocument(this.form);">
                                                                 <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg"
                                                                     fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -795,5 +796,481 @@
 
             window.addEventListener('beforeunload', stopCamera);
         });
+    </script>
+
+    <!-- Popup Notification Styles -->
+    <style>
+        .popup-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+            max-width: 500px;
+            padding: 16px 20px;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            transform: translateX(100%);
+            transition: transform 0.3s ease-in-out;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        
+        .popup-notification.show {
+            transform: translateX(0);
+        }
+        
+        .popup-notification.success {
+            background: linear-gradient(45deg, #10b981, #059669);
+            color: white;
+            border-left: 4px solid #047857;
+        }
+        
+        .popup-notification.error {
+            background: linear-gradient(45deg, #ef4444, #dc2626);
+            color: white;
+            border-left: 4px solid #b91c1c;
+        }
+        
+        .popup-notification.warning {
+            background: linear-gradient(45deg, #f59e0b, #d97706);
+            color: white;
+            border-left: 4px solid #b45309;
+        }
+        
+        .popup-notification .popup-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .popup-notification .popup-icon {
+            margin-right: 12px;
+            width: 24px;
+            height: 24px;
+        }
+        
+        .popup-notification .popup-message {
+            flex: 1;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .popup-notification .popup-close {
+            margin-left: 12px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            line-height: 1;
+        }
+        
+        .popup-notification .popup-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .confirmation-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .confirmation-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+        }
+        
+        .confirmation-content {
+            position: relative;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 25px rgba(0, 0, 0, 0.1);
+            padding: 24px;
+            max-width: 450px;
+            width: 90%;
+            animation: confirmationSlideIn 0.3s ease-out;
+        }
+        
+        @keyframes confirmationSlideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        
+        .confirmation-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .confirmation-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 12px;
+        }
+        
+        .confirmation-icon.delete {
+            color: #dc2626;
+        }
+        
+        .confirmation-icon.archive {
+            color: #f59e0b;
+        }
+        
+        .confirmation-header h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+            margin: 0;
+        }
+        
+        .confirmation-message {
+            color: #4b5563;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+        
+        .confirmation-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+        
+        .confirmation-cancel, .confirmation-confirm {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid;
+        }
+        
+        .confirmation-cancel {
+            background: #f9fafb;
+            border-color: #d1d5db;
+            color: #374151;
+        }
+        
+        .confirmation-cancel:hover {
+            background: #f3f4f6;
+            border-color: #9ca3af;
+        }
+        
+        .confirmation-confirm.delete {
+            background: #dc2626;
+            border-color: #dc2626;
+            color: white;
+        }
+        
+        .confirmation-confirm.delete:hover {
+            background: #b91c1c;
+            border-color: #b91c1c;
+        }
+        
+        .confirmation-confirm.archive {
+            background: #f59e0b;
+            border-color: #f59e0b;
+            color: white;
+        }
+        
+        .confirmation-confirm.archive:hover {
+            background: #d97706;
+            border-color: #d97706;
+        }
+
+        .confirmation-icon.recall {
+            width: 24px;
+            height: 24px;
+            color: #7c3aed;
+            margin-right: 12px;
+        }
+
+        .confirmation-confirm.recall {
+            background: #7c3aed;
+            border-color: #7c3aed;
+            color: white;
+        }
+
+        .confirmation-confirm.recall:hover {
+            background: #6d28d9;
+            border-color: #6d28d9;
+        }
+
+        .confirmation-icon.resume {
+            width: 24px;
+            height: 24px;
+            color: #059669;
+            margin-right: 12px;
+        }
+
+        .confirmation-confirm.resume {
+            background: #059669;
+            border-color: #059669;
+            color: white;
+        }
+
+        .confirmation-confirm.resume:hover {
+            background: #047857;
+            border-color: #047857;
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Show popup notifications for session messages
+            @if(session('success'))
+                showPopup('{{ session('success') }}', 'success');
+            @endif
+            
+            @if(session('error'))
+                showPopup('{{ session('error') }}', 'error');
+            @endif
+        });
+
+        // Function to show popup notifications
+        function showPopup(message, type = 'success') {
+            // Remove any existing popups
+            const existingPopups = document.querySelectorAll('.popup-notification');
+            existingPopups.forEach(popup => popup.remove());
+            
+            // Create popup element
+            const popup = document.createElement('div');
+            popup.className = `popup-notification ${type}`;
+            
+            let iconSvg = '';
+            switch(type) {
+                case 'success':
+                    iconSvg = '<svg class="popup-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
+                    break;
+                case 'error':
+                    iconSvg = '<svg class="popup-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
+                    break;
+                case 'warning':
+                    iconSvg = '<svg class="popup-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L4.732 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg>';
+                    break;
+            }
+            
+            popup.innerHTML = `
+                <div class="popup-content">
+                    ${iconSvg}
+                    <span class="popup-message">${message}</span>
+                    <button class="popup-close" onclick="closePopup(this)">&times;</button>
+                </div>
+            `;
+            
+            // Add to body
+            document.body.appendChild(popup);
+            
+            // Show popup
+            setTimeout(() => popup.classList.add('show'), 100);
+            
+            // Auto close after 5 seconds
+            setTimeout(() => closePopup(popup.querySelector('.popup-close')), 5000);
+        }
+        
+        // Function to close popup
+        function closePopup(closeBtn) {
+            const popup = closeBtn.closest('.popup-notification');
+            popup.classList.remove('show');
+            setTimeout(() => popup.remove(), 300);
+        }
+
+        // Custom confirmation popup function
+        function showConfirmationPopup(message, onConfirm, type = 'delete') {
+            // Remove any existing popups
+            const existingPopups = document.querySelectorAll('.popup-notification, .confirmation-popup');
+            existingPopups.forEach(popup => popup.remove());
+            
+            // Create confirmation popup
+            const popup = document.createElement('div');
+            popup.className = 'confirmation-popup';
+            
+            let iconSvg = '';
+            let title = '';
+            let confirmText = '';
+            
+            switch(type) {
+                case 'delete':
+                    iconSvg = '<svg class="confirmation-icon delete" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>';
+                    title = 'Delete Document';
+                    confirmText = 'Delete';
+                    break;
+                case 'archive':
+                    iconSvg = '<svg class="confirmation-icon archive" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>';
+                    title = 'Archive Document';
+                    confirmText = 'Archive';
+                    break;
+                case 'recall':
+                    iconSvg = '<svg class="confirmation-icon recall" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z" /></svg>';
+                    title = 'Recall Document';
+                    confirmText = 'Recall';
+                    break;
+                case 'resume':
+                    iconSvg = '<svg class="confirmation-icon resume" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h8m-9-4h1m-1 0V8a2 2 0 012-2h8a2 2 0 012 2v2M9 10v4m4-4v4" /></svg>';
+                    title = 'Resume Document';
+                    confirmText = 'Resume';
+                    break;
+                default:
+                    iconSvg = '<svg class="confirmation-icon delete" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>';
+                    title = 'Confirm Action';
+                    confirmText = 'Confirm';
+            }
+            
+            popup.innerHTML = `
+                <div class="confirmation-overlay"></div>
+                <div class="confirmation-content">
+                    <div class="confirmation-header">
+                        ${iconSvg}
+                        <h3>${title}</h3>
+                    </div>
+                    <div class="confirmation-message">${message}</div>
+                    <div class="confirmation-buttons">
+                        <button class="confirmation-cancel">Cancel</button>
+                        <button class="confirmation-confirm ${type}">${confirmText}</button>
+                    </div>
+                </div>
+            `;
+            
+            // Add to body
+            document.body.appendChild(popup);
+            
+            // Add event listeners
+            popup.querySelector('.confirmation-cancel').addEventListener('click', function() {
+                popup.remove();
+            });
+            
+            popup.querySelector('.confirmation-confirm').addEventListener('click', function() {
+                popup.remove();
+                onConfirm();
+            });
+            
+            popup.querySelector('.confirmation-overlay').addEventListener('click', function() {
+                popup.remove();
+            });
+            
+            // Close on escape key
+            document.addEventListener('keydown', function escapeHandler(e) {
+                if (e.key === 'Escape') {
+                    popup.remove();
+                    document.removeEventListener('keydown', escapeHandler);
+                }
+            });
+        }
+
+        // Enhanced delete function
+        function handleDeleteDocument(form) {
+            showConfirmationPopup(
+                'Are you sure you want to delete this document? This action cannot be undone and will permanently remove the document from the system.',
+                function() {
+                    // Show loading state
+                    const button = form.querySelector('button[type="submit"]');
+                    if (button) {
+                        button.disabled = true;
+                        button.innerHTML = `
+                            <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        `;
+                    }
+                    form.submit();
+                },
+                'delete'
+            );
+            return false;
+        }
+
+        // Enhanced archive function
+        function handleArchiveDocument(form) {
+            showConfirmationPopup(
+                'Are you sure you want to archive this document? It will be moved to the archive section and will no longer appear in the active documents list.',
+                function() {
+                    // Show loading state
+                    const button = form.querySelector('button[type="submit"]');
+                    if (button) {
+                        button.disabled = true;
+                        button.innerHTML = `
+                            <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        `;
+                    }
+                    form.submit();
+                },
+                'archive'
+            );
+            return false;
+        }
+
+        // Handle recall document action
+        function handleRecallDocument(form) {
+            showConfirmationPopup(
+                'Are you sure you want to recall this document? This will pause the workflow and notify all recipients.',
+                function() {
+                    // Show loading state
+                    const button = form.querySelector('button[type="submit"]');
+                    if (button) {
+                        button.disabled = true;
+                        button.innerHTML = `
+                            <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        `;
+                    }
+                    form.submit();
+                },
+                'recall'
+            );
+            return false;
+        }
+
+        // Handle resume document action
+        function handleResumeDocument(form) {
+            showConfirmationPopup(
+                'Are you sure you want to resume this document workflow? This will reactivate the workflow and notify all recipients.',
+                function() {
+                    // Show loading state
+                    const button = form.querySelector('button[type="submit"]');
+                    if (button) {
+                        button.disabled = true;
+                        button.innerHTML = `
+                            <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        `;
+                    }
+                    form.submit();
+                },
+                'resume'
+            );
+            return false;
+        }
     </script>
 @endsection

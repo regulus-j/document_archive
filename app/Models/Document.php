@@ -14,6 +14,7 @@ class Document extends Model
         'title',
         'uploader',
         'company_id',
+        'document_id',
         'description',
         'content',
         'path',
@@ -70,7 +71,7 @@ class Document extends Model
 
     public function trackingNumber()
     {
-        return $this->hasOne(DocumentTrackingNumber::class, 'doc_id');
+        return $this->hasOne(DocumentTrackingNumber::class, 'document_id');
     }
 
     public function attachments()
@@ -80,7 +81,11 @@ class Document extends Model
 
     public function documentWorkflow()
     {
-        return $this->hasMany(DocumentWorkflow::class, 'doc_id');
+        return $this->hasMany(DocumentWorkflow::class, 'document_id');
+    }
+     public function workflow()
+    {
+        return $this->hasOne(DocumentWorkflow::class, 'document_id');
     }
 
     public function originatingOffice()

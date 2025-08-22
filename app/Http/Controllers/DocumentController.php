@@ -39,13 +39,13 @@ class DocumentController extends Controller
     public function index(): View
     {
         if (auth()->user()->hasRole('company-admin')) {
-            $documents = Document::with(['user', 'status', 'transaction.fromOffice', 'transaction.toOffice'])
+            $documents = Document::with(['user.offices', 'status', 'transaction.fromOffice', 'transaction.toOffice'])
                 ->latest()
                 ->paginate(5);
         } else {
             $userOfficeIds = auth()->user()->offices->pluck('id')->toArray();
 
-            $documents = Document::with(['user', 'status', 'transaction.fromOffice', 'transaction.toOffice'])
+            $documents = Document::with(['user.offices', 'status', 'transaction.fromOffice', 'transaction.toOffice'])
                 ->whereHas('user.offices', function ($query) use ($userOfficeIds) {
                     $query->whereIn('offices.id', $userOfficeIds);
                 })
@@ -1050,7 +1050,7 @@ public function receiveIndex(): View
     // Get documents that can be received by the current user
     $userOfficeIds = auth()->user()->offices->pluck('id')->toArray();
     
-    $documents = Document::with(['user', 'status', 'transaction.fromOffice', 'transaction.toOffice'])
+    $documents = Document::with(['user', 'status', 'workflow', 'transaction.fromOffice', 'transaction.toOffice'])
         ->whereHas('transaction', function($query) use ($userOfficeIds) {
             $query->whereIn('to_office', $userOfficeIds);
         })
@@ -1061,7 +1061,43 @@ public function receiveIndex(): View
         ->paginate(10);
         
     return view('documents.receive', compact('documents'));
-}    /**
+}
+
+/**
+ * Confirm receipt of a document.
+ */
+public function receiveConfirm(Document $document)
+{
+    try {
+        // Update the document workflow status to received
+        if ($document->workflow) {
+            $document->workflow->update(['status' => 'received']);
+        }
+        
+        // Update the document status
+        if ($document->status) {
+            $document->status->update(['status' => 'received']);
+        }
+        
+        // Log the action
+        \App\Models\DocumentAudit::create([
+            'document_id' => $document->id,
+            'user_id' => auth()->id(),
+            'action' => 'received',
+            'status' => 'received',
+            'details' => 'Document received by ' . auth()->user()->first_name . ' ' . auth()->user()->last_name,
+        ]);
+        
+        return redirect()->route('documents.receive.index')
+            ->with('success', 'Document has been successfully received.');
+            
+    } catch (\Exception $e) {
+        return redirect()->back()
+            ->with('error', 'Failed to receive document: ' . $e->getMessage());
+    }
+}
+
+/**
      * Recall a document, pause workflow, and notify recipients.
      */
     public function recallDocument(Request $request, Document $document)
