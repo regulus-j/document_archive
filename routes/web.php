@@ -144,6 +144,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/', [DocumentController::class, 'uploadController'])->name('documents.store');
 
         Route::get('/receive', [DocumentController::class, 'receiveIndex'])->name('documents.receive.index');
+        Route::post('/receive/{document}', [DocumentController::class, 'receiveConfirm'])->name('documents.receive.confirm');
 
         // Static routes
         Route::get('/archive', [DocumentController::class, 'showArchive'])->name('documents.archive');
