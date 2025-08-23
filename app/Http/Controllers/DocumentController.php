@@ -745,7 +745,35 @@ class DocumentController extends Controller
             $document->status()->update([
                 'status' => 'forwarded',
             ]);
-            \Log::info('Document status updated to pending', ['document_id' => $document->id]);
+            \Log::info('Document status updated to forwarded', ['document_id' => $document->id]);
+
+            // If document had rejected workflows, reset them to pending so receivers can receive again
+            $rejectedWorkflows = \App\Models\DocumentWorkflow::where('document_id', $document->id)
+                ->where('status', 'rejected')
+                ->get();
+            
+            foreach ($rejectedWorkflows as $rejectedWorkflow) {
+                $rejectedWorkflow->status = 'pending';
+                $rejectedWorkflow->received_at = null; // Reset received timestamp
+                $rejectedWorkflow->save();
+                \Log::info('Reset rejected workflow to pending for re-receipt', [
+                    'document_id' => $document->id, 
+                    'workflow_id' => $rejectedWorkflow->id,
+                    'recipient_id' => $rejectedWorkflow->recipient_id
+                ]);
+                
+                // Notify the receiver that the document has been updated and is ready for re-receipt
+                \App\Models\Notifications::create([
+                    'user_id' => $rejectedWorkflow->recipient_id,
+                    'type' => 'document_updated_after_rejection',
+                    'data' => json_encode([
+                        'document_id' => $document->id,
+                        'message' => 'A rejected document has been updated and is ready for re-receipt.',
+                        'title' => $document->title,
+                        'updater' => auth()->user()->first_name . ' ' . auth()->user()->last_name,
+                    ]),
+                ]);
+            }
 
             // Handle file upload if new file is provided
             if ($request->hasFile('main_document')) {
@@ -1044,49 +1072,122 @@ class DocumentController extends Controller
 
   /**
  * Display the document receiving index page.
+ * Reformed to show all documents sent to user by admin (company-admin users)
  */
 public function receiveIndex(): View
 {
-    // Get documents that can be received by the current user
+    $currentUserId = auth()->id();
     $userOfficeIds = auth()->user()->offices->pluck('id')->toArray();
     
-    $documents = Document::with(['user', 'status', 'workflow', 'transaction.fromOffice', 'transaction.toOffice'])
-        ->whereHas('transaction', function($query) use ($userOfficeIds) {
-            $query->whereIn('to_office', $userOfficeIds);
+    // Build query to get documents that can be received by the current user
+    $documentsQuery = Document::with([
+        'user', 
+        'status', 
+        'workflow', 
+        'transaction.fromOffice', 
+        'transaction.toOffice',
+        'documentWorkflow.sender',
+        'documentWorkflow.recipient'
+    ]);
+    
+    // Primary condition: Documents forwarded to this user by admins
+    $documentsQuery->where(function($query) use ($currentUserId, $userOfficeIds) {
+        // 1. Documents with workflows where current user is the recipient
+        $query->whereHas('documentWorkflow', function($workflowQuery) use ($currentUserId) {
+            $workflowQuery->where('recipient_id', $currentUserId)
+                         ->whereIn('status', ['pending', 'received'])
+                         // CRITICAL: Only show documents sent by company-admin users
+                         ->whereHas('sender', function($senderQuery) {
+                             $senderQuery->whereHas('roles', function($roleQuery) {
+                                 $roleQuery->where('name', 'company-admin');
+                             });
+                         });
         })
-        ->whereHas('status', function($query) {
-            $query->where('id', '!=', 3); // Not completed
-        })
-        ->latest()
-        ->paginate(10);
+        
+        // 2. OR documents sent to user's office by admins (fallback for office-based routing)
+        ->orWhere(function($officeQuery) use ($userOfficeIds) {
+            $officeQuery->whereHas('transaction', function($transQuery) use ($userOfficeIds) {
+                $transQuery->whereIn('to_office', $userOfficeIds);
+            })
+            // Ensure the document was sent by a company-admin
+            ->whereHas('user', function($uploaderQuery) {
+                $uploaderQuery->whereHas('roles', function($roleQuery) {
+                    $roleQuery->where('name', 'company-admin');
+                });
+            });
+        });
+    });
+    
+    // Exclude completed documents
+    $documentsQuery->whereHas('status', function($query) {
+        $query->where('status', '!=', 'complete');
+    });
+    
+    // Order by latest first
+    $documents = $documentsQuery->latest()->paginate(10);
         
     return view('documents.receive', compact('documents'));
 }
 
 /**
  * Confirm receipt of a document.
+ * Reformed to handle admin-sent documents properly
  */
 public function receiveConfirm(Document $document)
 {
     try {
-        // Update the document workflow status to received
-        if ($document->workflow) {
-            $document->workflow->update(['status' => 'received']);
-        }
+        $currentUserId = auth()->id();
         
-        // Update the document status
-        if ($document->status) {
-            $document->status->update(['status' => 'received']);
+        // Find the specific workflow for this user (if exists)
+        $userWorkflow = DocumentWorkflow::where('document_id', $document->id)
+            ->where('recipient_id', $currentUserId)
+            ->whereIn('status', ['pending', 'received'])
+            ->first();
+            
+        if ($userWorkflow) {
+            // Update the specific workflow status to received
+            $userWorkflow->receive(); // This will now also sync document status
+            
+            // Log the action
+            DocumentAudit::logDocumentAction(
+                $document->id,
+                $currentUserId,
+                'workflow',
+                'received',
+                'Document received via workflow by ' . auth()->user()->first_name . ' ' . auth()->user()->last_name
+            );
+        } else {
+            // If no specific workflow found, check if document has any workflow and update main document status
+            $hasWorkflow = DocumentWorkflow::where('document_id', $document->id)->exists();
+            
+            if (!$hasWorkflow) {
+                // Create a workflow entry for this receipt
+                $workflow = DocumentWorkflow::create([
+                    'document_id' => $document->id,
+                    'sender_id' => $document->uploader,
+                    'recipient_id' => $currentUserId,
+                    'step_order' => 1,
+                    'status' => 'received',
+                    'received_at' => now(),
+                    'tracking_number' => 'RCV-' . time() . '-' . $document->id,
+                ]);
+                
+                // This will automatically sync document status
+                $workflow->receive();
+            } else {
+                // Update document status directly if workflow exists but user not in it
+                $document->status()->update(['status' => 'received']);
+            }
+            
+            // Log the action
+            DocumentAudit::logDocumentAction(
+                $document->id,
+                $currentUserId,
+                'document',
+                'received',
+                'Document received directly by ' . auth()->user()->first_name . ' ' . auth()->user()->last_name
+            );
         }
-        
-        // Log the action
-        \App\Models\DocumentAudit::create([
-            'document_id' => $document->id,
-            'user_id' => auth()->id(),
-            'action' => 'received',
-            'status' => 'received',
-            'details' => 'Document received by ' . auth()->user()->first_name . ' ' . auth()->user()->last_name,
-        ]);
         
         return redirect()->route('documents.receive.index')
             ->with('success', 'Document has been successfully received.');

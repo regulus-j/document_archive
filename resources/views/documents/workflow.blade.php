@@ -50,9 +50,30 @@
                 </div>
             @endif
 
+            <!-- Info Message for Workflow Access -->
+            @if (session('info'))
+                <div class="bg-white border-l-4 border-blue-500 text-blue-700 p-4 mb-6 rounded-r-lg shadow-md"
+                    role="alert">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                fill="currentColor">
+                                <path fill-rule="evenodd"
+                                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm font-medium text-blue-800">{{ session('info') }}</p>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             <!-- Error Message -->
             @if (session('error'))
-                <div class="bg-white border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-r-lg shadow-md" role="alert">
+                <div class="bg-white border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-r-lg shadow-md"
+                    role="alert">
                     <div class="flex">
                         <div class="flex-shrink-0">
                             <svg class="h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
@@ -64,6 +85,56 @@
                         </div>
                         <div class="ml-3">
                             <p class="text-sm font-medium text-red-800">{{ session('error') }}</p>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+            <!-- Pending Documents that need to be received first -->
+            @if(isset($pendingReceive) && $pendingReceive->count() > 0)
+                <div class="bg-white rounded-xl shadow-xl mb-6 border border-orange-200 overflow-hidden">
+                    <div class="bg-gradient-to-r from-orange-500 to-red-500 px-6 py-4">
+                        <div class="flex items-center">
+                            <svg class="h-6 w-6 text-white mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.98-.833-2.75 0L4.064 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                            </svg>
+                            <h3 class="text-lg font-medium text-white">Documents Pending Receipt</h3>
+                        </div>
+                        <p class="text-orange-100 text-sm mt-1">You must receive these documents first before they appear in your workflow.</p>
+                    </div>
+                    <div class="p-6">
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Document</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">From</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Sent</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    @foreach($pendingReceive as $pending)
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="text-sm font-medium text-gray-900">{{ $pending->document->title }}</div>
+                                                <div class="text-sm text-gray-500">{{ $pending->document->reference_number ?? 'No reference' }}</div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="text-sm text-gray-900">{{ $pending->sender->first_name }} {{ $pending->sender->last_name }}</div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                {{ $pending->created_at->format('M d, Y h:i A') }}
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <a href="{{ route('documents.receive.index') }}" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+                                                    Go to Receive
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>

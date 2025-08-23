@@ -1,3 +1,4 @@
+@php use App\Services\DocumentStatusService; @endphp
 @extends('layouts.app')
 
 @section('content')
@@ -14,7 +15,7 @@
                     </div>
                     <div>
                         <h1 class="text-2xl font-bold text-gray-800">{{ __('Receive Documents') }}</h1>
-                        <p class="text-sm text-gray-500">Receive and process incoming documents</p>
+                        <p class="text-sm text-gray-500">Documents sent to you by administrators</p>
                     </div>
                 </div>
                 <div>
@@ -43,7 +44,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                         </svg>
                         <h3 class="mt-4 text-lg font-medium text-gray-900">No documents to receive</h3>
-                        <p class="mt-2 text-gray-500">There are no documents pending receipt at your office.</p>
+                        <p class="mt-2 text-gray-500">There are no documents sent to you by administrators at this time.</p>
                     </div>
                 @else
                     <div class="overflow-x-auto">
@@ -51,9 +52,9 @@
                             <thead>
                                 <tr>
                                     <th class="bg-gray-50 px-6 py-3 text-left text-xs font-medium text-indigo-700 uppercase tracking-wider border-b border-gray-200">Document</th>
-                                    <th class="bg-gray-50 px-6 py-3 text-left text-xs font-medium text-indigo-700 uppercase tracking-wider border-b border-gray-200">From</th>
+                                    <th class="bg-gray-50 px-6 py-3 text-left text-xs font-medium text-indigo-700 uppercase tracking-wider border-b border-gray-200">Sent By (Admin)</th>
                                     <th class="bg-gray-50 px-6 py-3 text-left text-xs font-medium text-indigo-700 uppercase tracking-wider border-b border-gray-200">Status</th>
-                                    <th class="bg-gray-50 px-6 py-3 text-left text-xs font-medium text-indigo-700 uppercase tracking-wider border-b border-gray-200">Date Sent</th>
+                                    <th class="bg-gray-50 px-6 py-3 text-left text-xs font-medium text-indigo-700 uppercase tracking-wider border-b border-gray-200">Date Forwarded</th>
                                     <th class="bg-gray-50 px-6 py-3 text-left text-xs font-medium text-indigo-700 uppercase tracking-wider border-b border-gray-200">Actions</th>
                                 </tr>
                             </thead>
@@ -73,34 +74,82 @@
                                             </div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm text-gray-900">{{ $document->transaction->fromOffice->name ?? 'N/A' }}</div>
-                                            <div class="text-sm text-gray-500">{{ $document->user->name ?? $document->user->first_name . ' ' . $document->user->last_name ?? 'Unknown' }}</div>
+                                            <div class="text-sm text-gray-900">
+                                                {{ $document->transaction->fromOffice->name ?? ($document->user->offices->first()->name ?? 'Admin') }}
+                                            </div>
+                                            <div class="text-sm text-gray-500">
+                                                {{ $document->user->first_name ?? 'Unknown' }} {{ $document->user->last_name ?? 'Admin' }}
+                                                @if($document->user && $document->user->hasRole('company-admin'))
+                                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">Admin</span>
+                                                @endif
+                                            </div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            @if($document->status)
-                                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-{{ $document->status->color }}-100 text-{{ $document->status->color }}-800">
-                                                    {{ $document->status->name }}
-                                                </span>
-                                            @else
-                                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
-                                                    No Status
-                                                </span>
+                                            @php
+                                                $statusInfo = DocumentStatusService::getEffectiveStatus($document);
+                                                $statusDisplay = DocumentStatusService::getStatusDisplay($statusInfo['status']);
+                                            @endphp
+                                            
+                                            <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {{ $statusDisplay['bg_class'] }} {{ $statusDisplay['text_class'] }}">
+                                                {{ $statusDisplay['label'] }}
+                                                @if($statusInfo['source'] === 'workflow')
+                                                    <span class="ml-1 text-xs opacity-75">(W)</span>
+                                                @endif
+                                                @if($statusInfo['is_overdue'])
+                                                    <span class="ml-1 text-xs">⚠️</span>
+                                                @endif
+                                            </span>
+                                            
+                                            @if($statusInfo['urgency'])
+                                                <div class="mt-1">
+                                                    <span class="px-1 py-0.5 text-xs rounded 
+                                                        @if($statusInfo['urgency'] === 'critical') bg-red-200 text-red-800
+                                                        @elseif($statusInfo['urgency'] === 'high') bg-orange-200 text-orange-800
+                                                        @elseif($statusInfo['urgency'] === 'medium') bg-yellow-200 text-yellow-800
+                                                        @else bg-gray-200 text-gray-800
+                                                        @endif">
+                                                        {{ ucfirst($statusInfo['urgency']) }}
+                                                    </span>
+                                                </div>
                                             @endif
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {{ $document->transaction ? $document->transaction->created_at->format('M d, Y h:i A') : 'N/A' }}
+                                            {{ $document->documentWorkflow->where('recipient_id', auth()->id())->first()?->created_at?->format('M d, Y h:i A') ?? 
+                                               $document->transaction?->created_at?->format('M d, Y h:i A') ?? 
+                                               $document->created_at->format('M d, Y h:i A') }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                             <a href="{{ route('documents.show', $document->id) }}" class="text-indigo-600 hover:text-indigo-900 mr-3">View</a>
-                                            @if ($document->workflow && $document->workflow->status !== 'received')
+                                            
+                                            @php
+                                                $canReceive = DocumentStatusService::canReceiveDocument($document);
+                                                $statusInfo = DocumentStatusService::getEffectiveStatus($document);
+                                                $canAccessWorkflow = DocumentStatusService::canAccessWorkflow($document);
+                                            @endphp
+                                            
+                                            @if ($canReceive && $statusInfo['can_receive'])
                                                 <form method="POST" action="{{ route('documents.receive.confirm', $document->id) }}" class="inline">
                                                     @csrf
-                                                    <button type="submit" class="text-green-600 hover:text-green-900 hover:underline">
+                                                    <button type="submit" class="text-green-600 hover:text-green-900 hover:underline mr-3">
                                                         Receive
                                                     </button>
                                                 </form>
+                                            @elseif($statusInfo['status'] === 'received' && $statusInfo['source'] === 'workflow')
+                                                <span class="text-green-600 font-semibold mr-3">Received</span>
+                                                @if($canAccessWorkflow)
+                                                    <a href="{{ route('documents.workflows') }}" class="text-blue-600 hover:text-blue-900 hover:underline">
+                                                        Access Workflow
+                                                    </a>
+                                                @endif
+                                            @elseif($statusInfo['status'] === 'pending')
+                                                <span class="text-yellow-600 font-semibold">Awaiting Receipt</span>
                                             @else
-                                                <span class="text-green-600 font-semibold">Received</span>
+                                                <span class="text-gray-500">{{ ucfirst($statusInfo['status']) }}</span>
+                                                @if($canAccessWorkflow)
+                                                    <a href="{{ route('documents.workflows') }}" class="text-blue-600 hover:text-blue-900 hover:underline ml-3">
+                                                        Access Workflow
+                                                    </a>
+                                                @endif
                                             @endif
                                         </td>
                                     </tr>

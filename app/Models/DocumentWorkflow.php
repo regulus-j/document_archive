@@ -47,37 +47,89 @@ class DocumentWorkflow extends Model
     public function receive()
     {
         $this->status = 'received';
+        $this->received_at = now();
         $this->save();
+        
+        // Sync document status
+        $this->syncDocumentStatus();
     }
 
     public function approve()
     {
         $this->status = 'approved';
         $this->save();
+        
+        // Sync document status
+        $this->syncDocumentStatus();
     }
 
     public function reject()
     {
         $this->status = 'rejected';
         $this->save();
+        
+        // Sync document status
+        $this->syncDocumentStatus();
     }
     
     public function return()
     {
         $this->status = 'returned';
         $this->save();
+        
+        // Sync document status
+        $this->syncDocumentStatus();
     }
     
     public function refer()
     {
         $this->status = 'referred';
         $this->save();
+        
+        // Sync document status
+        $this->syncDocumentStatus();
     }
     
     public function forward()
     {
         $this->status = 'forwarded';
         $this->save();
+        
+        // Sync document status
+        $this->syncDocumentStatus();
+    }
+
+    /**
+     * Synchronize document status based on workflow states
+     */
+    private function syncDocumentStatus()
+    {
+        $document = $this->document;
+        if (!$document || !$document->status) {
+            return;
+        }
+
+        $allWorkflows = $document->documentWorkflow;
+        
+        // If no workflows exist, keep current status
+        if ($allWorkflows->isEmpty()) {
+            return;
+        }
+
+        // Determine overall document status based on workflow states
+        $statuses = $allWorkflows->pluck('status')->unique();
+        
+        if ($statuses->contains('rejected')) {
+            $document->status()->update(['status' => 'rejected']);
+        } elseif ($statuses->contains('returned')) {
+            $document->status()->update(['status' => 'returned']);
+        } elseif ($allWorkflows->every(fn($w) => $w->status === 'received')) {
+            $document->status()->update(['status' => 'received']);
+        } elseif ($allWorkflows->every(fn($w) => in_array($w->status, ['approved', 'received']))) {
+            $document->status()->update(['status' => 'complete']);
+        } elseif ($statuses->contains('pending')) {
+            $document->status()->update(['status' => 'forwarded']);
+        }
     }
 
     public function changeStatus($action)

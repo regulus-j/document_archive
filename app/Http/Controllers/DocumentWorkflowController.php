@@ -15,6 +15,44 @@ use Illuminate\Support\Facades\Storage;
 
 class DocumentWorkflowController extends Controller
 {
+    /**
+     * Check if user can access workflow for a document
+     * User must have "received" the document first in the receive view
+     */
+    private function canAccessWorkflow($workflowId, $userId = null)
+    {
+        $userId = $userId ?: auth()->id();
+        
+        $workflow = DocumentWorkflow::find($workflowId);
+        if (!$workflow) {
+            return false;
+        }
+        
+        // If user is the sender, they can always access (to monitor)
+        if ($workflow->sender_id === $userId) {
+            return true;
+        }
+        
+        // If user is recipient, they must have "received" the document first
+        if ($workflow->recipient_id === $userId) {
+            return in_array($workflow->status, ['received', 'approved', 'rejected', 'returned', 'referred', 'forwarded']);
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Middleware-like check for workflow access
+     */
+    private function ensureWorkflowAccess($workflowId)
+    {
+        if (!$this->canAccessWorkflow($workflowId)) {
+            return redirect()->route('documents.receive.index')
+                ->with('error', 'You must receive this document first before accessing the workflow. Please check the "Receive Documents" section.');
+        }
+        
+        return null;
+    }
     // workflow logic
     public function createWorkflow(Request $request): RedirectResponse
     {
@@ -163,6 +201,10 @@ class DocumentWorkflowController extends Controller
 
     public function approveWorkflow(Request $request, $id): RedirectResponse
     {
+        // Check if user can access this workflow
+        $accessCheck = $this->ensureWorkflowAccess($id);
+        if ($accessCheck) return $accessCheck;
+        
         $workflow = DocumentWorkflow::findOrFail($id);
         $workflow->approve();
         
@@ -223,6 +265,10 @@ class DocumentWorkflowController extends Controller
 
     public function rejectWorkflow(Request $request, $id): RedirectResponse
     {
+        // Check if user can access this workflow
+        $accessCheck = $this->ensureWorkflowAccess($id);
+        if ($accessCheck) return $accessCheck;
+        
         $request->validate([
             'remarks' => 'required|string|max:1000',
         ]);
@@ -231,10 +277,6 @@ class DocumentWorkflowController extends Controller
         $workflow->reject();
         $workflow->remarks = $request->remarks;
         $workflow->save();
-
-        // Update document status to indicate revision needed
-        $document = Document::findOrFail($workflow->document_id);
-        $document->status()->update(['status' => 'needs_revision']);
 
         // Log with remarks
         DocumentAudit::logDocumentAction(
@@ -263,32 +305,46 @@ class DocumentWorkflowController extends Controller
     // workflow management
     public function workflowManagement()
     {
+        $currentUserId = auth()->id();
+        
+        // Only show workflows where the user has already "received" the document
+        // This enforces the receive-first, then workflow logic
         $workflows = DocumentWorkflow::from('document_workflows as dw_outer')
             ->with(['document', 'sender', 'recipient'])
+            ->where(function($query) use ($currentUserId) {
+                $query->where('recipient_id', $currentUserId)
+                      ->where('status', '!=', 'pending'); // Must have moved past pending (i.e., received)
+            })
+            ->orWhere(function($query) use ($currentUserId) {
+                // Also show workflows where user is the sender (they can monitor progress)
+                $query->where('sender_id', $currentUserId);
+            })
+            ->orderBy('created_at', 'desc')
             ->paginate(15);
 
-        return view('documents.workflow', compact('workflows'));
+        // Get pending documents that need to be received first
+        $pendingReceive = DocumentWorkflow::with(['document', 'sender'])
+            ->where('recipient_id', $currentUserId)
+            ->where('status', 'pending')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('documents.workflow', compact('workflows', 'pendingReceive'));
     }
 
     public function receiveWorkflow($id): RedirectResponse
     {
-        $workflow = DocumentWorkflow::findOrFail($id);
-        $workflow->receive();
-        
-        // Log the receipt action
-        DocumentAudit::logDocumentAction(
-            $workflow->document_id,
-            auth()->id(),
-            'workflow',
-            'received',
-            'Document workflow received'
-        );
-        
-        return redirect()->back()->with('success', 'Document received successfully');
+        // This method is now deprecated - users should use the receive documents feature first
+        return redirect()->route('documents.receive.index')
+            ->with('info', 'Please use the "Receive Documents" feature to receive documents first, then access them in the workflow.');
     }
 
     public function reviewDocument($id)
     {
+        // Check if user can access this workflow
+        $accessCheck = $this->ensureWorkflowAccess($id);
+        if ($accessCheck) return $accessCheck;
+        
         $workflow = DocumentWorkflow::findOrFail($id);
         $document = $workflow->document;
         
@@ -373,6 +429,10 @@ class DocumentWorkflowController extends Controller
 
     public function returnWorkflow(Request $request, $id): RedirectResponse
     {
+        // Check if user can access this workflow
+        $accessCheck = $this->ensureWorkflowAccess($id);
+        if ($accessCheck) return $accessCheck;
+        
         $request->validate([
             'remarks' => 'required|string|max:1000',
         ]);
@@ -401,6 +461,10 @@ class DocumentWorkflowController extends Controller
 
     public function referWorkflow(Request $request, $id): RedirectResponse
     {
+        // Check if user can access this workflow
+        $accessCheck = $this->ensureWorkflowAccess($id);
+        if ($accessCheck) return $accessCheck;
+        
         $request->validate([
             'recipients' => 'required|array',
             'recipients.*' => 'exists:users,id',
@@ -475,6 +539,10 @@ class DocumentWorkflowController extends Controller
 
     public function forwardFromWorkflow(Request $request, $id): RedirectResponse
     {
+        // Check if user can access this workflow
+        $accessCheck = $this->ensureWorkflowAccess($id);
+        if ($accessCheck) return $accessCheck;
+        
         $request->validate([
             'recipients' => 'required|array',
             'recipients.*' => 'exists:users,id',
