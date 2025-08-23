@@ -258,285 +258,298 @@
             <!-- Document List -->
             <div class="lg:col-span-2">
                 <div class="bg-white rounded-xl shadow-xl overflow-hidden h-full border border-blue-100">
-                    <div class="bg-white p-6 border-b border-blue-200 flex justify-between items-center">
-                        <div class="flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600 mr-2" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                            <h2 class="text-lg font-semibold text-gray-800">Document List</h2>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <span class="text-sm text-gray-500">{{ $documents->total() }} documents</span>
-                            <div class="relative">
-                                <button type="button"
-                                    class="inline-flex items-center px-3 py-1.5 border border-blue-200 text-sm font-medium rounded-lg text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none"
+                    <!-- Tabbed Navigation -->
+                    <div class="bg-white border-b border-blue-200">
+                        <div class="p-6 pb-0">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600 mr-2" fill="none"
                                         viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                     </svg>
-                                    Filter
+                                    <h2 class="text-lg font-semibold text-gray-800">Document Management</h2>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-sm text-gray-500">{{ $documents->total() }} total documents</span>
+                                    <div class="relative">
+                                        <button type="button"
+                                            class="inline-flex items-center px-3 py-1.5 border border-blue-200 text-sm font-medium rounded-lg text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none"
+                                                viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                                            </svg>
+                                            Filter
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Tab Navigation -->
+                            <div class="flex space-x-1 bg-blue-50 p-1 rounded-lg">
+                                <button onclick="switchTab('all-documents')" id="tab-all-documents" 
+                                    class="tab-button flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors active-tab">
+                                    <div class="flex items-center justify-center space-x-2">
+                                        <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                        <span>All Documents</span>
+                                        <span class="bg-white/80 text-blue-700 px-2 py-0.5 rounded-full text-xs font-semibold" id="all-count">
+                                            @php 
+                                                $regularCount = $documents->filter(function($document) {
+                                                    $status = $document->status?->status ? strtolower($document->status->status) : '';
+                                                    return !in_array($status, ['rejected']);
+                                                })->count();
+                                            @endphp
+                                            {{ $regularCount }}
+                                        </span>
+                                    </div>
+                                </button>
+                                <button onclick="switchTab('rejected-documents')" id="tab-rejected-documents" 
+                                    class="tab-button flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors">
+                                    <div class="flex items-center justify-center space-x-2">
+                                        <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                        </svg>
+                                        <span>Rejected Documents</span>
+                                        <span class="bg-white/80 text-red-700 px-2 py-0.5 rounded-full text-xs font-semibold" id="rejected-count">
+                                            @php 
+                                                $rejectedCount = $documents->filter(function($document) {
+                                                    $status = $document->status?->status ? strtolower($document->status->status) : '';
+                                                    return in_array($status, ['rejected']);
+                                                })->count();
+                                            @endphp
+                                            {{ $rejectedCount }}
+                                        </span>
+                                    </div>
                                 </button>
                             </div>
                         </div>
                     </div>
 
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead>
-                                <tr>
-                                    <th
-                                        class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
-                                        No</th>
-                                    <th
-                                        class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
-                                        Details</th>
-                                    <th
-                                        class="bg-white px-6 py-3 text-right text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
-                                        Action</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                @forelse ($documents as $document)
-                                    <tr class="hover:bg-gray-50 transition-colors">
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {{ $loop->iteration }}</td>
-                                        <td class="px-6 py-4">
-                                            <div class="flex flex-col space-y-2">
-                                                <div class="text-sm font-medium text-gray-900">{{ $document->title }}</div>
-
-                                                <div class="flex items-center">
-                                                    <div
-                                                        class="flex-shrink-0 h-8 w-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold shadow-sm">
-                                                        {{ $document->user?->first_name ? substr($document->user->first_name, 0, 1) : 'N' }}
-                                                    </div>
-                                                    <div class="ml-3 text-sm text-gray-700">
-                                                        {{ ($document->user?->first_name ?? 'Unknown') . ' ' . ($document->user?->last_name ?? 'User') }}
-                                                    </div>
-                                                </div>
-
-                                                <div class="flex flex-wrap gap-2 items-center">
-                                                    @php
-                                                        $statusColor = 'gray';
-                                                        $status = $document->status?->status ? strtolower($document->status->status) : '';
-                                                        
-                                                        if ($status == 'approved') {
-                                                            $statusColor = 'emerald';
-                                                        } elseif ($status == 'pending') {
-                                                            $statusColor = 'amber';
-                                                        } elseif ($status == 'forwarded') {
-                                                            $statusColor = 'blue';
-                                                        } elseif ($status == 'recalled') {
-                                                            $statusColor = 'purple';
-                                                        } elseif ($status == 'uploaded') {
-                                                            $statusColor = 'indigo';
-                                                        }
-                                                    @endphp
-                                                    <span
-                                                        class="px-2.5 py-1 text-xs leading-5 font-semibold rounded-full bg-{{ $statusColor }}-100 text-{{ $statusColor }}-800">
-                                                        {{ $document->status?->status ?? 'N/A' }}
-                                                    </span>
-
-                                                    <span class="text-xs text-gray-500">
-                                                        <span class="font-medium">From:</span>
-                                                        {{ $document->transaction?->fromOffice?->name ?? $document->user?->offices?->first()?->name ?? 'N/A' }}
-                                                    </span>
-
-                                                    <span class="text-xs text-gray-500">
-                                                        <span class="font-medium">To:</span>
-                                                        @if (isset($documentRecipients[$document->id]) && count($documentRecipients[$document->id]) > 0)
-                                                            @foreach ($documentRecipients[$document->id] as $recipient)
-                                                                <span class="inline-flex items-center">
-                                                                    {{ $recipient['name'] }}
-                                                                    @if (!$loop->last)
-                                                                        ,
-                                                                    @endif
-                                                                </span>
-                                                            @endforeach
-                                                        @else
-                                                            N/A
-                                                        @endif
-                                                    </span>
-
-                                                    <span class="text-xs text-gray-500">
-                                                        <span class="font-medium">Uploaded:</span>
-                                                        {{ $document->created_at->format('M d, Y H:i') }}
-                                                    </span>
-
-                                                    <span class="text-xs text-gray-500">
-                                                        <span class="font-medium">Last Updated:</span>
-                                                        {{ $document->updated_at->format('M d, Y H:i') }}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <div class="flex items-center justify-end space-x-2">
-                                                <a href="{{ route('documents.show', $document->id) }}"
-                                                    class="p-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
-                                                    title="View">
-                                                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg"
-                                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="2"
-                                                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                    </svg>
-                                                </a>
-
-                                                @php
-                                                    $status = '';
-                                                    if (isset($document->status) && $document->status && $document->status->status) {
-                                                        $status = strtolower(trim($document->status->status));
-                                                    }
-                                                    $isDocumentOwner = $document->user && $document->user->id == auth()->user()->id;
-                                                    // Always enable buttons for admin users
-                                                    $canManageDocument = $isDocumentOwner || auth()->user()->can('document-manage') || auth()->user()->can('document-edit');
-                                                @endphp
-                                                
-                                                @if ($canManageDocument)
-                                                    @if ($status == 'uploaded' || $status == 'pending')
-                                                        <a href="{{ route('documents.forward', $document->id) }}"
-                                                            class="p-1.5 bg-amber-50 text-amber-600 rounded-lg hover:bg-amber-100 transition-colors"
-                                                            title="Forward">
-                                                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg"
-                                                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                                    stroke-width="2"
-                                                                    d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                                                            </svg>
-                                                        </a>
-                                                    @elseif($status == 'forwarded')
-                                                        <form action="{{ route('documents.recall', $document) }}" method="POST" class="inline-block">
-                                                            @csrf
-                                                            <button type="submit" 
-                                                                class="p-1.5 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-colors"
-                                                                title="Recall Document" 
-                                                                onclick="return handleRecallDocument(this.form);">
-                                                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" 
-                                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round" 
-                                                                        stroke-width="2" 
-                                                                        d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z" />
-                                                                </svg>
-                                                            </button>
-                                                        </form>
-                                                    @endif
-                                                    
-                                                    @if(isset($document->status) && strtolower($document->status->status) === 'recalled' && ($document->uploader == auth()->id() || $document->user->id == auth()->user()->id || auth()->user()->can('document-manage')))
-                                                        <form action="{{ route('documents.resume', $document) }}" method="POST" class="inline-block">
-                                                            @csrf
-                                                            <button type="submit" 
-                                                                class="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition-colors"
-                                                                title="Resume Document" 
-                                                                onclick="return handleResumeDocument(this.form);">
-                                                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" 
-                                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round" 
-                                                                        stroke-width="2" 
-                                                                        d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5" />
-                                                                </svg>
-                                                            </button>
-                                                        </form>
-                                                    @endif
-                                                @endif
-
-                                                @can('document-edit')
-                                                        <a href="{{ route('documents.edit', $document->id) }}"
-                                                            class="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition-colors"
-                                                            title="
-                                                            ">
-                                                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg"
-                                                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                                    stroke-width="2"
-                                                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                            </svg>
-                                                        </a>
-                                                    @endcan
-                                                    @can('document-delete')
-                                                        <form action="{{ route('documents.destroy', $document->id) }}"
-                                                            method="POST"
-                                                            onsubmit="return handleDeleteDocument(this);"
-                                                            class="inline-block">
-                                                            @csrf
-                                                            @method('DELETE')
-                                                            <button type="submit"
-                                                                class="p-1.5 bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-100 transition-colors"
-                                                                title="Delete">
-                                                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg"
-                                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                                        stroke-width="2"
-                                                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                                </svg>
-                                                            </button>
-                                                        </form>
-                                                    @endcan
-                                                    <form action="{{ route('documents.download', $document->id) }}"
-                                                        method="GET" class="inline-block">
-                                                        @csrf
-                                                        <button type="submit"
-                                                            class="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors"
-                                                            title="Download">
-                                                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg"
-                                                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                                    stroke-width="2"
-                                                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                                            </svg>
-                                                        </button>
-                                                    </form>
-
-                                                    @if ($document->status->status != 'archived')
-                                                        <form action="{{ route('documents.archive.store', $document) }}" method="POST" class="inline-block">
-                                                            @csrf
-                                                            <button type="submit"
-                                                                class="p-1.5 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
-                                                                title="Archive Document" 
-                                                                onclick="return handleArchiveDocument(this.form);">
-                                                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg"
-                                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                                        stroke-width="2"
-                                                                        d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                                                                </svg>
-                                                            </button>
-                                                        </form>
-                                                    @endif
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @empty
+                    <!-- Tab Content Areas -->
+                    <div id="all-documents-content" class="tab-content active">
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead>
                                     <tr>
-                                        <td colspan="9" class="px-6 py-4 text-center text-sm text-gray-500">
-                                            <div class="flex flex-col items-center justify-center py-6">
-                                                <svg class="h-12 w-12 text-gray-400 mb-3"
-                                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                                    stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                                </svg>
-                                                <p class="text-gray-500 text-base">No documents found</p>
-                                                <p class="text-gray-400 text-sm mt-1">Try adjusting your search criteria
-                                                </p>
-                                            </div>
-                                        </td>
+                                        <th class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
+                                            No</th>
+                                        <th class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
+                                            Details</th>
+                                        <th class="bg-white px-6 py-3 text-right text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
+                                            Action</th>
                                     </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    @php 
+                                        $regularDocuments = $documents->filter(function($document) {
+                                            $status = $document->status?->status ? strtolower($document->status->status) : '';
+                                            return !in_array($status, ['rejected']);
+                                        });
+                                        $counter = 1;
+                                    @endphp
+                                    @forelse ($regularDocuments as $document)
+                                        <tr class="hover:bg-gray-50 transition-colors">
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $counter++ }}</td>
+                                            <td class="px-6 py-4">
+                                                <div class="flex flex-col space-y-2">
+                                                    <div class="text-sm font-medium text-gray-900">{{ $document->title }}</div>
+
+                                                    <div class="flex items-center">
+                                                        <div class="flex-shrink-0 h-8 w-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold shadow-sm">
+                                                            {{ $document->user?->first_name ? substr($document->user->first_name, 0, 1) : 'N' }}
+                                                        </div>
+                                                        <div class="ml-3 text-sm text-gray-700">
+                                                            {{ ($document->user?->first_name ?? 'Unknown') . ' ' . ($document->user?->last_name ?? 'User') }}
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="flex flex-wrap gap-2 items-center">
+                                                        @php
+                                                            $statusColor = 'gray';
+                                                            $status = $document->status?->status ? strtolower($document->status->status) : '';
+                                                            
+                                                            if ($status == 'approved') {
+                                                                $statusColor = 'emerald';
+                                                            } elseif ($status == 'pending') {
+                                                                $statusColor = 'amber';
+                                                            } elseif ($status == 'forwarded') {
+                                                                $statusColor = 'blue';
+                                                            } elseif ($status == 'recalled') {
+                                                                $statusColor = 'purple';
+                                                            } elseif ($status == 'uploaded') {
+                                                                $statusColor = 'indigo';
+                                                            }
+                                                        @endphp
+                                                        <span class="px-2.5 py-1 text-xs leading-5 font-semibold rounded-full bg-{{ $statusColor }}-100 text-{{ $statusColor }}-800">
+                                                            {{ $document->status?->status ?? 'N/A' }}
+                                                        </span>
+
+                                                        <span class="text-xs text-gray-500">
+                                                            <span class="font-medium">From:</span>
+                                                            {{ $document->transaction?->fromOffice?->name ?? $document->user?->offices?->first()?->name ?? 'N/A' }}
+                                                        </span>
+
+                                                        <span class="text-xs text-gray-500">
+                                                            <span class="font-medium">To:</span>
+                                                            @if (isset($documentRecipients[$document->id]) && count($documentRecipients[$document->id]) > 0)
+                                                                @foreach ($documentRecipients[$document->id] as $recipient)
+                                                                    <span class="inline-flex items-center">
+                                                                        {{ $recipient['name'] }}
+                                                                        @if (!$loop->last), @endif
+                                                                    </span>
+                                                                @endforeach
+                                                            @else
+                                                                N/A
+                                                            @endif
+                                                        </span>
+
+                                                        <span class="text-xs text-gray-500">
+                                                            <span class="font-medium">Uploaded:</span>
+                                                            {{ $document->created_at->format('M d, Y H:i') }}
+                                                        </span>
+
+                                                        <span class="text-xs text-gray-500">
+                                                            <span class="font-medium">Last Updated:</span>
+                                                            {{ $document->updated_at->format('M d, Y H:i') }}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                @include('documents.partials.document-actions', ['document' => $document])
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="3" class="px-6 py-4 text-center text-sm text-gray-500">
+                                                <div class="flex flex-col items-center justify-center py-6">
+                                                    <svg class="h-12 w-12 text-gray-400 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                    </svg>
+                                                    <p class="text-gray-500 text-base">No documents found</p>
+                                                    <p class="text-gray-400 text-sm mt-1">Try adjusting your search criteria</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
-                    <div class="p-6 border-t border-gray-200">
-                        {{ $documents->links() }}
+                    <!-- Rejected Documents Tab -->
+                    <div id="rejected-documents-content" class="tab-content hidden">
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead>
+                                    <tr>
+                                        <th class="bg-white px-6 py-3 text-left text-xs font-medium text-red-700 uppercase tracking-wider border-b border-red-200">
+                                            No</th>
+                                        <th class="bg-white px-6 py-3 text-left text-xs font-medium text-red-700 uppercase tracking-wider border-b border-red-200">
+                                            Details</th>
+                                        <th class="bg-white px-6 py-3 text-right text-xs font-medium text-red-700 uppercase tracking-wider border-b border-red-200">
+                                            Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    @php 
+                                        $rejectedDocuments = $documents->filter(function($document) {
+                                            $status = $document->status?->status ? strtolower($document->status->status) : '';
+                                            return in_array($status, ['rejected']);
+                                        });
+                                        $rejectedCounter = 1;
+                                    @endphp
+                                    @forelse ($rejectedDocuments as $document)
+                                        <tr class="hover:bg-red-50 transition-colors border-l-4 border-red-300">
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $rejectedCounter++ }}</td>
+                                            <td class="px-6 py-4">
+                                                <div class="flex flex-col space-y-2">
+                                                    <div class="text-sm font-medium text-gray-900">{{ $document->title }}</div>
+
+                                                    <div class="flex items-center">
+                                                        <div class="flex-shrink-0 h-8 w-8 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center text-white font-bold shadow-sm">
+                                                            {{ $document->user?->first_name ? substr($document->user->first_name, 0, 1) : 'N' }}
+                                                        </div>
+                                                        <div class="ml-3 text-sm text-gray-700">
+                                                            {{ ($document->user?->first_name ?? 'Unknown') . ' ' . ($document->user?->last_name ?? 'User') }}
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="flex flex-wrap gap-2 items-center">
+                                                        <span class="px-2.5 py-1 text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                                            {{ $document->status?->status ?? 'Rejected' }}
+                                                        </span>
+
+                                                        <span class="text-xs text-gray-500">
+                                                            <span class="font-medium">From:</span>
+                                                            {{ $document->transaction?->fromOffice?->name ?? $document->user?->offices?->first()?->name ?? 'N/A' }}
+                                                        </span>
+
+                                                        <span class="text-xs text-gray-500">
+                                                            <span class="font-medium">To:</span>
+                                                            @if (isset($documentRecipients[$document->id]) && count($documentRecipients[$document->id]) > 0)
+                                                                @foreach ($documentRecipients[$document->id] as $recipient)
+                                                                    <span class="inline-flex items-center">
+                                                                        {{ $recipient['name'] }}
+                                                                        @if (!$loop->last), @endif
+                                                                    </span>
+                                                                @endforeach
+                                                            @else
+                                                                N/A
+                                                            @endif
+                                                        </span>
+
+                                                        @php
+                                                            $latestWorkflow = $document->documentWorkflow()
+                                                                ->where('status', 'rejected')
+                                                                ->latest()
+                                                                ->first();
+                                                        @endphp
+                                                        @if ($latestWorkflow && $latestWorkflow->remarks)
+                                                            <span class="text-xs text-red-600 bg-red-50 px-2 py-1 rounded">
+                                                                <span class="font-medium">Reason:</span>
+                                                                {{ Str::limit($latestWorkflow->remarks, 50) }}
+                                                            </span>
+                                                        @endif
+
+                                                        <span class="text-xs text-gray-500">
+                                                            <span class="font-medium">Rejected:</span>
+                                                            {{ $document->updated_at->format('M d, Y H:i') }}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                @include('documents.partials.document-actions', ['document' => $document])
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="3" class="px-6 py-4 text-center text-sm text-gray-500">
+                                                <div class="flex flex-col items-center justify-center py-6">
+                                                    <svg class="h-12 w-12 text-green-400 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                    <p class="text-green-600 text-base font-medium">Excellent Work!</p>
+                                                    <p class="text-gray-500 text-sm mt-1">No rejected documents found</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
+
+                <!-- Pagination for both tabs -->
+                <div class="p-6 border-t border-gray-200">
+                    {{ $documents->links() }}
                 </div>
             </div>
         </div>
+    </div>
 
         <!-- Audit Logs -->
         <div class="mt-6 bg-white rounded-xl shadow-xl overflow-hidden border border-blue-100 mb-8">
@@ -645,6 +658,86 @@
     </div>
 
     <script>
+        // Tab switching functionality
+        function switchTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active-tab');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName + '-content').classList.remove('hidden');
+            document.getElementById(tabName + '-content').classList.add('active');
+            
+            // Add active class to selected tab
+            document.getElementById('tab-' + tabName).classList.add('active-tab');
+            
+            // Update counts
+            updateTabCounts();
+        }
+        
+        // Update tab counts
+        function updateTabCounts() {
+            const allRows = document.querySelectorAll('#all-documents-content tbody tr:not(.hidden)');
+            const rejectedRows = document.querySelectorAll('#rejected-documents-content tbody tr:not(.hidden)');
+            
+            // Count visible rows (excluding "no documents" rows)
+            const allCount = Array.from(allRows).filter(row => !row.querySelector('td[colspan]')).length;
+            const rejectedCount = Array.from(rejectedRows).filter(row => !row.querySelector('td[colspan]')).length;
+            
+            document.getElementById('all-count').textContent = allCount;
+            document.getElementById('rejected-count').textContent = rejectedCount;
+        }
+
+        // Show contact modal for rejected documents
+        function showContactModal(reviewerName, reviewerEmail) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50';
+            modal.innerHTML = `
+                <div class="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900">Contact Reviewer</h3>
+                        <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-gray-600">
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Reviewer</label>
+                            <p class="text-sm text-gray-900 bg-gray-50 rounded-lg p-2">${reviewerName}</p>
+                        </div>
+                        ${reviewerEmail ? `
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                            <p class="text-sm text-gray-900 bg-gray-50 rounded-lg p-2">${reviewerEmail}</p>
+                        </div>
+                        ` : ''}
+                        <div class="flex space-x-3 pt-4">
+                            ${reviewerEmail ? `
+                            <a href="mailto:${reviewerEmail}" 
+                               class="flex-1 bg-blue-600 text-white text-center py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
+                                Send Email
+                            </a>
+                            ` : ''}
+                            <button onclick="this.closest('.fixed').remove()" 
+                                    class="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors">
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('search-form');
             const imageInput = document.getElementById('image-input');
@@ -1036,6 +1129,111 @@
         .confirmation-confirm.resume:hover {
             background: #047857;
             border-color: #047857;
+        }
+
+        /* Tab Styles */
+        .tab-button {
+            color: #6b7280;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .tab-button:hover {
+            color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
+        
+        .tab-button.active-tab {
+            color: #3b82f6;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .tab-content {
+            display: block;
+        }
+        
+        .tab-content.hidden {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Enhanced Rejected Documents Styling */
+        .rejected-document-row {
+            background: linear-gradient(135deg, #ffffff 0%, #fef7f7 100%);
+        }
+        
+        .rejected-document-row:hover {
+            background: linear-gradient(135deg, #fef7f7 0%, #fef2f2 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.1);
+        }
+        
+        .rejection-card {
+            background: linear-gradient(135deg, #fef2f2 0%, #fef7f7 100%);
+            border: 1px solid #fecaca;
+            box-shadow: 0 2px 4px rgba(239, 68, 68, 0.05);
+        }
+        
+        .rejection-card:hover {
+            box-shadow: 0 4px 8px rgba(239, 68, 68, 0.1);
+        }
+        
+        /* Action button hover effects */
+        .action-button {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .action-button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transition: width 0.3s, height 0.3s, top 0.3s, left 0.3s;
+        }
+        
+        .action-button:hover::before {
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            border-radius: 0;
+        }
+        
+        /* Tooltip improvements */
+        .tooltip {
+            z-index: 1000;
+            pointer-events: none;
+        }
+        
+        /* Enhanced status badges */
+        .status-badge {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .status-badge::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .status-badge:hover::before {
+            left: 100%;
         }
     </style>
 

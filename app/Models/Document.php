@@ -71,7 +71,7 @@ class Document extends Model
 
     public function trackingNumber()
     {
-        return $this->hasOne(DocumentTrackingNumber::class, 'document_id');
+        return $this->hasOne(DocumentTrackingNumber::class, 'doc_id');
     }
 
     public function attachments()
@@ -169,5 +169,35 @@ class Document extends Model
     public function allowedViewers()
     {
         return $this->hasMany(DocumentAllowedViewer::class, 'doc_id');
+    }
+
+    /**
+     * Get the effective status for the current user's workflow
+     */
+    public function getEffectiveStatusAttribute()
+    {
+        // For current user's workflow status
+        $userWorkflow = $this->documentWorkflow()->where('recipient_id', auth()->id())->first();
+        
+        if ($userWorkflow) {
+            return $userWorkflow->status;
+        }
+        
+        // Fallback to document status
+        return $this->status ? $this->status->status : 'unknown';
+    }
+
+    /**
+     * Get the effective status for a specific user
+     */
+    public function getEffectiveStatusForUser($userId)
+    {
+        $userWorkflow = $this->documentWorkflow()->where('recipient_id', $userId)->first();
+        
+        if ($userWorkflow) {
+            return $userWorkflow->status;
+        }
+        
+        return $this->status ? $this->status->status : 'unknown';
     }
 }
