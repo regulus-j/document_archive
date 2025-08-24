@@ -718,7 +718,7 @@ class DocumentController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required',
             'classification' => 'required|string',
-            'purpose' => 'nullable|string',
+            'purpose' => 'nullable|string|in:appropriate_action,comment,disseminate_info',
             'category' => 'nullable|integer',
             'from_office' => 'required|exists:offices,id',
             'main_document' => 'nullable|file|mimes:jpeg,png,jpg,gif,pdf,docx|max:10240',
@@ -1072,7 +1072,7 @@ class DocumentController extends Controller
 
   /**
  * Display the document receiving index page.
- * Reformed to show all documents sent to user by admin (company-admin users)
+ * Shows documents forwarded to user from any sender (admin or regular user)
  */
 public function receiveIndex(): View
 {
@@ -1090,31 +1090,21 @@ public function receiveIndex(): View
         'documentWorkflow.recipient'
     ]);
     
-    // Primary condition: Documents forwarded to this user by admins
+    // Primary condition: Documents forwarded to this user (from any user)
     $documentsQuery->where(function($query) use ($currentUserId, $userOfficeIds) {
         // 1. Documents with workflows where current user is the recipient
         $query->whereHas('documentWorkflow', function($workflowQuery) use ($currentUserId) {
             $workflowQuery->where('recipient_id', $currentUserId)
-                         ->whereIn('status', ['pending', 'received'])
-                         // CRITICAL: Only show documents sent by company-admin users
-                         ->whereHas('sender', function($senderQuery) {
-                             $senderQuery->whereHas('roles', function($roleQuery) {
-                                 $roleQuery->where('name', 'company-admin');
-                             });
-                         });
+                         ->whereIn('status', ['pending', 'received']);
+            // FIXED: Removed company-admin restriction to allow user-to-user forwarding
         })
         
-        // 2. OR documents sent to user's office by admins (fallback for office-based routing)
+        // 2. OR documents sent to user's office (fallback for office-based routing)
         ->orWhere(function($officeQuery) use ($userOfficeIds) {
             $officeQuery->whereHas('transaction', function($transQuery) use ($userOfficeIds) {
                 $transQuery->whereIn('to_office', $userOfficeIds);
-            })
-            // Ensure the document was sent by a company-admin
-            ->whereHas('user', function($uploaderQuery) {
-                $uploaderQuery->whereHas('roles', function($roleQuery) {
-                    $roleQuery->where('name', 'company-admin');
-                });
             });
+            // FIXED: Removed company-admin restriction to allow office-based routing from any user
         });
     });
     
