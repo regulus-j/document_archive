@@ -28,6 +28,10 @@ class Document extends Model
         'content' => null,
     ];
 
+    protected $casts = [
+        'purpose' => 'string',
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class, 'uploader');

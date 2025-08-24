@@ -15,7 +15,7 @@
                     </div>
                     <div>
                         <h1 class="text-2xl font-bold text-gray-800">{{ __('Receive Documents') }}</h1>
-                        <p class="text-sm text-gray-500">Documents sent to you by administrators</p>
+                        <p class="text-sm text-gray-500">Documents forwarded to you</p>
                     </div>
                 </div>
                 <div>
@@ -44,7 +44,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                         </svg>
                         <h3 class="mt-4 text-lg font-medium text-gray-900">No documents to receive</h3>
-                        <p class="mt-2 text-gray-500">There are no documents sent to you by administrators at this time.</p>
+                        <p class="mt-2 text-gray-500">There are no documents forwarded to you at this time.</p>
                     </div>
                 @else
                     <div class="overflow-x-auto">
@@ -52,7 +52,7 @@
                             <thead>
                                 <tr>
                                     <th class="bg-gray-50 px-6 py-3 text-left text-xs font-medium text-indigo-700 uppercase tracking-wider border-b border-gray-200">Document</th>
-                                    <th class="bg-gray-50 px-6 py-3 text-left text-xs font-medium text-indigo-700 uppercase tracking-wider border-b border-gray-200">Sent By (Admin)</th>
+                                    <th class="bg-gray-50 px-6 py-3 text-left text-xs font-medium text-indigo-700 uppercase tracking-wider border-b border-gray-200">Sent By</th>
                                     <th class="bg-gray-50 px-6 py-3 text-left text-xs font-medium text-indigo-700 uppercase tracking-wider border-b border-gray-200">Status</th>
                                     <th class="bg-gray-50 px-6 py-3 text-left text-xs font-medium text-indigo-700 uppercase tracking-wider border-b border-gray-200">Date Forwarded</th>
                                     <th class="bg-gray-50 px-6 py-3 text-left text-xs font-medium text-indigo-700 uppercase tracking-wider border-b border-gray-200">Actions</th>

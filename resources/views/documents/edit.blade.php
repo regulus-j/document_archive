@@ -129,16 +129,63 @@
                         >{{ old('description', $document->description) }}</textarea>
                     </div>
                     
-                    <!-- Purpose -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1" for="purpose">Purpose</label>
-                        <textarea 
-                            name="purpose" 
-                            id="purpose"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            rows="3"
-                            placeholder="Enter document purpose"
-                        >{{ old('purpose', $document->purpose) }}</textarea>
+                    <!-- Purpose Section -->
+                    <div class="col-span-1 md:col-span-2">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600 mr-2" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                            </svg>
+                            Purpose
+                        </h3>
+
+                        <div class="space-y-4">
+                            <p class="text-sm text-gray-600 mb-3">Select the purpose of this document. This will determine
+                                what actions recipients can take.</p>
+
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                                    <label class="flex items-start cursor-pointer">
+                                        <input type="radio" name="purpose" value="appropriate_action"
+                                            class="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                            {{ old('purpose', $document->purpose) == 'appropriate_action' ? 'checked' : '' }}>
+                                        <div class="ml-3">
+                                            <span class="block text-sm font-medium text-gray-700">Appropriate Action</span>
+                                            <span class="block text-xs text-gray-500 mt-1">Recipient can approve, reject,
+                                                reroute, return, or forward</span>
+                                        </div>
+                                    </label>
+                                </div>
+
+                                <div class="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                                    <label class="flex items-start cursor-pointer">
+                                        <input type="radio" name="purpose" value="comment"
+                                            class="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                            {{ old('purpose', $document->purpose) == 'comment' ? 'checked' : '' }}>
+                                        <div class="ml-3">
+                                            <span class="block text-sm font-medium text-gray-700">Comment</span>
+                                            <span class="block text-xs text-gray-500 mt-1">Recipient can only leave
+                                                remarks</span>
+                                        </div>
+                                    </label>
+                                </div>
+
+                                <div class="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                                    <label class="flex items-start cursor-pointer">
+                                        <input type="radio" name="purpose" value="disseminate_info"
+                                            class="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                            {{ old('purpose', $document->purpose) == 'disseminate_info' ? 'checked' : '' }}>
+                                        <div class="ml-3">
+                                            <span class="block text-sm font-medium text-gray-700">Disseminate
+                                                Information</span>
+                                            <span class="block text-xs text-gray-500 mt-1">Recipient can only mark as
+                                                received</span>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Classification -->
