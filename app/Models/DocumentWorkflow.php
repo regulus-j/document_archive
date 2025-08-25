@@ -125,8 +125,12 @@ class DocumentWorkflow extends Model
             $document->status()->update(['status' => 'returned']);
         } elseif ($allWorkflows->every(fn($w) => $w->status === 'received')) {
             $document->status()->update(['status' => 'received']);
-        } elseif ($allWorkflows->every(fn($w) => in_array($w->status, ['approved', 'received']))) {
+        } elseif ($allWorkflows->every(fn($w) => in_array($w->status, ['approved', 'received', 'commented', 'acknowledged']))) {
             $document->status()->update(['status' => 'complete']);
+        } elseif ($statuses->contains('commented')) {
+            $document->status()->update(['status' => 'commented']);
+        } elseif ($statuses->contains('acknowledged')) {
+            $document->status()->update(['status' => 'acknowledged']);
         } elseif ($statuses->contains('pending')) {
             $document->status()->update(['status' => 'forwarded']);
         }
@@ -173,6 +177,16 @@ class DocumentWorkflow extends Model
         return $this->status === 'forwarded';
     }
     
+    public function isCommented()
+    {
+        return $this->status === 'commented';
+    }
+    
+    public function isAcknowledged()
+    {
+        return $this->status === 'acknowledged';
+    }
+    
     public function canProcess()
     {
         return $this->status === 'received';
@@ -185,7 +199,7 @@ class DocumentWorkflow extends Model
     
     public function workflowActive()
     {
-        return !in_array($this->status, ['rejected', 'returned', 'approved']);
+        return !in_array($this->status, ['rejected', 'returned', 'approved', 'commented', 'acknowledged']);
     }
     public function isOverdue()
     {

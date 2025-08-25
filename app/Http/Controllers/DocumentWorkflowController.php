@@ -645,4 +645,129 @@ class DocumentWorkflowController extends Controller
 
         return redirect()->route('documents.receive.index')->with('success', 'Document status updated to received.');
     }
+
+    /**
+     * Add comment to workflow (for 'for_comment' purpose)
+     */
+    public function addComment(Request $request, $id): RedirectResponse
+    {
+        // Check if user can access this workflow
+        $accessCheck = $this->ensureWorkflowAccess($id);
+        if ($accessCheck) return $accessCheck;
+        
+        $request->validate([
+            'remarks' => 'required|string|max:1000',
+        ]);
+        
+        $workflow = DocumentWorkflow::findOrFail($id);
+        
+        // Ensure this is a comment purpose workflow
+        if ($workflow->purpose !== 'for_comment') {
+            return redirect()->back()->with('error', 'This action is only available for documents requesting comments.');
+        }
+        
+        // Update workflow with comment
+        $workflow->status = 'commented';
+        $workflow->remarks = $request->remarks;
+        $workflow->received_at = now();
+        $workflow->save();
+        
+        // Update document status directly
+        if ($workflow->document && $workflow->document->status) {
+            $workflow->document->status()->update(['status' => 'commented']);
+        }
+        
+        // Log the action
+        DocumentAudit::logDocumentAction(
+            $workflow->document_id,
+            auth()->id(),
+            'workflow',
+            'commented',
+            'Comment added: ' . $request->remarks
+        );
+
+        // Notify sender about the comment
+        if ($workflow->sender_id && $workflow->sender_id != auth()->id()) {
+            \App\Models\Notifications::create([
+                'user_id' => $workflow->sender_id,
+                'title' => 'Document Comment Received',
+                'message' => 'A comment has been added to document: ' . $workflow->document->title,
+                'type' => 'workflow_comment',
+                'data' => json_encode([
+                    'document_id' => $workflow->document_id,
+                    'workflow_id' => $workflow->id,
+                    'commenter' => auth()->user()->first_name . ' ' . auth()->user()->last_name,
+                    'comment' => $request->remarks
+                ])
+            ]);
+        }
+
+        return redirect()->route('documents.workflows')->with('success', 'Comment submitted successfully.');
+    }
+
+    /**
+     * Acknowledge workflow (for 'dissemination' purpose)
+     */
+    public function acknowledgeWorkflow(Request $request, $id): RedirectResponse
+    {
+        // Check if user can access this workflow
+        $accessCheck = $this->ensureWorkflowAccess($id);
+        if ($accessCheck) return $accessCheck;
+        
+        $request->validate([
+            'remarks' => 'nullable|string|max:1000',
+        ]);
+        
+        $workflow = DocumentWorkflow::findOrFail($id);
+        
+        // Ensure this is a dissemination purpose workflow
+        if ($workflow->purpose !== 'dissemination') {
+            return redirect()->back()->with('error', 'This action is only available for information dissemination documents.');
+        }
+        
+        // Update workflow with acknowledgment
+        $workflow->status = 'acknowledged';
+        if ($request->remarks) {
+            $workflow->remarks = $request->remarks;
+        }
+        $workflow->received_at = now();
+        $workflow->save();
+        
+        // Update document status directly
+        if ($workflow->document && $workflow->document->status) {
+            $workflow->document->status()->update(['status' => 'acknowledged']);
+        }
+        
+        // Log the action
+        $logMessage = 'Document information acknowledged';
+        if ($request->remarks) {
+            $logMessage .= ': ' . $request->remarks;
+        }
+        
+        DocumentAudit::logDocumentAction(
+            $workflow->document_id,
+            auth()->id(),
+            'workflow',
+            'acknowledged',
+            $logMessage
+        );
+
+        // Notify sender about the acknowledgment
+        if ($workflow->sender_id && $workflow->sender_id != auth()->id()) {
+            \App\Models\Notifications::create([
+                'user_id' => $workflow->sender_id,
+                'title' => 'Document Information Acknowledged',
+                'message' => 'Document information has been acknowledged: ' . $workflow->document->title,
+                'type' => 'workflow_acknowledged',
+                'data' => json_encode([
+                    'document_id' => $workflow->document_id,
+                    'workflow_id' => $workflow->id,
+                    'acknowledger' => auth()->user()->first_name . ' ' . auth()->user()->last_name,
+                    'remarks' => $request->remarks
+                ])
+            ]);
+        }
+
+        return redirect()->route('documents.workflows')->with('success', 'Document information acknowledged successfully.');
+    }
 }
