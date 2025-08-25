@@ -28,6 +28,11 @@ class DocumentWorkflowController extends Controller
             return false;
         }
         
+        // Check if document has been recalled
+        if ($workflow->document && $workflow->document->status && $workflow->document->status->status === 'recalled') {
+            return false;
+        }
+        
         // If user is the sender, they can always access (to monitor)
         if ($workflow->sender_id === $userId) {
             return true;
@@ -46,6 +51,14 @@ class DocumentWorkflowController extends Controller
      */
     private function ensureWorkflowAccess($workflowId)
     {
+        $workflow = DocumentWorkflow::find($workflowId);
+        
+        // Check if document has been recalled
+        if ($workflow && $workflow->document && $workflow->document->status && $workflow->document->status->status === 'recalled') {
+            return redirect()->route('documents.workflows')
+                ->with('error', 'This document has been recalled by the sender. Workflow actions are no longer available.');
+        }
+        
         if (!$this->canAccessWorkflow($workflowId)) {
             return redirect()->route('documents.receive.index')
                 ->with('error', 'You must receive this document first before accessing the workflow. Please check the "Receive Documents" section.');
@@ -309,8 +322,8 @@ class DocumentWorkflowController extends Controller
         
         // Only show workflows where the user has already "received" the document
         // This enforces the receive-first, then workflow logic
-        $workflows = DocumentWorkflow::from('document_workflows as dw_outer')
-            ->with(['document', 'sender', 'recipient'])
+        // Also exclude recalled documents
+        $workflows = DocumentWorkflow::with(['document.status', 'sender', 'recipient'])
             ->where(function($query) use ($currentUserId) {
                 $query->where('recipient_id', $currentUserId)
                       ->where('status', '!=', 'pending'); // Must have moved past pending (i.e., received)
@@ -319,13 +332,23 @@ class DocumentWorkflowController extends Controller
                 // Also show workflows where user is the sender (they can monitor progress)
                 $query->where('sender_id', $currentUserId);
             })
+            ->whereHas('document', function($query) {
+                $query->whereHas('status', function($statusQuery) {
+                    $statusQuery->where('status', '!=', 'recalled');
+                });
+            })
             ->orderBy('created_at', 'desc')
             ->paginate(15);
 
-        // Get pending documents that need to be received first
-        $pendingReceive = DocumentWorkflow::with(['document', 'sender'])
+        // Get pending documents that need to be received first (exclude recalled)
+        $pendingReceive = DocumentWorkflow::with(['document.status', 'sender'])
             ->where('recipient_id', $currentUserId)
             ->where('status', 'pending')
+            ->whereHas('document', function($query) {
+                $query->whereHas('status', function($statusQuery) {
+                    $statusQuery->where('status', '!=', 'recalled');
+                });
+            })
             ->orderBy('created_at', 'desc')
             ->get();
 

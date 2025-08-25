@@ -138,7 +138,6 @@ class DocumentController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required',
             'classification' => 'required|string',
-            'purpose' => 'nullable|string',
             'category' => 'nullable|integer',
             'from_office' => 'required|exists:offices,id',
             'main_document' => 'required|file',
@@ -164,7 +163,6 @@ class DocumentController extends Controller
                 'uploader' => auth()->id(),
                 'description' => $request->description,
                 'classification' => $request->classification,
-                'purpose' => $request->purpose ?? null,
                 'category' => $request->category ?? null,
                 'path' => $filePath,
             ]);
@@ -718,7 +716,6 @@ class DocumentController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required',
             'classification' => 'required|string',
-            'purpose' => 'nullable|string|in:appropriate_action,comment,disseminate_info',
             'category' => 'nullable|integer',
             'from_office' => 'required|exists:offices,id',
             'main_document' => 'nullable|file|mimes:jpeg,png,jpg,gif,pdf,docx|max:10240',
@@ -737,7 +734,6 @@ class DocumentController extends Controller
                 'title' => $request->title,
                 'description' => $request->description,
                 'classification' => $request->classification,
-                'purpose' => $request->purpose ?? null,
                 'category' => $request->category ?? null,
             ]);
             \Log::info('Document basic info updated', ['document_id' => $document->id]);
@@ -1108,9 +1104,9 @@ public function receiveIndex(): View
         });
     });
     
-    // Exclude completed documents
+    // Exclude completed and recalled documents
     $documentsQuery->whereHas('status', function($query) {
-        $query->where('status', '!=', 'complete');
+        $query->whereNotIn('status', ['complete', 'recalled']);
     });
     
     // Order by latest first
@@ -1127,6 +1123,12 @@ public function receiveConfirm(Document $document)
 {
     try {
         $currentUserId = auth()->id();
+        
+        // Check if document has been recalled
+        if ($document->status && $document->status->status === 'recalled') {
+            return redirect()->route('documents.receive.index')
+                ->with('error', 'This document has been recalled by the sender and cannot be received.');
+        }
         
         // Find the specific workflow for this user (if exists)
         $userWorkflow = DocumentWorkflow::where('document_id', $document->id)

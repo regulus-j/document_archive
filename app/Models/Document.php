@@ -20,7 +20,6 @@ class Document extends Model
         'path',
         'storage_size',
         'classification',
-        'purpose',
         'category',
     ];
 

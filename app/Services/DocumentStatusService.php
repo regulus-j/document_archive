@@ -143,6 +143,11 @@ class DocumentStatusService
     {
         $userId = $userId ?: auth()->id();
         
+        // Check if document has been recalled
+        if ($document->status && $document->status->status === 'recalled') {
+            return false;
+        }
+        
         $userWorkflow = $document->documentWorkflow()
             ->where('recipient_id', $userId)
             ->whereIn('status', ['pending'])
@@ -158,6 +163,11 @@ class DocumentStatusService
     public static function canAccessWorkflow(Document $document, $userId = null)
     {
         $userId = $userId ?: auth()->id();
+        
+        // Check if document has been recalled
+        if ($document->status && $document->status->status === 'recalled') {
+            return false;
+        }
         
         $userWorkflow = $document->documentWorkflow()
             ->where('recipient_id', $userId)
