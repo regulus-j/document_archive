@@ -12,7 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('document_attachments', function (Blueprint $table) {
-            //
+            $table->bigInteger('storage_size')->nullable()->after('path')->comment('File size in bytes');
+            $table->string('mime_type')->nullable()->after('storage_size')->comment('File MIME type');
+            
         });
     }
 
@@ -22,7 +24,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('document_attachments', function (Blueprint $table) {
-            //
+            $table->dropColumn('storage_size');
+            $table->dropColumn('mime_type');
         });
     }
 };
