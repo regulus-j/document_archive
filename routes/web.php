@@ -178,6 +178,12 @@ Route::middleware('auth')->group(function () {
             Route::post('/{workflow}/forward-from', [DocumentWorkflowController::class, 'forwardFromWorkflow'])
                 ->name('documents.forwardFromWorkflow');
             
+            Route::post('/{workflow}/comment', [DocumentWorkflowController::class, 'addComment'])
+                ->name('documents.addComment');
+            
+            Route::post('/{workflow}/acknowledge', [DocumentWorkflowController::class, 'acknowledgeWorkflow'])
+                ->name('documents.acknowledgeWorkflow');
+            
             Route::get('/{workflow}/review', [DocumentWorkflowController::class, 'reviewDocument'])
                 ->name('documents.review');
             
