@@ -125,9 +125,13 @@
                                                 $canReceive = DocumentStatusService::canReceiveDocument($document);
                                                 $statusInfo = DocumentStatusService::getEffectiveStatus($document);
                                                 $canAccessWorkflow = DocumentStatusService::canAccessWorkflow($document);
+                                                $isRecalled = $document->status && $document->status->status === 'recalled';
                                             @endphp
                                             
-                                            @if ($canReceive && $statusInfo['can_receive'])
+                                            @if ($isRecalled)
+                                                <span class="text-red-600 font-semibold">Document Recalled</span>
+                                                <div class="text-xs text-red-500 mt-1">This document has been recalled by the sender</div>
+                                            @elseif ($canReceive && $statusInfo['can_receive'])
                                                 <form method="POST" action="{{ route('documents.receive.confirm', $document->id) }}" class="inline">
                                                     @csrf
                                                     <button type="submit" class="text-green-600 hover:text-green-900 hover:underline mr-3">
