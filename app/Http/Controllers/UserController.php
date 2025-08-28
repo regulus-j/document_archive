@@ -12,11 +12,14 @@ use App\Models\CompanyUser;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\Traits\HasRoles;
 
 class UserController extends Controller
 {
@@ -37,23 +40,25 @@ class UserController extends Controller
 
     public function index(Request $request): View
     {
+        $authUser = Auth::user();
+
         // Only super-admins can see the super-admin role in filters
-        if (auth()->user()->hasRole('super-admin')) {
+        if ($authUser->hasRole('super-admin')) {
             $roles = Role::all();
-        } elseif (auth()->user()->hasRole('company-admin')) {
+        } elseif ($authUser->hasRole('company-admin')) {
             $roles = Role::where('name', '!=', 'super-admin')->get();
         } else {
             $roles = Role::where('name', 'user')->get();
         }
 
         // Super-admin: see all users
-        if (auth()->user()->hasRole('super-admin')) {
+        if ($authUser->hasRole('super-admin')) {
             return $this->showRegistered();
         }
 
         // Company admin: see users in their company
-        if (auth()->user()->isCompanyAdmin()) {
-            $company = auth()->user()->companies()->first();
+        if ($authUser->isCompanyAdmin()) {
+            $company = $authUser->companies()->first();
             if ($company) {
                 $users = $company->employees()->paginate(5);
             } else {
@@ -61,7 +66,7 @@ class UserController extends Controller
             }
         } else {
             // Regular user: see only themselves
-            $users = User::where('id', auth()->id())->paginate(5);
+            $users = User::where('id', $authUser->id)->paginate(5);
         }
 
 
@@ -86,31 +91,33 @@ class UserController extends Controller
      */
     public function search(Request $request): View
     {
+        $authUser = Auth::user();
+
         // Only super-admins can see the super-admin role in filters
-        if (auth()->user()->hasRole('super-admin')) {
+        if ($authUser->hasRole('super-admin')) {
             $roles = Role::all();
-        } elseif (auth()->user()->hasRole('company-admin')) {
+        } elseif ($authUser->hasRole('company-admin')) {
             $roles = Role::where('name', '!=', 'super-admin')->get();
         } else {
             $roles = Role::where('name', 'user')->get();
         }
 
         // Fetch teams for filter
-        if (auth()->user()->hasRole('super-admin')) {
+        if ($authUser->hasRole('super-admin')) {
             $teams = \App\Models\Office::all();
-        } elseif (auth()->user()->isCompanyAdmin()) {
-            $company = auth()->user()->companies()->first();
+        } elseif ($authUser->isCompanyAdmin()) {
+            $company = $authUser->companies()->first();
             $teams = $company ? $company->offices()->get() : collect();
         } else {
-            $teams = auth()->user()->offices()->get();
+            $teams = $authUser->offices()->get();
         }
 
         // Super-admin: can search all users
-        if (auth()->user()->hasRole('super-admin')) {
+        if ($authUser->hasRole('super-admin')) {
             $query = User::query();
-        } elseif (auth()->user()->isCompanyAdmin()) {
+        } elseif ($authUser->isCompanyAdmin()) {
             // Company admin: can search only users in their company
-            $company = auth()->user()->companies()->first();
+            $company = $authUser->companies()->first();
             if ($company) {
                 $query = $company->employees();
             } else {
@@ -118,7 +125,7 @@ class UserController extends Controller
             }
         } else {
             // Regular user: can search only themselves
-            $query = User::where('id', auth()->id());
+            $query = User::where('id', $authUser->id);
         }
 
         if ($request->filled('name')) {
@@ -263,7 +270,32 @@ class UserController extends Controller
      */
     public function show($id): View
     {
-        $user = User::find($id);
+        $user = User::findOrFail($id);
+        $authUser = User::findOrFail(Auth::id());
+
+        // Super admin can see all users
+        if ($authUser->hasRole('super-admin')) {
+            return view('users.show', compact('user'));
+        }
+
+        // Company admin can only see users in their company
+        if ($authUser->isCompanyAdmin()) {
+            $company = $authUser->companies()->first();
+
+            if (!$company) {
+                abort(403, 'You must be associated with a company to view user details.');
+            }
+
+            // Check if user belongs to the company
+            if (!$user->companies->contains($company->id)) {
+                abort(403, 'You can only view users from your company.');
+            }
+        } else {
+            // Regular users can only see themselves
+            if ($user->id !== $authUser->id) {
+                abort(403, 'Unauthorized access.');
+            }
+        }
 
         return view('users.show', compact('user'));
     }
@@ -273,22 +305,39 @@ class UserController extends Controller
      */
     public function edit($id): View
     {
-        $user = User::find($id);
+        $user = User::findOrFail($id);
+        $authUser = User::findOrFail(Auth::id());
 
-        // Filter roles based on user permissions
-        if (auth()->user()->hasRole('super-admin')) {
-            // Super admins can see all roles
+        // Super admin can edit all users
+        if ($authUser->hasRole('super-admin')) {
             $roles = Role::pluck('name', 'name')->all();
-        } else {
-            // Others can't see the super-admin role
+        } elseif ($authUser->isCompanyAdmin()) {
+            // Company admin checks
+            $company = $authUser->companies()->first();
+            if (!$company) {
+                abort(403, 'You must be associated with a company to edit users.');
+            }
+
+            // Check if target user belongs to admin's company
+            if (!$user->companies->contains($company->id)) {
+                abort(403, 'You can only edit users from your company.');
+            }
+
+            // Company admins can't see super-admin role
             $roles = Role::where('name', '!=', 'super-admin')->pluck('name', 'name')->all();
+        } else {
+            // Regular users can only edit themselves
+            if ($user->id !== $authUser->id) {
+                abort(403, 'You can only edit your own profile.');
+            }
+            $roles = Role::where('name', 'user')->pluck('name', 'name')->all();
         }
 
         $userRoles = $user->roles->pluck('name', 'name')->all();
 
         // Get offices from user's company only
-        $company = auth()->user()->companies()->first();
-        $offices = Office::where('company_id', $company->id)->pluck('name', 'id')->all();
+        $company = $authUser->companies()->first();
+        $offices = $company ? Office::where('company_id', $company->id)->pluck('name', 'id')->all() : [];
 
         $userOffices = $user->offices->pluck('id')->all();
         $userCompany = CompanyAccount::all();
@@ -362,7 +411,8 @@ class UserController extends Controller
             $user->offices()->sync($request->input('offices'));
         } else if ($user->hasRole('company-admin')) {
             // For company admins, ensure they have at least one office from their company
-            $company = auth()->user()->companies()->first();
+            $authUser = User::findOrFail(Auth::id());
+            $company = $authUser->companies()->first();
             if ($company) {
                 $office = Office::where('company_id', $company->id)->first();
                 if ($office && $user->offices()->count() == 0) {
@@ -389,22 +439,48 @@ class UserController extends Controller
      */
     public function destroy(User $user): RedirectResponse
     {
-        // Check if the user is trying to delete themselves
-        if ($user->id === auth()->id()) {
+        $authUser = User::findOrFail(Auth::id());
+
+        // Prevent self-deletion
+        if ($user->id === $authUser->id) {
             return redirect()->route('users.index')
                 ->with('error', 'You cannot delete your own account.');
         }
 
-        // Check if the user is an admin trying to delete another admin
-        if (auth()->user()->hasRole('super-admin') && $user->hasRole('super-admin')) {
+        // Super admin specific checks
+        if ($authUser->hasRole('super-admin')) {
+            if ($user->hasRole('super-admin')) {
+                return redirect()->route('users.index')
+                    ->with('error', 'You cannot delete another super admin account.');
+            }
+        } elseif ($authUser->isCompanyAdmin()) {
+            // Company admin checks
+            $company = $authUser->companies()->first();
+
+            if (!$company) {
+                return redirect()->route('users.index')
+                    ->with('error', 'You must be associated with a company to delete users.');
+            }
+
+            // Check if target user belongs to admin's company
+            if (!$user->companies->contains($company->id)) {
+                return redirect()->route('users.index')
+                    ->with('error', 'You can only delete users from your company.');
+            }
+
+            // Prevent company admins from deleting other company admins
+            if ($user->hasRole('company-admin')) {
+                return redirect()->route('users.index')
+                    ->with('error', 'You cannot delete another company admin account.');
+            }
+        } else {
+            // Regular users cannot delete anyone
             return redirect()->route('users.index')
-                ->with('error', 'You cannot delete another super admin account.');
+                ->with('error', 'You do not have permission to delete users.');
         }
 
-        // Delete user's company associations
+        // Proceed with deletion
         CompanyUser::where('user_id', $user->id)->delete();
-
-        // Delete the user
         $user->delete();
 
         return redirect()->route('users.index')

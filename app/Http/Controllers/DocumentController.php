@@ -19,6 +19,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use PhpOffice\PhpWord\IOFactory;
 use Spatie\PdfToText\Pdf;
@@ -130,9 +132,15 @@ class DocumentController extends Controller
     //Storing the document
     public function uploadController(Request $request)
     {
-        \Log::info('uploadController called');
-        \Log::info("SEARCH ME");
-        \Log::info($request);
+        Log::info('uploadController called');
+
+        // Check if user has an office assigned
+        $user = Auth::user();
+        if (!$user || !$user->offices->first()) {
+            return redirect()->back()
+                ->with('error', 'You must be assigned to an office before creating documents. Please contact your administrator.')
+                ->withInput();
+        }
 
         $request->validate([
             'title' => 'required|string|max:255',
@@ -149,24 +157,24 @@ class DocumentController extends Controller
         ]);
 
         try {
-            \Log::info('Starting document upload process');
-            $companyId = auth()->user()->companies()->first()->id ?? 'default';
+            Log::info('Starting document upload process');
+            $companyId = $user->companies()->first()->id ?? 'default';
             $companyPath = $companyId;
 
             $file = $request->file('main_document');  // Changed from 'upload'
             $fileName = time() . '_' . $file->getClientOriginalName();
-            \Log::info('Uploading file', ['fileName' => $fileName]);
+            Log::info('Uploading file', ['fileName' => $fileName]);
             $filePath = $file->storeAs($companyPath . '/documents', $fileName, 'public');
 
             $document = Document::create([
                 'title' => $request->title,
-                'uploader' => auth()->id(),
+                'uploader' => $user->id,
                 'description' => $request->description,
                 'classification' => $request->classification,
                 'category' => $request->category ?? null,
                 'path' => $filePath,
             ]);
-            \Log::info('Document created', ['document_id' => $document->id]);
+            Log::info('Document created', ['document_id' => $document->id]);
 
             // Attach the document category - This fixes the categories not being assigned
             if ($request->has('category')) {
@@ -430,7 +438,7 @@ class DocumentController extends Controller
     }
 
     /**
-     * DEFUNCT, 
+     * DEFUNCT,
      * Store a newly created document in storage.
      */
     public function store(Request $request): RedirectResponse
@@ -728,7 +736,7 @@ class DocumentController extends Controller
 
         try {
             \Log::info('Starting document update process', ['document_id' => $document->id]);
-            
+
             // Update document basic information
             $document->update([
                 'title' => $request->title,
@@ -747,17 +755,17 @@ class DocumentController extends Controller
             $rejectedWorkflows = \App\Models\DocumentWorkflow::where('document_id', $document->id)
                 ->where('status', 'rejected')
                 ->get();
-            
+
             foreach ($rejectedWorkflows as $rejectedWorkflow) {
                 $rejectedWorkflow->status = 'pending';
                 $rejectedWorkflow->received_at = null; // Reset received timestamp
                 $rejectedWorkflow->save();
                 \Log::info('Reset rejected workflow to pending for re-receipt', [
-                    'document_id' => $document->id, 
+                    'document_id' => $document->id,
                     'workflow_id' => $rejectedWorkflow->id,
                     'recipient_id' => $rejectedWorkflow->recipient_id
                 ]);
-                
+
                 // Notify the receiver that the document has been updated and is ready for re-receipt
                 \App\Models\Notifications::create([
                     'user_id' => $rejectedWorkflow->recipient_id,
@@ -776,12 +784,12 @@ class DocumentController extends Controller
                 Storage::disk('public')->delete($document->path);
                 $companyId = auth()->user()->companies()->first()->id ?? 'default';
                 $companyPath = $companyId;
-                
+
                 $file = $request->file('main_document');
                 $fileName = time() . '_' . $file->getClientOriginalName();
                 \Log::info('Uploading new file', ['fileName' => $fileName]);
                 $filePath = $file->storeAs($companyPath . '/documents', $fileName, 'public');
-                
+
                 $document->update(['path' => $filePath]);
                 \Log::info('Document file updated', ['document_id' => $document->id]);
             }
@@ -797,7 +805,7 @@ class DocumentController extends Controller
             if ($request->classification == 'Private') {
                 // Remove old viewers
                 $document->allowedViewers()->delete();
-                
+
                 // Add new viewers if provided
                 if ($request->has('allowed_viewers')) {
                     foreach ($request->allowed_viewers as $userId) {
@@ -851,7 +859,7 @@ class DocumentController extends Controller
             \Log::info('Document update action logged', ['document_id' => $document->id]);
 
             // Notify all users who have received or forwarded this document (except current user)
-            $workflowUsers = 
+            $workflowUsers =
                 \App\Models\DocumentWorkflow::where('document_id', $document->id)
                     ->where(function($q) {
                         $q->whereNotNull('recipient_id')->orWhereNotNull('sender_id');
@@ -968,7 +976,7 @@ class DocumentController extends Controller
         // Retrieve the office abbreviation and document type
         $office = Office::findOrFail($officeId);
         $documentType = DocumentCategory::find($documentTypeId);
-        
+
         if ($documentType) {
             $prefix = strtoupper(substr($office->name, 0, 3)) . '-' . strtoupper(substr($documentType->category, 0, 3));
         } else {
@@ -1074,18 +1082,18 @@ public function receiveIndex(): View
 {
     $currentUserId = auth()->id();
     $userOfficeIds = auth()->user()->offices->pluck('id')->toArray();
-    
+
     // Build query to get documents that can be received by the current user
     $documentsQuery = Document::with([
-        'user', 
-        'status', 
-        'workflow', 
-        'transaction.fromOffice', 
+        'user',
+        'status',
+        'workflow',
+        'transaction.fromOffice',
         'transaction.toOffice',
         'documentWorkflow.sender',
         'documentWorkflow.recipient'
     ]);
-    
+
     // Primary condition: Documents forwarded to this user (from any user)
     $documentsQuery->where(function($query) use ($currentUserId, $userOfficeIds) {
         // 1. Documents with workflows where current user is the recipient
@@ -1094,7 +1102,7 @@ public function receiveIndex(): View
                          ->whereIn('status', ['pending', 'received']);
             // FIXED: Removed company-admin restriction to allow user-to-user forwarding
         })
-        
+
         // 2. OR documents sent to user's office (fallback for office-based routing)
         ->orWhere(function($officeQuery) use ($userOfficeIds) {
             $officeQuery->whereHas('transaction', function($transQuery) use ($userOfficeIds) {
@@ -1103,15 +1111,15 @@ public function receiveIndex(): View
             // FIXED: Removed company-admin restriction to allow office-based routing from any user
         });
     });
-    
+
     // Exclude completed and recalled documents
     $documentsQuery->whereHas('status', function($query) {
         $query->whereNotIn('status', ['complete', 'recalled']);
     });
-    
+
     // Order by latest first
     $documents = $documentsQuery->latest()->paginate(10);
-        
+
     return view('documents.receive', compact('documents'));
 }
 
@@ -1123,23 +1131,23 @@ public function receiveConfirm(Document $document)
 {
     try {
         $currentUserId = auth()->id();
-        
+
         // Check if document has been recalled
         if ($document->status && $document->status->status === 'recalled') {
             return redirect()->route('documents.receive.index')
                 ->with('error', 'This document has been recalled by the sender and cannot be received.');
         }
-        
+
         // Find the specific workflow for this user (if exists)
         $userWorkflow = DocumentWorkflow::where('document_id', $document->id)
             ->where('recipient_id', $currentUserId)
             ->whereIn('status', ['pending', 'received'])
             ->first();
-            
+
         if ($userWorkflow) {
             // Update the specific workflow status to received
             $userWorkflow->receive(); // This will now also sync document status
-            
+
             // Log the action
             DocumentAudit::logDocumentAction(
                 $document->id,
@@ -1151,7 +1159,7 @@ public function receiveConfirm(Document $document)
         } else {
             // If no specific workflow found, check if document has any workflow and update main document status
             $hasWorkflow = DocumentWorkflow::where('document_id', $document->id)->exists();
-            
+
             if (!$hasWorkflow) {
                 // Create a workflow entry for this receipt
                 $workflow = DocumentWorkflow::create([
@@ -1163,14 +1171,14 @@ public function receiveConfirm(Document $document)
                     'received_at' => now(),
                     'tracking_number' => 'RCV-' . time() . '-' . $document->id,
                 ]);
-                
+
                 // This will automatically sync document status
                 $workflow->receive();
             } else {
                 // Update document status directly if workflow exists but user not in it
                 $document->status()->update(['status' => 'received']);
             }
-            
+
             // Log the action
             DocumentAudit::logDocumentAction(
                 $document->id,
@@ -1180,10 +1188,10 @@ public function receiveConfirm(Document $document)
                 'Document received directly by ' . auth()->user()->first_name . ' ' . auth()->user()->last_name
             );
         }
-        
+
         return redirect()->route('documents.receive.index')
             ->with('success', 'Document has been successfully received.');
-            
+
     } catch (\Exception $e) {
         return redirect()->back()
             ->with('error', 'Failed to receive document: ' . $e->getMessage());
@@ -1227,10 +1235,10 @@ public function receiveConfirm(Document $document)
 
         // Log the recall action
         \App\Models\DocumentAudit::logDocumentAction(
-            $document->id, 
+            $document->id,
             auth()->id(),
-            'recall', 
-            'recalled', 
+            'recall',
+            'recalled',
             'Document recalled and workflow paused'
         );
 
@@ -1281,8 +1289,8 @@ public function receiveConfirm(Document $document)
         \App\Models\DocumentAudit::logDocumentAction(
             $document->id,
             auth()->id(),
-            'resume', 
-            'forwarded', 
+            'resume',
+            'forwarded',
             'Document workflow resumed'
         );
 
@@ -1291,7 +1299,7 @@ public function receiveConfirm(Document $document)
 
     /**
      * Archive a document
-     * 
+     *
      * @param Document $document
      * @return \Illuminate\Http\RedirectResponse
      */

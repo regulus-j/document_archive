@@ -140,10 +140,17 @@
                         <div class="space-y-2 mb-4">
                             <label for="from_office" class="block text-sm font-medium text-gray-700">Originating
                                 Office</label>
+                            @php
+                                $userOffice = auth()->user()->offices->first();
+                            @endphp
                             <input type="text" id="from_office"
-                                value="{{ auth()->user()->offices->first()->name ?? 'N/A' }}"
+                                value="{{ $userOffice ? $userOffice->name : 'No Office Assigned' }}"
                                 class="w-full rounded-lg border-gray-300 bg-gray-100 cursor-not-allowed" readonly>
-                            <input type="hidden" name="from_office" value="{{ auth()->user()->offices->first()->id }}">
+                            @if($userOffice)
+                                <input type="hidden" name="from_office" value="{{ $userOffice->id }}">
+                            @else
+                                <p class="text-red-500 text-sm mt-1">Please contact your administrator to be assigned to an office.</p>
+                            @endif
                         </div>
                     </div>
 
@@ -274,41 +281,41 @@
             transition: transform 0.3s ease-in-out;
             font-family: system-ui, -apple-system, sans-serif;
         }
-        
+
         .popup-notification.show {
             transform: translateX(0);
         }
-        
+
         .popup-notification.success {
             background: linear-gradient(45deg, #10b981, #059669);
             color: white;
             border-left: 4px solid #047857;
         }
-        
+
         .popup-notification.error {
             background: linear-gradient(45deg, #ef4444, #dc2626);
             color: white;
             border-left: 4px solid #b91c1c;
         }
-        
+
         .popup-notification .popup-content {
             display: flex;
             align-items: center;
             justify-content: space-between;
         }
-        
+
         .popup-notification .popup-icon {
             margin-right: 12px;
             width: 24px;
             height: 24px;
         }
-        
+
         .popup-notification .popup-message {
             flex: 1;
             font-size: 14px;
             font-weight: 500;
         }
-        
+
         .popup-notification .popup-close {
             margin-left: 12px;
             background: rgba(255, 255, 255, 0.2);
@@ -324,7 +331,7 @@
             font-size: 16px;
             line-height: 1;
         }
-        
+
         .popup-notification .popup-close:hover {
             background: rgba(255, 255, 255, 0.3);
         }
@@ -336,15 +343,15 @@
             // Remove any existing popups
             const existingPopups = document.querySelectorAll('.popup-notification');
             existingPopups.forEach(popup => popup.remove());
-            
+
             // Create popup element
             const popup = document.createElement('div');
             popup.className = `popup-notification ${type}`;
-            
-            const iconSvg = type === 'success' 
+
+            const iconSvg = type === 'success'
                 ? '<svg class="popup-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>'
                 : '<svg class="popup-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
-            
+
             popup.innerHTML = `
                 <div class="popup-content">
                     ${iconSvg}
@@ -352,17 +359,17 @@
                     <button class="popup-close" onclick="closePopup(this)">&times;</button>
                 </div>
             `;
-            
+
             // Add to body
             document.body.appendChild(popup);
-            
+
             // Show popup
             setTimeout(() => popup.classList.add('show'), 100);
-            
+
             // Auto close after 5 seconds
             setTimeout(() => closePopup(popup.querySelector('.popup-close')), 5000);
         }
-        
+
         // Function to close popup
         function closePopup(closeBtn) {
             const popup = closeBtn.closest('.popup-notification');
@@ -377,15 +384,15 @@
             @if(session('success'))
                 showPopup('{{ session('success') }}', 'success');
             @endif
-            
+
             @if(session('error'))
                 showPopup('{{ session('error') }}', 'error');
             @endif
-            
+
             @if($errors->any())
                 showPopup('Please check the form for errors.', 'error');
             @endif
-            
+
             // --- File upload feedback logic ---
 
             // Main document feedback
@@ -407,11 +414,11 @@
             const attachmentsInput = document.getElementById('attachments');
             const attachmentPreview = document.getElementById('attachment-files-preview');
             const attachmentList = document.getElementById('attachment-files-list');
-            
+
             if (attachmentsInput) {
                 attachmentsInput.addEventListener('change', function() {
                     console.log('Attachments selected:', this.files.length);
-                    
+
                     // Simple validation for max 5 files
                     if (this.files.length > 5) {
                         alert('Maximum 5 attachments allowed. Please select fewer files.');
@@ -419,15 +426,15 @@
                         attachmentPreview.classList.add('hidden');
                         return;
                     }
-                    
+
                     // Display selected files with names and sizes
                     if (this.files.length > 0) {
                         attachmentList.innerHTML = '';
-                        
+
                         Array.from(this.files).forEach((file, index) => {
                             const fileSize = formatFileSize(file.size);
                             const fileIcon = getFileIcon(file.name);
-                            
+
                             const li = document.createElement('li');
                             li.className = 'flex items-center justify-between p-3 hover:bg-gray-50';
                             li.innerHTML = `
@@ -446,14 +453,14 @@
                             `;
                             attachmentList.appendChild(li);
                         });
-                        
+
                         attachmentPreview.classList.remove('hidden');
                     } else {
                         attachmentPreview.classList.add('hidden');
                     }
                 });
             }
-            
+
             // Helper function to format file sizes
             function formatFileSize(bytes) {
                 if (bytes === 0) return '0 Bytes';
@@ -462,12 +469,12 @@
                 const i = Math.floor(Math.log(bytes) / Math.log(k));
                 return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
             }
-            
+
             // Helper function to get file type icon
             function getFileIcon(filename) {
                 const ext = filename.split('.').pop().toLowerCase();
                 const iconClass = 'h-5 w-5 text-gray-400';
-                
+
                 switch(ext) {
                     case 'pdf':
                         return `<svg class="${iconClass}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -520,7 +527,7 @@
                     });
                 });
             }
-            
+
             // Form submission handling
             const form = document.querySelector('form');
             if (form) {
@@ -540,23 +547,23 @@
             }
         });
     </script>
-    
+
     <script>
     // Global function to remove individual attachment file
     function removeAttachmentFile(index) {
         const attachmentsInput = document.getElementById('attachments');
         const dt = new DataTransfer();
-        
+
         // Re-add all files except the one to remove
         Array.from(attachmentsInput.files).forEach((file, i) => {
             if (i !== index) {
                 dt.items.add(file);
             }
         });
-        
+
         // Update the input files
         attachmentsInput.files = dt.files;
-        
+
         // Trigger change event to update the preview
         attachmentsInput.dispatchEvent(new Event('change'));
     }

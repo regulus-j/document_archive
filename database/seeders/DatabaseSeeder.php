@@ -21,25 +21,47 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Run feature seeder before plan seeder to ensure features exist
+        // Run seeders in proper order
         $this->call([
-            FeatureSeeder::class,
-            PlanSeeder::class,
+            FeatureSeeder::class,          // Create features first
+            PlanSeeder::class,             // Create plans with features
+            PermissionTableSeeder::class,   // Set up permissions
+            RolesSeeder::class,            // Create roles with permissions
+            CreateAdminUserSeeder::class,   // Create admin and initial users
+            OfficeCompanyUser::class,       // Set up offices and company relationships
+            DocumentCategories::class,      // Create document categories
         ]);
-        
-        // Assign company owners the admin role
-        $companyOwners = User::whereHas('company')->get();
-        foreach ($companyOwners as $owner) {
-            // Skip users who are already super-admins
-            if (!$owner->hasRole('super-admin')) {
-                $owner->assignRole('company-admin');
-            }
-        }
 
-        // Assign the basic user role to all remaining users
-        $regularUsers = User::whereDoesntHave('roles')->get();
-        foreach ($regularUsers as $user) {
+        // Ensure any remaining users without roles get the basic user role
+        User::whereDoesntHave('roles')->get()->each(function ($user) {
             $user->assignRole('user');
+        });
+
+        // Only handle edge case where a company-admin somehow doesn't have a company
+        $companyAdmins = User::role('company-admin')
+            ->whereDoesntHave('companies')
+            ->where('email', '!=', 'superadmin@example.com')
+            ->get();
+
+        foreach ($companyAdmins as $admin) {
+            // Create a company for the admin if they don't have one
+            $company = CompanyAccount::create([
+                'user_id' => $admin->id,
+                'company_name' => 'Company of ' . $admin->first_name . ' ' . $admin->last_name,
+                'registered_name' => 'Company of ' . $admin->first_name . ' ' . $admin->last_name . ' Ltd',
+                'company_email' => $admin->email,
+                'company_phone' => '000-000-0000',
+                'industry' => 'Other',
+                'company_size' => 'Small'
+            ]);
+
+            // Create company user relationship
+            DB::table('company_users')->insert([
+                'user_id' => $admin->id,
+                'company_id' => $company->id,
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
         }
     }
 }
