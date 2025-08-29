@@ -34,7 +34,7 @@
 </head>
 
 <body class="font-sans antialiased">
-    <div class="min-h-screen bg-gray-100">
+    <div class="min-h-screen bg-gradient-to-b from-blue-50 to-white">
         @include('layouts.navigation')
 
         <!-- Page Heading -->

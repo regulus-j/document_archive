@@ -1,10 +1,10 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="min-h-screen bg-gray-50/50" x-data="{ showDeleteModal: false, deleteId: null }">
+<div class="min-h-screen bg-gradient-to-b from-blue-50 to-white" x-data="{ showDeleteModal: false, deleteId: null }">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->
-        <div class="bg-white rounded-lg shadow-md p-4 mt-8">
+        <div class="bg-white rounded-lg shadow-xl p-4 mt-8 border border-blue-100">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3">
                     <svg class="h-8 w-8 text-[#0066FF]" xmlns="http://www.w3.org/2000/svg" fill="none"
@@ -57,9 +57,9 @@
                                         :value="searchType === 'name' ? '{{ request('name') }}' :
                                                 searchType === 'email' ? '{{ request('email') }}' :
                                                 searchType === 'role' ? '{{ request('role_search') }}' : '{{ request('team_search') }}'"
-                                        class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-[#0066FF] focus:border-[#0066FF] sm:text-sm">
+                                        class="w-full pl-10 pr-4 py-2 border border-blue-100 rounded-md shadow-sm focus:ring-blue-400 focus:border-blue-400 transition-colors duration-150 sm:text-sm">
                                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <svg class="h-5 w-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                         </svg>
@@ -133,30 +133,30 @@
         <!-- Users Table -->
         <div class="mt-4 bg-white rounded-lg shadow-md relative">
             <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
+                <thead>
                     <tr>
                         <th scope="col"
-                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
                             {{ __('NO') }}
                         </th>
                         <th scope="col"
-                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
                             {{ __('NAME') }}
                         </th>
                         <th scope="col"
-                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
                             {{ __('EMAIL') }}
                         </th>
                         <th scope="col"
-                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
                             {{ __('TEAM') }}
                         </th>
                         <th scope="col"
-                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
                             {{ __('ROLES') }}
                         </th>
                         <th scope="col"
-                            class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            class="bg-white px-6 py-3 text-right text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
                             {{ __('ACTION') }}
                         </th>
                     </tr>
