@@ -17,9 +17,17 @@
 
     <!-- Bootstrap CSS and JS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
+
     <!-- Ajax -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+    <!-- Alpine.js -->
+    <script src="//unpkg.com/alpinejs" defer></script>
+
+    <!-- Alpine.js Cloak -->
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
 
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -48,13 +56,13 @@
 
         </main>
     </div>
-    
+
     <!-- Bootstrap JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
+
     <!-- Additional scripts -->
     @stack('scripts')
-    
+
     <script>
         // Initialize tooltips and popovers
         document.addEventListener('DOMContentLoaded', function() {
