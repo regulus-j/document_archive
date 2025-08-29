@@ -1,9 +1,10 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="min-h-screen bg-gradient-to-b from-blue-50 to-white p-4 md:p-8">
+    <div class="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         <!-- Header Box -->
-        <div class="bg-white rounded-xl shadow-xl mb-6 border border-blue-100 overflow-hidden">
+        <div class="max-w-7xl mx-auto bg-white rounded-xl mb-6 border border-blue-200/80 overflow-hidden">
             <div class="bg-white p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div class="flex items-center space-x-3">
                     <div class="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg shadow-md">
@@ -110,11 +111,11 @@
         @endif
 
         <!-- Main Content -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- Search Panel -->
             <div class="lg:col-span-1">
-                <div class="bg-white rounded-xl shadow-xl overflow-hidden h-full border border-blue-100">
-                    <div class="bg-white p-6 border-b border-blue-200">
+                <div class="bg-white rounded-xl overflow-hidden h-full border border-blue-200/80 transition-all duration-300 hover:border-blue-300/80">
+                    <div class="bg-white p-6 border-b border-blue-200/60">
                         <div class="flex items-center mb-1">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600 mr-2" fill="none"
                                 viewBox="0 0 24 24" stroke="currentColor">
@@ -257,7 +258,7 @@
 
             <!-- Document List -->
             <div class="lg:col-span-2">
-                <div class="bg-white rounded-xl shadow-xl overflow-hidden h-full border border-blue-100">
+                <div class="bg-white rounded-xl overflow-hidden h-full border border-blue-200/80 transition-all duration-300 hover:border-blue-300/80">
                     <!-- Tabbed Navigation -->
                     <div class="bg-white border-b border-blue-200">
                         <div class="p-6 pb-0">
@@ -287,7 +288,7 @@
                             </div>
                             <!-- Tab Navigation -->
                             <div class="flex space-x-1 bg-blue-50 p-1 rounded-lg">
-                                <button onclick="switchTab('all-documents')" id="tab-all-documents" 
+                                <button onclick="switchTab('all-documents')" id="tab-all-documents"
                                     class="tab-button flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors active-tab">
                                     <div class="flex items-center justify-center space-x-2">
                                         <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -295,7 +296,7 @@
                                         </svg>
                                         <span>All Documents</span>
                                         <span class="bg-white/80 text-blue-700 px-2 py-0.5 rounded-full text-xs font-semibold" id="all-count">
-                                            @php 
+                                            @php
                                                 $regularCount = $documents->filter(function($document) {
                                                     $status = $document->status?->status ? strtolower($document->status->status) : '';
                                                     return !in_array($status, ['rejected']);
@@ -305,7 +306,7 @@
                                         </span>
                                     </div>
                                 </button>
-                                <button onclick="switchTab('rejected-documents')" id="tab-rejected-documents" 
+                                <button onclick="switchTab('rejected-documents')" id="tab-rejected-documents"
                                     class="tab-button flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors">
                                     <div class="flex items-center justify-center space-x-2">
                                         <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -313,7 +314,7 @@
                                         </svg>
                                         <span>Rejected Documents</span>
                                         <span class="bg-white/80 text-red-700 px-2 py-0.5 rounded-full text-xs font-semibold" id="rejected-count">
-                                            @php 
+                                            @php
                                                 $rejectedCount = $documents->filter(function($document) {
                                                     $status = $document->status?->status ? strtolower($document->status->status) : '';
                                                     return in_array($status, ['rejected']);
@@ -342,7 +343,7 @@
                                     </tr>
                                 </thead>
                                 <tbody class="bg-white divide-y divide-gray-200">
-                                    @php 
+                                    @php
                                         $regularDocuments = $documents->filter(function($document) {
                                             $status = $document->status?->status ? strtolower($document->status->status) : '';
                                             return !in_array($status, ['rejected']);
@@ -369,7 +370,7 @@
                                                         @php
                                                             $statusColor = 'gray';
                                                             $status = $document->status?->status ? strtolower($document->status->status) : '';
-                                                            
+
                                                             if ($status == 'approved') {
                                                                 $statusColor = 'emerald';
                                                             } elseif ($status == 'pending') {
@@ -454,7 +455,7 @@
                                     </tr>
                                 </thead>
                                 <tbody class="bg-white divide-y divide-gray-200">
-                                    @php 
+                                    @php
                                         $rejectedDocuments = $documents->filter(function($document) {
                                             $status = $document->status?->status ? strtolower($document->status->status) : '';
                                             return in_array($status, ['rejected']);
@@ -552,8 +553,8 @@
     </div>
 
         <!-- Audit Logs -->
-        <div class="mt-6 bg-white rounded-xl shadow-xl overflow-hidden border border-blue-100 mb-8">
-            <div class="bg-white p-6 border-b border-blue-200 flex justify-between items-center">
+        <div class="max-w-7xl mx-auto mt-8 bg-white rounded-xl overflow-hidden border border-blue-200/80 mb-8 transition-all duration-300 hover:border-blue-300/80">
+            <div class="bg-white p-6 border-b border-blue-200/60 flex justify-between items-center">
                 <div class="flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600 mr-2" fill="none"
                         viewBox="0 0 24 24" stroke="currentColor">
@@ -665,32 +666,32 @@
                 content.classList.add('hidden');
                 content.classList.remove('active');
             });
-            
+
             // Remove active class from all tabs
             document.querySelectorAll('.tab-button').forEach(button => {
                 button.classList.remove('active-tab');
             });
-            
+
             // Show selected tab content
             document.getElementById(tabName + '-content').classList.remove('hidden');
             document.getElementById(tabName + '-content').classList.add('active');
-            
+
             // Add active class to selected tab
             document.getElementById('tab-' + tabName).classList.add('active-tab');
-            
+
             // Update counts
             updateTabCounts();
         }
-        
+
         // Update tab counts
         function updateTabCounts() {
             const allRows = document.querySelectorAll('#all-documents-content tbody tr:not(.hidden)');
             const rejectedRows = document.querySelectorAll('#rejected-documents-content tbody tr:not(.hidden)');
-            
+
             // Count visible rows (excluding "no documents" rows)
             const allCount = Array.from(allRows).filter(row => !row.querySelector('td[colspan]')).length;
             const rejectedCount = Array.from(rejectedRows).filter(row => !row.querySelector('td[colspan]')).length;
-            
+
             document.getElementById('all-count').textContent = allCount;
             document.getElementById('rejected-count').textContent = rejectedCount;
         }
@@ -722,12 +723,12 @@
                         ` : ''}
                         <div class="flex space-x-3 pt-4">
                             ${reviewerEmail ? `
-                            <a href="mailto:${reviewerEmail}" 
+                            <a href="mailto:${reviewerEmail}"
                                class="flex-1 bg-blue-600 text-white text-center py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
                                 Send Email
                             </a>
                             ` : ''}
-                            <button onclick="this.closest('.fixed').remove()" 
+                            <button onclick="this.closest('.fixed').remove()"
                                     class="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors">
                                 Close
                             </button>
@@ -901,53 +902,56 @@
             min-width: 300px;
             max-width: 500px;
             padding: 16px 20px;
-            border-radius: 8px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1),
+                        0 0 1px rgba(0, 0, 0, 0.1);
             transform: translateX(100%);
-            transition: transform 0.3s ease-in-out;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
             font-family: system-ui, -apple-system, sans-serif;
         }
-        
+
         .popup-notification.show {
             transform: translateX(0);
         }
-        
+
         .popup-notification.success {
             background: linear-gradient(45deg, #10b981, #059669);
             color: white;
             border-left: 4px solid #047857;
         }
-        
+
         .popup-notification.error {
             background: linear-gradient(45deg, #ef4444, #dc2626);
             color: white;
             border-left: 4px solid #b91c1c;
         }
-        
+
         .popup-notification.warning {
             background: linear-gradient(45deg, #f59e0b, #d97706);
             color: white;
             border-left: 4px solid #b45309;
         }
-        
+
         .popup-notification .popup-content {
             display: flex;
             align-items: center;
             justify-content: space-between;
         }
-        
+
         .popup-notification .popup-icon {
             margin-right: 12px;
             width: 24px;
             height: 24px;
         }
-        
+
         .popup-notification .popup-message {
             flex: 1;
             font-size: 14px;
             font-weight: 500;
         }
-        
+
         .popup-notification .popup-close {
             margin-left: 12px;
             background: rgba(255, 255, 255, 0.2);
@@ -963,7 +967,7 @@
             font-size: 16px;
             line-height: 1;
         }
-        
+
         .popup-notification .popup-close:hover {
             background: rgba(255, 255, 255, 0.3);
         }
@@ -979,7 +983,7 @@
             align-items: center;
             justify-content: center;
         }
-        
+
         .confirmation-overlay {
             position: absolute;
             top: 0;
@@ -989,7 +993,7 @@
             background: rgba(0, 0, 0, 0.5);
             backdrop-filter: blur(4px);
         }
-        
+
         .confirmation-content {
             position: relative;
             background: white;
@@ -1000,7 +1004,7 @@
             width: 90%;
             animation: confirmationSlideIn 0.3s ease-out;
         }
-        
+
         @keyframes confirmationSlideIn {
             from {
                 opacity: 0;
@@ -1011,47 +1015,47 @@
                 transform: scale(1) translateY(0);
             }
         }
-        
+
         .confirmation-header {
             display: flex;
             align-items: center;
             margin-bottom: 16px;
         }
-        
+
         .confirmation-icon {
             width: 24px;
             height: 24px;
             margin-right: 12px;
         }
-        
+
         .confirmation-icon.delete {
             color: #dc2626;
         }
-        
+
         .confirmation-icon.archive {
             color: #f59e0b;
         }
-        
+
         .confirmation-header h3 {
             font-size: 18px;
             font-weight: 600;
             color: #1f2937;
             margin: 0;
         }
-        
+
         .confirmation-message {
             color: #4b5563;
             font-size: 14px;
             line-height: 1.5;
             margin-bottom: 20px;
         }
-        
+
         .confirmation-buttons {
             display: flex;
             gap: 12px;
             justify-content: flex-end;
         }
-        
+
         .confirmation-cancel, .confirmation-confirm {
             padding: 8px 16px;
             border-radius: 6px;
@@ -1061,35 +1065,35 @@
             transition: all 0.2s ease;
             border: 1px solid;
         }
-        
+
         .confirmation-cancel {
             background: #f9fafb;
             border-color: #d1d5db;
             color: #374151;
         }
-        
+
         .confirmation-cancel:hover {
             background: #f3f4f6;
             border-color: #9ca3af;
         }
-        
+
         .confirmation-confirm.delete {
             background: #dc2626;
             border-color: #dc2626;
             color: white;
         }
-        
+
         .confirmation-confirm.delete:hover {
             background: #b91c1c;
             border-color: #b91c1c;
         }
-        
+
         .confirmation-confirm.archive {
             background: #f59e0b;
             border-color: #f59e0b;
             color: white;
         }
-        
+
         .confirmation-confirm.archive:hover {
             background: #d97706;
             border-color: #d97706;
@@ -1138,26 +1142,26 @@
             border: none;
             cursor: pointer;
         }
-        
+
         .tab-button:hover {
             color: #3b82f6;
             background: rgba(59, 130, 246, 0.1);
         }
-        
+
         .tab-button.active-tab {
             color: #3b82f6;
             background: white;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
-        
+
         .tab-content {
             display: block;
         }
-        
+
         .tab-content.hidden {
             display: none;
         }
-        
+
         .tab-content.active {
             display: block;
         }
@@ -1166,29 +1170,29 @@
         .rejected-document-row {
             background: linear-gradient(135deg, #ffffff 0%, #fef7f7 100%);
         }
-        
+
         .rejected-document-row:hover {
             background: linear-gradient(135deg, #fef7f7 0%, #fef2f2 100%);
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(239, 68, 68, 0.1);
         }
-        
+
         .rejection-card {
             background: linear-gradient(135deg, #fef2f2 0%, #fef7f7 100%);
             border: 1px solid #fecaca;
             box-shadow: 0 2px 4px rgba(239, 68, 68, 0.05);
         }
-        
+
         .rejection-card:hover {
             box-shadow: 0 4px 8px rgba(239, 68, 68, 0.1);
         }
-        
+
         /* Action button hover effects */
         .action-button {
             position: relative;
             overflow: hidden;
         }
-        
+
         .action-button::before {
             content: '';
             position: absolute;
@@ -1200,7 +1204,7 @@
             border-radius: 50%;
             transition: width 0.3s, height 0.3s, top 0.3s, left 0.3s;
         }
-        
+
         .action-button:hover::before {
             width: 100%;
             height: 100%;
@@ -1208,19 +1212,19 @@
             left: 0;
             border-radius: 0;
         }
-        
+
         /* Tooltip improvements */
         .tooltip {
             z-index: 1000;
             pointer-events: none;
         }
-        
+
         /* Enhanced status badges */
         .status-badge {
             position: relative;
             overflow: hidden;
         }
-        
+
         .status-badge::before {
             content: '';
             position: absolute;
@@ -1231,7 +1235,7 @@
             background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
             transition: left 0.5s;
         }
-        
+
         .status-badge:hover::before {
             left: 100%;
         }
@@ -1243,7 +1247,7 @@
             @if(session('success'))
                 showPopup('{{ session('success') }}', 'success');
             @endif
-            
+
             @if(session('error'))
                 showPopup('{{ session('error') }}', 'error');
             @endif
@@ -1254,11 +1258,11 @@
             // Remove any existing popups
             const existingPopups = document.querySelectorAll('.popup-notification');
             existingPopups.forEach(popup => popup.remove());
-            
+
             // Create popup element
             const popup = document.createElement('div');
             popup.className = `popup-notification ${type}`;
-            
+
             let iconSvg = '';
             switch(type) {
                 case 'success':
@@ -1271,7 +1275,7 @@
                     iconSvg = '<svg class="popup-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L4.732 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg>';
                     break;
             }
-            
+
             popup.innerHTML = `
                 <div class="popup-content">
                     ${iconSvg}
@@ -1279,17 +1283,17 @@
                     <button class="popup-close" onclick="closePopup(this)">&times;</button>
                 </div>
             `;
-            
+
             // Add to body
             document.body.appendChild(popup);
-            
+
             // Show popup
             setTimeout(() => popup.classList.add('show'), 100);
-            
+
             // Auto close after 5 seconds
             setTimeout(() => closePopup(popup.querySelector('.popup-close')), 5000);
         }
-        
+
         // Function to close popup
         function closePopup(closeBtn) {
             const popup = closeBtn.closest('.popup-notification');
@@ -1302,15 +1306,15 @@
             // Remove any existing popups
             const existingPopups = document.querySelectorAll('.popup-notification, .confirmation-popup');
             existingPopups.forEach(popup => popup.remove());
-            
+
             // Create confirmation popup
             const popup = document.createElement('div');
             popup.className = 'confirmation-popup';
-            
+
             let iconSvg = '';
             let title = '';
             let confirmText = '';
-            
+
             switch(type) {
                 case 'delete':
                     iconSvg = '<svg class="confirmation-icon delete" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>';
@@ -1337,7 +1341,7 @@
                     title = 'Confirm Action';
                     confirmText = 'Confirm';
             }
-            
+
             popup.innerHTML = `
                 <div class="confirmation-overlay"></div>
                 <div class="confirmation-content">
@@ -1352,24 +1356,24 @@
                     </div>
                 </div>
             `;
-            
+
             // Add to body
             document.body.appendChild(popup);
-            
+
             // Add event listeners
             popup.querySelector('.confirmation-cancel').addEventListener('click', function() {
                 popup.remove();
             });
-            
+
             popup.querySelector('.confirmation-confirm').addEventListener('click', function() {
                 popup.remove();
                 onConfirm();
             });
-            
+
             popup.querySelector('.confirmation-overlay').addEventListener('click', function() {
                 popup.remove();
             });
-            
+
             // Close on escape key
             document.addEventListener('keydown', function escapeHandler(e) {
                 if (e.key === 'Escape') {
