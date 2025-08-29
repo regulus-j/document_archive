@@ -78,19 +78,19 @@ Route::middleware(['auth'])->group(function () {
 
 //--------------------------------------------------------------------------------------------------------------------
 
-Route::middleware(['auth', 'role:super-admin'])->prefix('admin')->name('admin.')->group(function () {       
+Route::middleware(['auth', 'role:super-admin'])->prefix('admin')->name('admin.')->group(function () {
     // Subscription Management
     Route::get('/subscriptions', [SubscriptionController::class, 'indexAdmin'])->name('subscriptions.index');
     Route::get('/subscriptions/assign', [SubscriptionController::class, 'assignForm'])->name('subscriptions.assign.form');
     Route::post('/subscriptions/assign', [SubscriptionController::class, 'assign'])->name('subscriptions.assign');
     Route::post('/subscriptions/{subscription}/renew', [SubscriptionController::class, 'renew'])->name('subscriptions.renew');
-    
+
     // User Management
     Route::get('/users/registered', [UserController::class, 'showRegistered'])->name('users.registered');
-    
+
     // Plan Management
     Route::get('/plans', [PlanController::class, 'index'])->name('plans.index');
-    
+
     // Other admin routes
     Route::get('/user-manual', [UserManualController::class, 'show'])->name('userManual.manual');
 });
@@ -101,32 +101,32 @@ Route::middleware('auth')->group(function () {
     Route::prefix('users')->group(function () {
         Route::get('/api/users', [UserController::class, 'getUsersByOffice']);
         Route::get('/', [UserController::class, 'index'])->name('users.index');
+        Route::get('/search', [UserController::class, 'search'])->name('users.search');
         Route::get('/create', [UserController::class, 'create'])->name('users.create');
         Route::post('/', [UserController::class, 'store'])->name('users.store');
         Route::get('/{user}', [UserController::class, 'show'])->name('users.show');
         Route::get('/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
         Route::put('/{user}', [UserController::class, 'update'])->name('users.update');
         Route::delete('/{user}', [UserController::class, 'destroy'])->name('users.destroy');
-        Route::post('/search', [UserController::class, 'search'])->name('users.search');
     });
-    
-     
+
+
     Route::get('/companies/manage/{id}', [UserManagedController::class, 'index'])->name('companies.userManaged');
 
-    
-       
+
+
     Route::prefix('companies')->group(function () {
         Route::get('/', [CompanyController::class, 'index'])->name('companies.index');
         Route::get('/create', [CompanyController::class, 'create'])->name('companies.create');
         Route::post('/', [CompanyController::class, 'store'])->name('companies.store');
-        
+
         Route::get('/{company}/edit', [CompanyController::class, 'edit'])->name('companies.edit');
         Route::put('/{company}', [CompanyController::class, 'update'])->name('companies.update');
         Route::delete('/{company}', [CompanyController::class, 'destroy'])->name('companies.destroy');
         Route::get('/{company}', [CompanyController::class, 'show'])->name('companies.show')->middleware('auth');
 
 
- 
+
 
         Route::prefix('{company}/addresses')->group(function () {
             Route::get('/', [CompanyController::class, 'addresses'])->name('companies.addresses.index');
@@ -159,34 +159,34 @@ Route::middleware('auth')->group(function () {
         Route::prefix('workflows')->group(function () {
             Route::get('/', [DocumentWorkflowController::class, 'workflowManagement'])
                 ->name('documents.workflows');
-            
+
             Route::get('/{workflow}/receive', [DocumentWorkflowController::class, 'receiveWorkflow'])
                 ->name('documents.receive');
-            
+
             Route::post('/{workflow}/approve', [DocumentWorkflowController::class, 'approveWorkflow'])
                 ->name('documents.approveWorkflow');
-            
+
             Route::post('/{workflow}/reject', [DocumentWorkflowController::class, 'rejectWorkflow'])
                 ->name('documents.rejectWorkflow');
-                
+
             Route::post('/{workflow}/return', [DocumentWorkflowController::class, 'returnWorkflow'])
                 ->name('documents.returnWorkflow');
-                
+
             Route::post('/{workflow}/refer', [DocumentWorkflowController::class, 'referWorkflow'])
                 ->name('documents.referWorkflow');
-                
+
             Route::post('/{workflow}/forward-from', [DocumentWorkflowController::class, 'forwardFromWorkflow'])
                 ->name('documents.forwardFromWorkflow');
-            
+
             Route::post('/{workflow}/comment', [DocumentWorkflowController::class, 'addComment'])
                 ->name('documents.addComment');
-            
+
             Route::post('/{workflow}/acknowledge', [DocumentWorkflowController::class, 'acknowledgeWorkflow'])
                 ->name('documents.acknowledgeWorkflow');
-            
+
             Route::get('/{workflow}/review', [DocumentWorkflowController::class, 'reviewDocument'])
                 ->name('documents.review');
-            
+
             Route::post('/review/submit/{workflow}', [DocumentWorkflowController::class, 'reviewSubmit'])
                 ->name('documents.review.submit');
         });
@@ -254,7 +254,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware(['auth'])->group(function () {
         Route::get('/plans', [PlanController::class, 'index'])->name('plans.index');
         Route::get('/plans/create', [PlanController::class, 'create'])->name('plans.create');
-        Route::post('/plans', [PlanController::class, 'store'])->name('plans.store'); 
+        Route::post('/plans', [PlanController::class, 'store'])->name('plans.store');
         Route::get('/plans/{plan}', [PlanController::class, 'show'])->name('plans.show');
         Route::get('/plans/{plan}/edit', [PlanController::class, 'edit'])->name('plans.edit');
         Route::put('/plans/{plan}', [PlanController::class, 'update'])->name('plans.update');

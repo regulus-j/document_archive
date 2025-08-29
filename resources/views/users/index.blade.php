@@ -30,41 +30,54 @@
 
         <!-- Filters -->
         <div class="mt-4 mb-8 bg-white rounded-lg shadow-md p-6">
-            <form method="POST" action="{{ route('users.search') }}" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                @csrf
-                <div>
-                    <label for="name" class="block text-sm font-medium text-gray-700 mb-1">{{ __('Name') }}</label>
-                    <input type="text" name="name" id="name" placeholder="{{ __('Search by name') }}"
-                        value="{{ request('name') }}"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-[#0066FF] focus:border-[#0066FF] sm:text-sm">
-                </div>
-                <div>
-                    <label for="email" class="block text-sm font-medium text-gray-700 mb-1">{{ __('Email') }}</label>
-                    <input type="text" name="email" id="email" placeholder="{{ __('Search by email') }}"
-                        value="{{ request('email') }}"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-[#0066FF] focus:border-[#0066FF] sm:text-sm">
-                </div>
-                <div>
-                    <label for="role_search" class="block text-sm font-medium text-gray-700 mb-1">{{ __('Role') }}</label>
-                    <input type="text" name="role_search" id="role_search" placeholder="Search by role name"
-                        value="{{ request('role_search') }}"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-[#0066FF] focus:border-[#0066FF] sm:text-sm">
-                </div>
-                <div>
-                    <label for="team_search" class="block text-sm font-medium text-gray-700 mb-1">{{ __('Team') }}</label>
-                    <input type="text" name="team_search" id="team_search" placeholder="Search by team name"
-                        value="{{ request('team_search') }}"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-[#0066FF] focus:border-[#0066FF] sm:text-sm">
-                </div>
-                <div class="md:col-span-3">
-                    <button type="submit"
-                        class="inline-flex items-center px-4 py-2 bg-[#EEF2FF] text-[#0066FF] text-sm font-medium rounded-md hover:bg-[#0066FF]/10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0066FF] transition-colors duration-150 shadow-sm">
-                        <svg class="h-5 w-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                        {{ __('Filter') }}
-                    </button>
+            <form method="GET" action="{{ route('users.search') }}" x-data="{ searchType: 'name' }">
+                <div class="flex flex-col space-y-4">
+                    <div class="flex flex-col md:flex-row md:items-end md:space-x-4">
+                        <!-- Search Type Selector -->
+                        <div class="w-full md:w-1/4">
+                            <label for="searchType" class="block text-sm font-medium text-gray-700 mb-1">{{ __('Search By') }}</label>
+                            <select x-model="searchType" id="searchType"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-[#0066FF] focus:border-[#0066FF] sm:text-sm">
+                                <option value="name">{{ __('Name') }}</option>
+                                <option value="email">{{ __('Email') }}</option>
+                                <option value="role">{{ __('Role') }}</option>
+                                <option value="team">{{ __('Team') }}</option>
+                            </select>
+                        </div>
+                        <!-- Search Input and Button -->
+                        <div class="flex-1 flex space-x-4">
+                            <div class="flex-1">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('Search') }}</label>
+                                <div class="relative">
+                                    <input type="text"
+                                        :name="searchType === 'name' ? 'name' :
+                                               searchType === 'email' ? 'email' :
+                                               searchType === 'role' ? 'role_search' : 'team_search'"
+                                        :placeholder="'Search by ' + searchType"
+                                        :value="searchType === 'name' ? '{{ request('name') }}' :
+                                                searchType === 'email' ? '{{ request('email') }}' :
+                                                searchType === 'role' ? '{{ request('role_search') }}' : '{{ request('team_search') }}'"
+                                        class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-[#0066FF] focus:border-[#0066FF] sm:text-sm">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-end">
+                                <button type="submit"
+                                    class="inline-flex items-center px-4 py-2 bg-[#EEF2FF] text-[#0066FF] text-sm font-medium rounded-md hover:bg-[#0066FF]/10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0066FF] transition-colors duration-150 shadow-sm">
+                                    <svg class="h-5 w-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    </svg>
+                                    {{ __('Search') }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </form>
         </div>
