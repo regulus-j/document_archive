@@ -121,14 +121,14 @@ class Document extends Model
         if (!$this->storage_size) {
             return '0 KB';
         }
-        
+
         $units = ['B', 'KB', 'MB', 'GB', 'TB'];
         $size = $this->storage_size;
         $factor = floor((strlen($size) - 1) / 3);
-        
+
         return sprintf("%.2f %s", $size / pow(1024, $factor), $units[$factor]);
     }
-    
+
     /**
      * Check if document is eligible for deletion
      */
@@ -136,7 +136,7 @@ class Document extends Model
     {
         return !$this->is_archived;
     }
-    
+
     /**
      * Scope a query to only include documents from a specific company
      */
@@ -144,7 +144,7 @@ class Document extends Model
     {
         return $query->where('company_id', $companyId);
     }
-    
+
     /**
      * Scope a query to include only documents created before a specific date
      */
@@ -152,7 +152,7 @@ class Document extends Model
     {
         return $query->where('created_at', '<', $date);
     }
-    
+
     /**
      * Scope a query to search documents by title, content and description
      */
@@ -165,7 +165,7 @@ class Document extends Model
                     ->orWhere('description', 'like', "%{$searchTerm}%");
             });
         }
-        
+
         return $query;
     }
 
@@ -181,11 +181,11 @@ class Document extends Model
     {
         // For current user's workflow status
         $userWorkflow = $this->documentWorkflow()->where('recipient_id', auth()->id())->first();
-        
+
         if ($userWorkflow) {
             return $userWorkflow->status;
         }
-        
+
         // Fallback to document status
         return $this->status ? $this->status->status : 'unknown';
     }
@@ -196,11 +196,51 @@ class Document extends Model
     public function getEffectiveStatusForUser($userId)
     {
         $userWorkflow = $this->documentWorkflow()->where('recipient_id', $userId)->first();
-        
+
         if ($userWorkflow) {
             return $userWorkflow->status;
         }
-        
+
         return $this->status ? $this->status->status : 'unknown';
+    }
+
+    /**
+     * Archive a document
+     */
+    public function archive(User $user = null)
+    {
+        $this->archived_by = $user ? $user->id : auth()->id();
+        $this->archived_at = now();
+        $this->status()->update(['status' => 'archived']);
+        $this->save();
+
+        // Log the action
+        DocumentAudit::logDocumentAction(
+            $this->id,
+            $this->archived_by,
+            'archive',
+            'archived',
+            'Document archived'
+        );
+    }
+
+    /**
+     * Restore a document from archive
+     */
+    public function unarchive(User $user = null)
+    {
+        $this->archived_by = null;
+        $this->archived_at = null;
+        $this->status()->update(['status' => 'forwarded']); // Reset to default active status
+        $this->save();
+
+        // Log the action
+        DocumentAudit::logDocumentAction(
+            $this->id,
+            $user ? $user->id : auth()->id(),
+            'restore',
+            'forwarded',
+            'Document restored from archive'
+        );
     }
 }

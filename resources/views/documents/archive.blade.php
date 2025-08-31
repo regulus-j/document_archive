@@ -1,20 +1,30 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="py-6">
+<div class="min-h-screen bg-gradient-to-b from-blue-50 to-white py-6">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-bold text-gray-800">Document Archive</h2>
-            <a href="{{ route('documents.index') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-sm">
-                Back to Documents
-            </a>
+        <div class="bg-white rounded-xl mb-6 border border-blue-200/80 overflow-hidden">
+            <div class="p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div class="flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                    </svg>
+                    <h2 class="text-2xl font-bold text-gray-800">Document Archive</h2>
+                </div>
+                <a href="{{ route('documents.index') }}" class="inline-flex items-center px-4 py-2 bg-white border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors duration-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+                    </svg>
+                    Back to Documents
+                </a>
+            </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
             <!-- Search Panel -->
             <div class="lg:col-span-1">
-                <div class="bg-white rounded-xl shadow-xl overflow-hidden h-full border border-blue-100">
-                    <div class="bg-white p-6 border-b border-blue-200">
+                <div class="bg-white rounded-xl overflow-hidden h-full border border-blue-200/80 transition-all duration-300 hover:border-blue-300/80 hover:shadow-md">
+                    <div class="bg-gradient-to-r from-blue-50 to-white p-6 border-b border-blue-200/60">
                         <div class="flex items-center mb-1">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -78,34 +88,39 @@
 
             <!-- Documents List -->
             <div class="lg:col-span-3">
-                <div class="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-100">
-                    <div class="p-6 bg-white border-b border-gray-200">
+                <div class="bg-white rounded-xl overflow-hidden border border-blue-200/80 transition-all duration-300 hover:border-blue-300/80">
+                    <div class="bg-gradient-to-r from-blue-50 to-white p-6 border-b border-blue-200/60">
                         <div class="flex justify-between items-center">
-                            <h3 class="text-lg font-semibold text-gray-800">Archived Documents</h3>
-                            <span class="text-sm text-gray-600 bg-blue-100 py-1 px-3 rounded-full">{{ $documents->total() ?? 0 }} documents</span>
+                            <div class="flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                                </svg>
+                                <h3 class="text-lg font-semibold text-gray-800">Archived Documents</h3>
+                            </div>
+                            <span class="text-sm text-blue-600 bg-blue-50 py-1 px-3 rounded-full border border-blue-200/60">{{ $documents->total() ?? 0 }} documents</span>
                         </div>
                     </div>
 
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
+                            <thead class="bg-gradient-to-r from-gray-50 to-white">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Uploader</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Archived</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">ID</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Title</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Uploader</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Date Archived</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Actions</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
                                 @forelse($documents as $document)
-                                <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $document->id }}</td>
+                                <tr class="hover:bg-blue-50/50 transition-colors duration-150">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $document->id ?? 'N/A' }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="flex items-center">
-                                            <div class="flex-shrink-0 h-10 w-10 flex items-center justify-center rounded-md bg-blue-100 text-blue-500">
+                                            <div class="flex-shrink-0 h-10 w-10 flex items-center justify-center rounded-lg bg-gradient-to-br from-blue-100 to-blue-50 text-blue-600 border border-blue-200/60">
                                                 @php
-                                                    $extension = pathinfo($document->file_path, PATHINFO_EXTENSION);
+                                                    $extension = pathinfo($document->file_path ?? '', PATHINFO_EXTENSION);
                                                     $icon = match($extension) {
                                                         'pdf' => 'document-text',
                                                         'doc', 'docx' => 'document',
@@ -113,45 +128,196 @@
                                                         default => 'document'
                                                     };
                                                 @endphp
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                                 </svg>
                                             </div>
                                             <div class="ml-4">
-                                                <div class="text-sm font-medium text-gray-900">{{ $document->title }}</div>
-                                                <div class="text-sm text-gray-500">{{ Str::limit($document->description, 50) }}</div>
+                                                <div class="text-sm font-medium text-gray-900">{{ $document->title ?? 'Untitled Document' }}</div>
+                                                <div class="text-sm text-gray-500">{{ Str::limit($document->description ?? 'No description available', 50) }}</div>
                                             </div>
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        @if($document->user)
-                                            {{ $document->user->first_name }} {{ $document->user->last_name }}
+                                        @if(optional($document)->user)
+                                            {{ $document->user->first_name ?? '' }} {{ $document->user->last_name ?? '' }}
                                         @else
                                             Unknown
                                         @endif
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        @if($document->status && $document->status->updated_at)
+                                        @if(optional($document->status)->updated_at)
                                             {{ $document->status->updated_at->format('M d, Y') }}
                                         @else
                                             N/A
                                         @endif
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <div class="flex space-x-2">
-                                            <a href="{{ route('documents.show', $document->id) }}" class="text-blue-600 hover:text-blue-900">View</a>
-                                            <a href="{{ route('documents.download', $document->id) }}" class="text-green-600 hover:text-green-900">Download</a>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium relative">
+                                        <div x-data="{ open: false }" class="relative">
+                                            <button @click="open = !open" class="text-gray-500 hover:text-gray-700 focus:outline-none">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                                                </svg>
+                                            </button>
+                                            <div x-show="open"
+                                                @click.away="open = false"
+                                                class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50 border border-gray-200"
+                                                x-transition:enter="transition ease-out duration-100"
+                                                x-transition:enter-start="transform opacity-0 scale-95"
+                                                x-transition:enter-end="transform opacity-100 scale-100"
+                                                x-transition:leave="transition ease-in duration-75"
+                                                x-transition:leave-start="transform opacity-100 scale-100"
+                                                x-transition:leave-end="transform opacity-0 scale-95">
+                                                <div class="py-1">
+                                                    <a href="{{ route('documents.show', $document->id ?? 0) }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                        </svg>
+                                                        View
+                                                    </a>
+                                                    <a href="{{ route('documents.download', $document->id ?? 0) }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                                        </svg>
+                                                        Download
+                                                    </a>
+                                                    @can('restore', $document)
+                                                    <div x-data="{ showRestoreConfirm: false }">
+                                                        <button @click="showRestoreConfirm = true" type="button" class="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                                            </svg>
+                                                            Restore
+                                                        </button>
+
+                                                        <!-- Restore Confirmation Modal -->
+                                                        <div x-show="showRestoreConfirm"
+                                                            x-cloak
+                                                            x-transition:enter="ease-out duration-300"
+                                                            x-transition:enter-start="opacity-0"
+                                                            x-transition:enter-end="opacity-100"
+                                                            x-transition:leave="ease-in duration-200"
+                                                            x-transition:leave-start="opacity-100"
+                                                            x-transition:leave-end="opacity-0"
+                                                            class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+                                                            <div x-show="showRestoreConfirm"
+                                                                x-transition:enter="ease-out duration-300"
+                                                                x-transition:enter-start="opacity-0 translate-y-4"
+                                                                x-transition:enter-end="opacity-100 translate-y-0"
+                                                                x-transition:leave="ease-in duration-200"
+                                                                x-transition:leave-start="opacity-100 translate-y-0"
+                                                                x-transition:leave-end="opacity-0 translate-y-4"
+                                                                class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 overflow-hidden"
+                                                                @click.away="showRestoreConfirm = false">
+                                                                <div class="px-6 py-4 border-b border-gray-200">
+                                                                    <div class="flex items-center">
+                                                                        <div class="p-2 bg-emerald-100 rounded-full">
+                                                                            <svg class="h-6 w-6 text-emerald-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                                                            </svg>
+                                                                        </div>
+                                                                        <h3 class="ml-3 text-lg font-medium text-gray-900">
+                                                                            {{ __('Confirm Restore') }}
+                                                                        </h3>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="px-6 py-4">
+                                                                    <p class="text-gray-600">
+                                                                        {{ __('It will be moved back to active documents.') }}
+                                                                    </p>
+                                                                </div>
+                                                                <div class="px-6 py-4 bg-gray-50 flex justify-end space-x-3">
+                                                                    <button type="button" @click="showRestoreConfirm = false"
+                                                                        class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0066FF]">
+                                                                        {{ __('Cancel') }}
+                                                                    </button>
+                                                                    <a href="{{ route('documents.restore', $document->id) }}"
+                                                                        class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 border border-transparent rounded-md shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
+                                                                        {{ __('Restore Document') }}
+                                                                    </a>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    @endcan
+                                                    @can('delete', $document)
+                                                    <div x-data="{ showDeleteConfirm: false }">
+                                                        <button @click="showDeleteConfirm = true" type="button" class="flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                            </svg>
+                                                            Delete
+                                                        </button>
+
+                                                        <!-- Delete Confirmation Modal -->
+                                                        <div x-show="showDeleteConfirm"
+                                                            x-cloak
+                                                            x-transition:enter="ease-out duration-300"
+                                                            x-transition:enter-start="opacity-0"
+                                                            x-transition:enter-end="opacity-100"
+                                                            x-transition:leave="ease-in duration-200"
+                                                            x-transition:leave-start="opacity-100"
+                                                            x-transition:leave-end="opacity-0"
+                                                            class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+                                                            <div x-show="showDeleteConfirm"
+                                                                x-transition:enter="ease-out duration-300"
+                                                                x-transition:enter-start="opacity-0 translate-y-4"
+                                                                x-transition:enter-end="opacity-100 translate-y-0"
+                                                                x-transition:leave="ease-in duration-200"
+                                                                x-transition:leave-start="opacity-100 translate-y-0"
+                                                                x-transition:leave-end="opacity-0 translate-y-4"
+                                                                class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 overflow-hidden"
+                                                                @click.away="showDeleteConfirm = false">
+                                                                <div class="px-6 py-4 border-b border-gray-200">
+                                                                    <div class="flex items-center">
+                                                                        <div class="p-2 bg-red-100 rounded-full">
+                                                                            <svg class="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                                                            </svg>
+                                                                        </div>
+                                                                        <h3 class="ml-3 text-lg font-medium text-gray-900">
+                                                                            {{ __('Confirm Delete') }}
+                                                                        </h3>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="px-6 py-4">
+                                                                    <p class="text-gray-600">
+                                                                        {{ __('Are you sure you want to delete this document? ') }}
+                                                                    </p>
+                                                                </div>
+                                                                <div class="px-6 py-4 bg-gray-50 flex justify-end space-x-3">
+                                                                    <button type="button" @click="showDeleteConfirm = false"
+                                                                        class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0066FF]">
+                                                                        {{ __('Cancel') }}
+                                                                    </button>
+                                                                    <form action="{{ route('documents.destroy', $document->id) }}" method="POST" class="inline">
+                                                                        @csrf
+                                                                        @method('DELETE')
+                                                                        <button type="submit"
+                                                                            class="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                                                            {{ __('Delete Document') }}
+                                                                        </button>
+                                                                    </form>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    @endcan
+                                                </div>
+                                            </div>
                                         </div>
                                     </td>
                                 </tr>
                                 @empty
                                 <tr>
                                     <td colspan="5" class="px-6 py-10 text-center">
-                                        <div class="flex flex-col items-center justify-center">
-                                            <svg class="w-12 h-12 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                                        <div class="flex flex-col items-center justify-center p-6 bg-blue-50/50 rounded-lg border border-blue-100 mx-6">
+                                            <svg class="w-16 h-16 text-blue-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
                                             </svg>
-                                            <p class="text-gray-500 text-base">No archived documents found</p>
+                                            <p class="text-blue-900 text-lg font-medium mb-1">No Archived Documents</p>
+                                            <p class="text-blue-600 text-sm">No documents have been archived yet</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -166,7 +332,162 @@
                 </div>
             </div>
         </div>
-        @include('documents.partials.archive')
+
+        <!-- Client-side search functionality -->
+        <script>
+            function showPopup(message, type = 'success') {
+                const popup = document.createElement('div');
+                popup.className = `popup-notification ${type}`;
+                popup.innerHTML = `
+                    <div class="popup-content">
+                        <div class="popup-icon">
+                            ${type === 'success' ?
+                                '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>' :
+                                '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'
+                            }
+                        </div>
+                        <span class="popup-message">${message}</span>
+                        <button onclick="closePopup(this)" class="popup-close">&times;</button>
+                    </div>
+                `;
+                document.body.appendChild(popup);
+                setTimeout(() => popup.classList.add('show'), 100);
+                setTimeout(() => closePopup(popup.querySelector('.popup-close')), 5000);
+            }
+
+            function closePopup(closeBtn) {
+                const popup = closeBtn.closest('.popup-notification');
+                popup.classList.remove('show');
+                setTimeout(() => popup.remove(), 500);
+            }
+
+            function showConfirmationPopup(message, onConfirm, type = 'delete') {
+                const popup = document.createElement('div');
+                popup.className = 'confirmation-popup';
+                popup.innerHTML = `
+                    <div class="confirmation-overlay"></div>
+                    <div class="confirmation-content">
+                        <div class="confirmation-header">
+                            <div class="confirmation-icon ${type}">
+                                ${type === 'delete' ?
+                                    '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>' :
+                                    '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>'
+                                }
+                            </div>
+                            <h3>${type === 'delete' ? 'Confirm Delete' : 'Confirm Restore'}</h3>
+                        </div>
+                        <p class="confirmation-message">${message}</p>
+                        <div class="confirmation-buttons">
+                            <button class="confirmation-cancel" onclick="this.closest('.confirmation-popup').remove()">Cancel</button>
+                            <button class="confirmation-confirm ${type}" onclick="(() => {
+                                this.closest('.confirmation-popup').remove();
+                                onConfirm();
+                            })()">Confirm</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(popup);
+            }
+
+            // Client-side search
+            document.addEventListener('DOMContentLoaded', function () {
+                const searchInput = document.getElementById('text-search');
+                const tbody = document.querySelector('tbody');
+                const rows = tbody.querySelectorAll('tr');
+
+                searchInput.addEventListener('keyup', function () {
+                    const searchTerm = this.value.toLowerCase();
+                    rows.forEach(row => {
+                        let text = row.textContent.toLowerCase();
+                        row.style.display = text.includes(searchTerm) ? '' : 'none';
+                    });
+                });
+
+                // Client-side search only
+                searchInput.addEventListener('keyup', function () {
+                    const searchTerm = this.value.toLowerCase();
+                    rows.forEach(row => {
+                        let text = row.textContent.toLowerCase();
+                        row.style.display = text.includes(searchTerm) ? '' : 'none';
+                    });
+                });
+            });
+        </script>
+
+        <style>
+            .popup-notification {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 9999;
+                min-width: 300px;
+                max-width: 500px;
+                padding: 16px 20px;
+                border-radius: 12px;
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(10px);
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1),
+                            0 0 1px rgba(0, 0, 0, 0.1);
+                transform: translateX(100%);
+                transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            }
+
+            .popup-notification.show {
+                transform: translateX(0);
+            }
+
+            .popup-notification.success {
+                background: linear-gradient(45deg, #10b981, #059669);
+                color: white;
+                border-left: 4px solid #047857;
+            }
+
+            .popup-notification.error {
+                background: linear-gradient(45deg, #ef4444, #dc2626);
+                color: white;
+                border-left: 4px solid #b91c1c;
+            }
+
+            .popup-notification .popup-content {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+
+            .popup-notification .popup-icon {
+                margin-right: 12px;
+                width: 24px;
+                height: 24px;
+            }
+
+            .popup-notification .popup-message {
+                flex: 1;
+                font-size: 14px;
+                font-weight: 500;
+            }
+
+            .popup-notification .popup-close {
+                margin-left: 12px;
+                background: rgba(255, 255, 255, 0.2);
+                border: none;
+                color: white;
+                width: 24px;
+                height: 24px;
+                border-radius: 50%;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 16px;
+                line-height: 1;
+            }
+
+            .popup-notification .popup-close:hover {
+                background: rgba(255, 255, 255, 0.3);
+            }
+
+
+        </style>
     </div>
 </div>
 

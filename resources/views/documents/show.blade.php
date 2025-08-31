@@ -5,13 +5,13 @@
 @endpush
 
 @section('content')
-<div class="min-h-screen bg-gradient-to-b from-blue-50 to-white p-4 md:p-8">
-    <div class="max-w-6xl mx-auto">
+<div class="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+    <div class="max-w-7xl mx-auto space-y-8 p-4 md:p-8">
         <!-- Header -->
-        <div class="bg-white rounded-xl shadow-xl mb-6 border border-blue-100 overflow-hidden">
-            <div class="bg-white p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div class="bg-white rounded-xl border border-blue-200/80 transition-all duration-300 hover:border-blue-300/80 hover:shadow-sm">
+            <div class="p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div class="flex items-center space-x-3">
-                    <div class="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg shadow-md">
+                    <div class="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg">
                         <svg class="w-6 h-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
                             viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -36,7 +36,7 @@
         </div>
 
         <!-- Progress Tracking Card -->
-        <div class="bg-white rounded-xl shadow-xl mb-6 border border-blue-100 overflow-hidden">
+        <div class="bg-white rounded-xl border border-blue-200/80 transition-all duration-300 hover:border-blue-300/80 hover:shadow-sm overflow-hidden">
             <div class="p-6">
                 @php
                     // Sort audit logs by created_at timestamp in descending order
@@ -252,13 +252,25 @@
         @endif
 
         <!-- Document Details Card -->
-        <div class="bg-white rounded-xl shadow-xl overflow-hidden mb-8 border border-blue-100">
+        <div class="bg-white rounded-xl border border-blue-200/80 transition-all duration-300 hover:border-blue-300/80 hover:shadow-sm overflow-hidden">
             <!-- Card Header -->
-            <div class="p-6 border-b border-gray-200">
+            <div class="p-6 border-b border-blue-200/60">
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between">
-                    <h2 class="text-2xl font-semibold text-gray-800">{{ $document->title }}</h2>
-                    <span
-                        class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 mt-2 md:mt-0">
+                    <div class="flex items-center space-x-3">
+                        <h2 class="text-xl font-semibold text-gray-800">{{ $document->title }}</h2>
+                    </div>
+                    @php
+                        $statusColor = match(strtolower($document->status?->status ?? '')) {
+                            'approved' => 'emerald',
+                            'pending' => 'amber',
+                            'forwarded' => 'blue',
+                            'recalled' => 'purple',
+                            'uploaded' => 'indigo',
+                            'rejected' => 'red',
+                            default => 'gray'
+                        };
+                    @endphp
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-semibold bg-{{ $statusColor }}-100 text-{{ $statusColor }}-800 mt-2 md:mt-0">
                         <svg class="w-4 h-4 mr-1.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -274,23 +286,38 @@
                 <!-- Document Information Grid with Attachment Card -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                     <!-- Tracking Number Card -->
-                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                        <p class="text-sm font-medium text-gray-500 mb-1">Tracking Number</p>
-                        <p class="text-base font-medium text-gray-900">
+                    <div class="bg-blue-50/60 p-4 rounded-lg border border-blue-200/60 transition-all duration-300 hover:border-blue-300/80">
+                        <div class="flex items-center mb-1">
+                            <svg class="h-4 w-4 text-blue-500 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+                            </svg>
+                            <p class="text-sm font-medium text-blue-900">Tracking Number</p>
+                        </div>
+                        <p class="text-base font-medium text-blue-700">
                             {{ $document->trackingNumber->tracking_number ?? 'N/A' }}
                         </p>
                     </div>
                     <!-- Classification Card -->
-                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                        <p class="text-sm font-medium text-gray-500 mb-1">Classification</p>
-                        <p class="text-base font-medium text-gray-900">
+                    <div class="bg-indigo-50/60 p-4 rounded-lg border border-indigo-200/60 transition-all duration-300 hover:border-indigo-300/80">
+                        <div class="flex items-center mb-1">
+                            <svg class="h-4 w-4 text-indigo-500 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                            </svg>
+                            <p class="text-sm font-medium text-indigo-900">Classification</p>
+                        </div>
+                        <p class="text-base font-medium text-indigo-700">
                             {{ $document->categories->first()->category ?? 'N/A' }}
                         </p>
                     </div>
                     <!-- From Office Card -->
-                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                        <p class="text-sm font-medium text-gray-500 mb-1">From Office</p>
-                        <p class="text-base font-medium text-gray-900">
+                    <div class="bg-emerald-50/60 p-4 rounded-lg border border-emerald-200/60 transition-all duration-300 hover:border-emerald-300/80">
+                        <div class="flex items-center mb-1">
+                            <svg class="h-4 w-4 text-emerald-500 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            </svg>
+                            <p class="text-sm font-medium text-emerald-900">From Office</p>
+                        </div>
+                        <p class="text-base font-medium text-emerald-700">
                             @if(isset($docRoute[1]) && count($docRoute[1]) > 0)
                             @foreach($docRoute[1] as $route)
                             @if($route['type'] == 'office')
@@ -304,9 +331,14 @@
                         </p>
                     </div>
                     <!-- To Office Card -->
-                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                        <p class="text-sm font-medium text-gray-500 mb-1">To Office</p>
-                        <p class="text-base font-medium text-gray-900">
+                    <div class="bg-purple-50/60 p-4 rounded-lg border border-purple-200/60 transition-all duration-300 hover:border-purple-300/80">
+                        <div class="flex items-center mb-1">
+                            <svg class="h-4 w-4 text-purple-500 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            </svg>
+                            <p class="text-sm font-medium text-purple-900">To Office</p>
+                        </div>
+                        <p class="text-base font-medium text-purple-700">
                             @if(isset($workflows) && $workflows->isNotEmpty())
                             @php
                             $officeNames = [];
@@ -328,16 +360,26 @@
                         </p>
                     </div>
                     <!-- Status Card -->
-                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                        <p class="text-sm font-medium text-gray-500 mb-1">Status</p>
-                        <p class="text-base font-medium text-gray-900">
+                    <div class="bg-amber-50/60 p-4 rounded-lg border border-amber-200/60 transition-all duration-300 hover:border-amber-300/80">
+                        <div class="flex items-center mb-1">
+                            <svg class="h-4 w-4 text-amber-500 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <p class="text-sm font-medium text-amber-900">Status</p>
+                        </div>
+                        <p class="text-base font-medium text-amber-700">
                             {{ $document->status?->status ?? "N/A" }}
                         </p>
                     </div>
                     <!-- Remarks Card -->
-                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                        <p class="text-sm font-medium text-gray-500 mb-1">Remarks</p>
-                        <p class="text-base font-medium text-gray-900">
+                    <div class="bg-rose-50/60 p-4 rounded-lg border border-rose-200/60 transition-all duration-300 hover:border-rose-300/80">
+                        <div class="flex items-center mb-1">
+                            <svg class="h-4 w-4 text-rose-500 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                            </svg>
+                            <p class="text-sm font-medium text-rose-900">Remarks</p>
+                        </div>
+                        <p class="text-base font-medium text-rose-700">
                             {{ $document->remarks ?? 'N/A' }}
                         </p>
                     </div>
@@ -362,9 +404,14 @@
                 </div>
 
                 <!-- Description -->
-                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-8">
-                    <p class="text-sm font-medium text-gray-500 mb-1">Description</p>
-                    <p class="text-base text-gray-900">{{ $document->description }}</p>
+                <div class="bg-gray-50/60 p-4 rounded-lg border border-gray-200/60 transition-all duration-300 hover:border-gray-300/80 mb-8">
+                    <div class="flex items-center mb-2">
+                        <svg class="h-4 w-4 text-gray-500 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" />
+                        </svg>
+                        <p class="text-sm font-medium text-gray-700">Description</p>
+                    </div>
+                    <p class="text-base text-gray-600">{{ $document->description }}</p>
                 </div>
 
                 <!-- Workflow -->

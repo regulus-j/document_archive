@@ -911,12 +911,33 @@ class DocumentController extends Controller
      */
     public function destroy(Document $document): RedirectResponse
     {
+        if (!auth()->user()->can('delete', $document)) {
+            return redirect()->route('documents.index')
+                ->with('error', 'You do not have permission to delete this document.');
+        }
+
         $this->logDocumentAction($document, 'deleted');
         Storage::disk('public')->delete($document->path);
         $document->delete();
 
         return redirect()->route('documents.index')
             ->with('success', 'Document deleted successfully');
+    }
+
+    /**
+     * Restore a document from archive
+     */
+    public function restore(Document $document): RedirectResponse
+    {
+        if (!auth()->user()->can('restore', $document)) {
+            return redirect()->route('documents.index')
+                ->with('error', 'You do not have permission to restore this document.');
+        }
+
+        $document->unarchive();
+
+        return redirect()->route('documents.index')
+            ->with('success', 'Document restored successfully');
     }
 
     public function deleteAttachment(Request $request, $documentId)

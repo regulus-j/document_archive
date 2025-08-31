@@ -251,7 +251,7 @@
                             </div>
 
                             <!-- Search Button -->
-                            <div>
+                            <div class="mt-3">
                                 <button type="submit" id="submit-button"
                                     class="w-full inline-flex justify-center items-center px-4 py-2.5 border border-transparent text-sm font-medium rounded-lg shadow-md text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
                                     <span id="spinner" class="hidden mr-2">
@@ -360,21 +360,22 @@
                                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500">{{ $counter++ }}</td>
                                             <td class="px-6 py-4">
                                                 <div class="text-sm font-medium text-gray-900 truncate">{{ $document->title }}</div>
-                                                @if($document->transaction?->fromOffice)
-                                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 self-start mt-0.5">
-                                                        {{ $document->transaction?->fromOffice?->name }}
-                                                    </span>
-                                                @endif
                                             </td>
                                             <td class="px-6 py-4">
-                                                <div class="flex items-center">
-                                                    <div class="flex-shrink-0 h-6 w-6 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-sm">
-                                                        {{ $document->user?->first_name ? substr($document->user->first_name, 0, 1) : 'N' }}
+                                                <div class="flex flex-col space-y-2">
+                                                    <div class="flex items-center">
+                                                        <div class="flex-shrink-0 h-6 w-6 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-sm">
+                                                            {{ $document->user?->first_name ? substr($document->user->first_name, 0, 1) : 'N' }}
+                                                        </div>
+                                                        <div class="ml-2 text-sm text-gray-700 font-medium truncate">
+                                                            {{ ($document->user?->first_name ?? 'Unknown') . ' ' . ($document->user?->last_name ?? 'User') }}
+                                                        </div>
                                                     </div>
-                                                    <div class="ml-2 text-sm text-gray-700 font-medium truncate">
-                                                        {{ ($document->user?->first_name ?? 'Unknown') . ' ' . ($document->user?->last_name ?? 'User') }}
-                                                    </div>
-                                                </div>
+                                                    @if($document->transaction?->fromOffice)
+                                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 self-start">
+                                                            {{ $document->transaction?->fromOffice?->name }}
+                                                        </span>
+                                                    @endif
                                                 </div>
                                             </td>
                                             <td class="px-6 py-4">

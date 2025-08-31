@@ -2,31 +2,25 @@
 
 @section('content')
     <div class="min-h-screen bg-gradient-to-b from-blue-50 to-white p-4 md:p-8">
-        <div class="max-w-7xl mx-auto">
+        <div class="max-w-7xl mx-auto px-6">
             <!-- Header Box -->
-            <div class="bg-white rounded-xl shadow-xl mb-6 border border-blue-100 overflow-hidden">
-                <div class="bg-white p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                    <div class="flex items-center space-x-3">
-                        <div class="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg shadow-md">
-                            <svg class="w-6 h-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                            </svg>
-                        </div>
+            <div class="bg-white rounded-xl mb-6 border border-blue-200/80 overflow-hidden">
+                <div class="p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div class="flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                        </svg>
                         <div>
-                            <h1 class="text-2xl font-bold text-gray-800">{{ __('Workflow Management') }}</h1>
-                            <p class="text-sm text-gray-500">Track and manage document workflows</p>
+                            <h2 class="text-2xl font-bold text-gray-800">{{ __('Workflow Management') }}</h2>
+                            <p class="text-sm text-gray-600">Track and manage document workflows</p>
                         </div>
                     </div>
-                    <div>
-                    <a href="{{ route('documents.index') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-md text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
-                        <svg class="mr-2 -ml-1 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    <a href="{{ route('documents.index') }}" class="inline-flex items-center px-4 py-2 bg-white border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors duration-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
                         </svg>
-                        {{ __('Back to List') }}
+                        Back to Documents
                     </a>
-                </div>
                 </div>
             </div>
 
@@ -92,15 +86,20 @@
 
             <!-- Pending Documents that need to be received first -->
             @if(isset($pendingReceive) && $pendingReceive->count() > 0)
-                <div class="bg-white rounded-xl shadow-xl mb-6 border border-orange-200 overflow-hidden">
-                    <div class="bg-gradient-to-r from-orange-500 to-red-500 px-6 py-4">
-                        <div class="flex items-center">
-                            <svg class="h-6 w-6 text-white mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.98-.833-2.75 0L4.064 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                            </svg>
-                            <h3 class="text-lg font-medium text-white">Documents Pending Receipt</h3>
+                <div class="bg-white rounded-xl mb-6 border border-orange-200/80 overflow-hidden">
+                    <div class="bg-gradient-to-r from-orange-50 to-white p-6 border-b border-orange-200/60">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center">
+                                <svg class="h-5 w-5 text-orange-600 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.98-.833-2.75 0L4.064 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                </svg>
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-800">Documents Pending Receipt</h3>
+                                    <p class="text-sm text-gray-600">You must receive these documents first before they appear in your workflow.</p>
+                                </div>
+                            </div>
+                            <span class="text-sm text-orange-600 bg-orange-50 py-1 px-3 rounded-full border border-orange-200/60">{{ $pendingReceive->count() }} pending</span>
                         </div>
-                        <p class="text-orange-100 text-sm mt-1">You must receive these documents first before they appear in your workflow.</p>
                     </div>
                     <div class="p-6">
                         <div class="overflow-x-auto">
@@ -141,44 +140,40 @@
             @endif
 
             <!-- Main Content -->
-            <div class="bg-white rounded-xl shadow-xl overflow-hidden border border-blue-100">
-                <div class="p-6">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-6 flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600 mr-2" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                        </svg>
-                        {{ __('Active Workflows') }}
-                    </h3>
+            <div class="bg-white rounded-xl overflow-hidden border border-blue-200/80 transition-all duration-300 hover:border-blue-300/80">
+                <div class="bg-gradient-to-r from-blue-50 to-white p-6 border-b border-blue-200/60">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                            </svg>
+                            <h3 class="text-lg font-semibold text-gray-800">{{ __('Active Workflows') }}</h3>
+                        </div>
+                        <span class="text-sm text-blue-600 bg-blue-50 py-1 px-3 rounded-full border border-blue-200/60">{{ $workflows->count() ?? 0 }} workflows</span>
+                    </div>
+                </div>
 
                     @if(isset($workflows) && $workflows->count() > 0)
-                        <div class="overflow-x-auto rounded-lg border border-gray-200">
+                        <div class="overflow-x-auto">
                             <table class="min-w-full divide-y divide-gray-200">
-                                <thead>
+                                <thead class="bg-gradient-to-r from-gray-50 to-white">
                                     <tr>
-                                        <th
-                                            class="bg-gray-50 px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-gray-200">
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                                             {{ __('ID') }}
                                         </th>
-                                        <th
-                                            class="bg-gray-50 px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-gray-200">
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                                             {{ __('Document') }}
                                         </th>
-                                        <th
-                                            class="bg-gray-50 px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-gray-200">
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                                             {{ __('Current Step') }}
                                         </th>
-                                        <th
-                                            class="bg-gray-50 px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-gray-200">
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                                             {{ __('Recipient') }}
                                         </th>
-                                        <th
-                                            class="bg-gray-50 px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-gray-200">
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                                             {{ __('Status') }}
                                         </th>
-                                        <th
-                                            class="bg-gray-50 px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-gray-200">
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                                             {{ __('Actions') }}
                                         </th>
                                     </tr>
@@ -305,15 +300,13 @@
                             {{ $workflows->links() }}
                         </div>
                     @else
-                        <div
-                            class="bg-gray-50 border-2 border-dashed border-blue-200 rounded-lg p-8 flex items-center justify-center">
-                            <div class="text-center">
-                                <svg class="mx-auto h-12 w-12 text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                        <div class="p-6">
+                            <div class="flex flex-col items-center justify-center p-6 bg-blue-50/50 rounded-lg border border-blue-100">
+                                <svg class="w-16 h-16 text-blue-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                                 </svg>
-                                <p class="mt-4 text-gray-600">No workflows found.</p>
+                                <p class="text-blue-900 text-lg font-medium mb-1">No Active Workflows</p>
+                                <p class="text-blue-600 text-sm">No workflows have been created yet</p>
                             </div>
                         </div>
                     @endif

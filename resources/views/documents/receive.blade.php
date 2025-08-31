@@ -3,12 +3,12 @@
 
 @section('content')
 <div class="min-h-screen bg-gradient-to-b from-blue-50 to-white p-4 md:p-8">
-    <div class="max-w-7xl mx-auto">
+    <div class="max-w-7xl mx-auto space-y-8 px-6">
         <!-- Header Box -->
-        <div class="bg-white rounded-xl shadow-xl mb-6 border border-blue-100 overflow-hidden">
-            <div class="bg-white p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div class="bg-white rounded-xl border border-blue-200/80 transition-all duration-300 hover:border-blue-300/80 hover:shadow-sm">
+            <div class="p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div class="flex items-center space-x-3">
-                    <div class="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg shadow-md">
+                    <div class="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg">
                         <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                         </svg>
@@ -30,37 +30,44 @@
         </div>
 
         <!-- Main Content -->
-        <div class="bg-white rounded-xl shadow-xl overflow-hidden border border-blue-100">
+        <div class="bg-white rounded-xl border border-blue-200/80 transition-all duration-300 hover:border-blue-300/80 hover:shadow-sm overflow-hidden">
             <div class="p-6">
                 @if(session('success'))
-                    <div class="mb-6 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-md" role="alert">
-                        <p class="font-medium">{{ session('success') }}</p>
+                    <div class="mb-6 bg-emerald-50/60 border-l-4 border-emerald-500 text-emerald-700 p-4 rounded-lg transition-all duration-300" role="alert">
+                        <div class="flex items-center">
+                            <svg class="h-5 w-5 text-emerald-500 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                            </svg>
+                            <p class="font-medium">{{ session('success') }}</p>
+                        </div>
                     </div>
                 @endif
 
                 @if($documents->isEmpty())
-                    <div class="text-center py-12">
-                        <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                        </svg>
-                        <h3 class="mt-4 text-lg font-medium text-gray-900">No documents to receive</h3>
-                        <p class="mt-2 text-gray-500">There are no documents forwarded to you at this time.</p>
+                    <div class="flex flex-col items-center justify-center py-12 border-2 border-dashed border-blue-200 rounded-lg bg-blue-50/50">
+                        <div class="p-3 bg-blue-100 rounded-lg mb-4">
+                            <svg class="h-12 w-12 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">No documents to receive</h3>
+                        <p class="text-gray-500 text-center">There are no documents forwarded to you at this time.</p>
                     </div>
                 @else
                     <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
+                        <table class="min-w-full divide-y divide-blue-200/60">
                             <thead>
                                 <tr>
-                                    <th class="bg-gray-50 px-6 py-3 text-left text-xs font-medium text-indigo-700 uppercase tracking-wider border-b border-gray-200">Document</th>
-                                    <th class="bg-gray-50 px-6 py-3 text-left text-xs font-medium text-indigo-700 uppercase tracking-wider border-b border-gray-200">Sent By</th>
-                                    <th class="bg-gray-50 px-6 py-3 text-left text-xs font-medium text-indigo-700 uppercase tracking-wider border-b border-gray-200">Status</th>
-                                    <th class="bg-gray-50 px-6 py-3 text-left text-xs font-medium text-indigo-700 uppercase tracking-wider border-b border-gray-200">Date Forwarded</th>
-                                    <th class="bg-gray-50 px-6 py-3 text-left text-xs font-medium text-indigo-700 uppercase tracking-wider border-b border-gray-200">Actions</th>
+                                    <th class="bg-blue-50/40 px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200/60">Document</th>
+                                    <th class="bg-blue-50/40 px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200/60">Sent By</th>
+                                    <th class="bg-blue-50/40 px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200/60">Status</th>
+                                    <th class="bg-blue-50/40 px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200/60">Date Forwarded</th>
+                                    <th class="bg-blue-50/40 px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200/60">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
+                            <tbody class="bg-white divide-y divide-blue-200/60">
                                 @foreach($documents as $document)
-                                    <tr class="hover:bg-gray-50">
+                                    <tr class="hover:bg-blue-50/40 transition-colors duration-150">
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="flex items-center">
                                                 <div>
@@ -80,7 +87,7 @@
                                             <div class="text-sm text-gray-500">
                                                 {{ $document->user->first_name ?? 'Unknown' }} {{ $document->user->last_name ?? 'Admin' }}
                                                 @if($document->user && $document->user->hasRole('company-admin'))
-                                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">Admin</span>
+                                                    <span class="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100/80 text-blue-700">Admin</span>
                                                 @endif
                                             </div>
                                         </td>
@@ -89,7 +96,7 @@
                                                 $statusInfo = DocumentStatusService::getEffectiveStatus($document);
                                                 $statusDisplay = DocumentStatusService::getStatusDisplay($statusInfo['status']);
                                             @endphp
-                                            
+
                                             <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {{ $statusDisplay['bg_class'] }} {{ $statusDisplay['text_class'] }}">
                                                 {{ $statusDisplay['label'] }}
                                                 @if($statusInfo['source'] === 'workflow')
@@ -99,14 +106,14 @@
                                                     <span class="ml-1 text-xs">⚠️</span>
                                                 @endif
                                             </span>
-                                            
+
                                             @if($statusInfo['urgency'])
                                                 <div class="mt-1">
-                                                    <span class="px-1 py-0.5 text-xs rounded 
-                                                        @if($statusInfo['urgency'] === 'critical') bg-red-200 text-red-800
-                                                        @elseif($statusInfo['urgency'] === 'high') bg-orange-200 text-orange-800
-                                                        @elseif($statusInfo['urgency'] === 'medium') bg-yellow-200 text-yellow-800
-                                                        @else bg-gray-200 text-gray-800
+                                                    <span class="px-2 py-0.5 text-xs rounded-full font-medium
+                                                        @if($statusInfo['urgency'] === 'critical') bg-red-100/80 text-red-700
+                                                        @elseif($statusInfo['urgency'] === 'high') bg-amber-100/80 text-amber-700
+                                                        @elseif($statusInfo['urgency'] === 'medium') bg-yellow-100/80 text-yellow-700
+                                                        @else bg-blue-100/80 text-blue-700
                                                         @endif">
                                                         {{ ucfirst($statusInfo['urgency']) }}
                                                     </span>
@@ -114,20 +121,20 @@
                                             @endif
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {{ $document->documentWorkflow->where('recipient_id', auth()->id())->first()?->created_at?->format('M d, Y h:i A') ?? 
-                                               $document->transaction?->created_at?->format('M d, Y h:i A') ?? 
+                                            {{ $document->documentWorkflow->where('recipient_id', auth()->id())->first()?->created_at?->format('M d, Y h:i A') ??
+                                               $document->transaction?->created_at?->format('M d, Y h:i A') ??
                                                $document->created_at->format('M d, Y h:i A') }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                             <a href="{{ route('documents.show', $document->id) }}" class="text-indigo-600 hover:text-indigo-900 mr-3">View</a>
-                                            
+
                                             @php
                                                 $canReceive = DocumentStatusService::canReceiveDocument($document);
                                                 $statusInfo = DocumentStatusService::getEffectiveStatus($document);
                                                 $canAccessWorkflow = DocumentStatusService::canAccessWorkflow($document);
                                                 $isRecalled = $document->status && $document->status->status === 'recalled';
                                             @endphp
-                                            
+
                                             @if ($isRecalled)
                                                 <span class="text-red-600 font-semibold">Document Recalled</span>
                                                 <div class="text-xs text-red-500 mt-1">This document has been recalled by the sender</div>
@@ -161,7 +168,7 @@
                             </tbody>
                         </table>
                     </div>
-                    
+
                     <div class="mt-6">
                         {{ $documents->links() }}
                     </div>
