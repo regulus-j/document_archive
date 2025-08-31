@@ -111,88 +111,104 @@
         @endif
 
         <!-- Main Content -->
-        <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="max-w-7xl mx-auto space-y-8">
             <!-- Search Panel -->
-            <div class="lg:col-span-1">
-                <div class="bg-white rounded-xl overflow-hidden h-full border border-blue-200/80 transition-all duration-300 hover:border-blue-300/80">
-                    <div class="bg-white p-6 border-b border-blue-200/60">
-                        <div class="flex items-center mb-1">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600 mr-2" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            <div class=" rounded-xl border-blue-200/80 transition-all duration-300 hover:border-blue-300/80 hover:shadow-sm">
+                <div class="bg-white p-6 border-b border-blue-200/60">
+                    {{-- <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                             </svg>
-                            <h2 class="text-lg font-semibold text-gray-800">Search Documents</h2>
+                            <h2 class="text-lg font-semibold text-gray-800">Search and Filter</h2>
                         </div>
-                        <p class="mt-1 text-sm text-gray-600">Search by text or upload an image</p>
-                    </div>
+                    </div> --}}
 
                     <div class="p-6">
                         <form id="search-form" action="{{ route('documents.search') }}" method="POST"
-                            enctype="multipart/form-data" class="space-y-5">
+                            enctype="multipart/form-data">
                             @csrf
-                            <!-- Quick Search -->
-                            <div>
-                                <label for="filter-field" class="block text-sm font-medium text-gray-700 mb-1">Search
-                                    by</label>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    <select id="filter-field"
-                                        class="rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
-                                        <option value="title">Title</option>
-                                        <option value="uploader">Uploader</option>
-                                        <option value="status">Status</option>
-                                        <option value="originating">Originating</option>
-                                        <option value="recipient">Recipient</option>
-                                        <option value="description">Description</option>
-                                    </select>
-                                    <input type="text" id="quick-search"
-                                        class="rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                                        placeholder="Quick search...">
-                                </div>
-                            </div>
-
-                            <!-- Text Search -->
-                            <div>
-                                <label for="text-search" class="block text-sm font-medium text-gray-700 mb-1">Text
-                                    search</label>
-                                <div class="relative">
-                                    <input type="text" id="text-search" name="text"
-                                        class="w-full pl-10 pr-4 py-2.5 rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                                        placeholder="Search by text...">
+                            <div class="flex flex-col md:flex-row gap-4">
+                                <!-- Combined Search Bar with Filter -->
+                                <div class="flex-1 relative">
                                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <svg class="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg"
-                                            viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                            <path fill-rule="evenodd"
-                                                d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                                                clip-rule="evenodd" />
+                                        <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg"
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                         </svg>
                                     </div>
+                                    <input type="text" id="quick-search" name="text"
+                                        class="w-full pl-10 pr-36 py-2.5 rounded-lg border-gray-200 bg-gray-50/60 focus:bg-white focus:border-blue-500 focus:ring-blue-200 transition-all"
+                                        placeholder="Search documents...">
+                                    <div class="absolute inset-y-0 right-0 flex items-center">
+                                        <div class="h-6 w-px bg-gray-200 mx-2"></div>
+                                        <select id="filter-field"
+                                            class="h-full py-0 pl-2 pr-7 border-transparent bg-transparent text-gray-500 sm:text-sm focus:ring-0">
+                                            <option value="general">All Fields</option>
+                                            <option value="title">Title</option>
+                                            <option value="uploader">Uploader</option>
+                                            <option value="status">Status</option>
+                                            <option value="originating">Origin</option>
+                                            <option value="recipient">Recipient</option>
+                                            <option value="description">Description</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Image Search Button -->
+                                <div>
+                                    <button type="button"
+                                        id="image-search-toggle-btn"
+                                        onclick="toggleImageSearch()"
+                                        class="px-4 py-2.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50/80 text-gray-700 flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200">
+                                        <div class="relative w-5 h-5">
+                                            <!-- Image icon -->
+                                            <svg class="image-icon h-5 w-5 text-gray-400 transition-all duration-200"
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
+                                            <!-- Close icon (hidden by default) -->
+                                            <svg class="close-icon absolute inset-0 h-5 w-5 text-gray-400 opacity-0 transition-all duration-200"
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                                stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </div>
+                                        <span class="hidden sm:inline transition-all duration-200">Image Search</span>
+                                    </button>
                                 </div>
                             </div>
 
-                            <!-- Image Upload/Camera -->
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Image search</label>
-                                <div class="flex flex-wrap gap-3">
-                                    <button type="button" onclick="document.getElementById('image-input').click()"
-                                        class="inline-flex items-center px-4 py-2 border border-blue-200 shadow-sm text-sm font-medium rounded-lg text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
-                                        <svg class="h-5 w-5 mr-2 text-blue-500" xmlns="http://www.w3.org/2000/svg"
-                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                        </svg>
-                                        Upload Image
-                                    </button>
-                                    <button type="button" id="camera-toggle"
-                                        class="inline-flex items-center px-4 py-2 border border-indigo-200 shadow-sm text-sm font-medium rounded-lg text-indigo-700 bg-indigo-50 hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-                                        <svg class="h-5 w-5 mr-2 text-indigo-500" xmlns="http://www.w3.org/2000/svg"
+                            <!-- Image Search Section (Hidden by default) -->
+                            <div id="image-search-section" class="hidden mt-4">
+                                <div class="p-4 bg-gray-50/80 rounded-lg border border-gray-200">
+                                    <div class="flex items-center gap-4">
+                                        <div class="flex-1">
+                                            <input type="file" id="image-input" name="image" accept="image/*" class="hidden">
+                                            <label for="image-input"
+                                                class="flex items-center justify-center w-full px-4 py-2.5 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 focus:outline-none focus:border-blue-500 transition-all">
+                                                <svg class="h-5 w-5 text-gray-400 mr-2" xmlns="http://www.w3.org/2000/svg"
+                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                                </svg>
+                                                <span class="text-gray-600">Click to upload or drag and drop</span>
+                                            </label>
+                                        </div>
+                                        <button type="button" id="camera-toggle"
+                                        class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                        <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg"
                                             fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                                         </svg>
-                                        Open Camera
                                     </button>
                                 </div>
 
@@ -257,8 +273,7 @@
             </div>
 
             <!-- Document List -->
-            <div class="lg:col-span-2">
-                <div class="bg-white rounded-xl overflow-hidden h-full border border-blue-200/80 transition-all duration-300 hover:border-blue-300/80">
+            <div class="bg-white rounded-xl overflow-visible border border-blue-200/80 transition-all duration-300 hover:border-blue-300/80 mt-3">
                     <!-- Tabbed Navigation -->
                     <div class="bg-white border-b border-blue-200">
                         <div class="p-6 pb-0">
@@ -273,21 +288,11 @@
                                 </div>
                                 <div class="flex items-center space-x-2">
                                     <span class="text-sm text-gray-500">{{ $documents->total() }} total documents</span>
-                                    <div class="relative">
-                                        <button type="button"
-                                            class="inline-flex items-center px-3 py-1.5 border border-blue-200 text-sm font-medium rounded-lg text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none"
-                                                viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                                            </svg>
-                                            Filter
-                                        </button>
-                                    </div>
+
                                 </div>
                             </div>
                             <!-- Tab Navigation -->
-                            <div class="flex space-x-1 bg-blue-50 p-1 rounded-lg">
+                            <div class="flex space-x-1 bg-blue-50 p-1 rounded-lg mb-3">
                                 <button onclick="switchTab('all-documents')" id="tab-all-documents"
                                     class="tab-button flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors active-tab">
                                     <div class="flex items-center justify-center space-x-2">
@@ -334,103 +339,112 @@
                             <table class="min-w-full divide-y divide-gray-200">
                                 <thead>
                                     <tr>
-                                        <th class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
-                                            No</th>
-                                        <th class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
-                                            Details</th>
-                                        <th class="bg-white px-6 py-3 text-right text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
-                                            Action</th>
+                                        <th class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200 w-12">#</th>
+                                        <th class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">Title</th>
+                                        <th class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">Uploader</th>
+                                        <th class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">Status & Workflow</th>
+                                        <th class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">Tracking</th>
+                                        <th class="bg-white px-6 py-3 text-center text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200 w-24">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody class="bg-white divide-y divide-gray-200">
                                     @php
+                                        $counter = ($documents->currentPage() - 1) * $documents->perPage() + 1;
                                         $regularDocuments = $documents->filter(function($document) {
                                             $status = $document->status?->status ? strtolower($document->status->status) : '';
                                             return !in_array($status, ['rejected']);
                                         });
-                                        $counter = 1;
                                     @endphp
                                     @forelse ($regularDocuments as $document)
                                         <tr class="hover:bg-gray-50 transition-colors">
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $counter++ }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500">{{ $counter++ }}</td>
                                             <td class="px-6 py-4">
-                                                <div class="flex flex-col space-y-2">
-                                                    <div class="text-sm font-medium text-gray-900">{{ $document->title }}</div>
-
-                                                    <div class="flex items-center">
-                                                        <div class="flex-shrink-0 h-8 w-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold shadow-sm">
-                                                            {{ $document->user?->first_name ? substr($document->user->first_name, 0, 1) : 'N' }}
-                                                        </div>
-                                                        <div class="ml-3 text-sm text-gray-700">
-                                                            {{ ($document->user?->first_name ?? 'Unknown') . ' ' . ($document->user?->last_name ?? 'User') }}
-                                                        </div>
+                                                <div class="text-sm font-medium text-gray-900 truncate">{{ $document->title }}</div>
+                                                @if($document->transaction?->fromOffice)
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 self-start mt-0.5">
+                                                        {{ $document->transaction?->fromOffice?->name }}
+                                                    </span>
+                                                @endif
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                <div class="flex items-center">
+                                                    <div class="flex-shrink-0 h-6 w-6 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-sm">
+                                                        {{ $document->user?->first_name ? substr($document->user->first_name, 0, 1) : 'N' }}
                                                     </div>
+                                                    <div class="ml-2 text-sm text-gray-700 font-medium truncate">
+                                                        {{ ($document->user?->first_name ?? 'Unknown') . ' ' . ($document->user?->last_name ?? 'User') }}
+                                                    </div>
+                                                </div>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                <div class="flex flex-col space-y-1.5">
+                                                    @php
+                                                        $statusColor = 'gray';
+                                                        $status = $document->status?->status ? strtolower($document->status->status) : '';
 
-                                                    <div class="flex flex-wrap gap-2 items-center">
-                                                        @php
-                                                            $statusColor = 'gray';
-                                                            $status = $document->status?->status ? strtolower($document->status->status) : '';
-
-                                                            if ($status == 'approved') {
-                                                                $statusColor = 'emerald';
-                                                            } elseif ($status == 'pending') {
-                                                                $statusColor = 'amber';
-                                                            } elseif ($status == 'forwarded') {
-                                                                $statusColor = 'blue';
-                                                            } elseif ($status == 'recalled') {
-                                                                $statusColor = 'purple';
-                                                            } elseif ($status == 'uploaded') {
-                                                                $statusColor = 'indigo';
-                                                            }
-                                                        @endphp
-                                                        <span class="px-2.5 py-1 text-xs leading-5 font-semibold rounded-full bg-{{ $statusColor }}-100 text-{{ $statusColor }}-800">
+                                                        if ($status == 'approved') {
+                                                            $statusColor = 'emerald';
+                                                        } elseif ($status == 'pending') {
+                                                            $statusColor = 'amber';
+                                                        } elseif ($status == 'forwarded') {
+                                                            $statusColor = 'blue';
+                                                        } elseif ($status == 'recalled') {
+                                                            $statusColor = 'purple';
+                                                        } elseif ($status == 'uploaded') {
+                                                            $statusColor = 'indigo';
+                                                        }
+                                                    @endphp
+                                                    <div class="flex items-center space-x-2">
+                                                        <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-{{ $statusColor }}-100 text-{{ $statusColor }}-800">
                                                             {{ $document->status?->status ?? 'N/A' }}
                                                         </span>
-
-                                                        <span class="text-xs text-gray-500">
-                                                            <span class="font-medium">From:</span>
-                                                            {{ $document->transaction?->fromOffice?->name ?? $document->user?->offices?->first()?->name ?? 'N/A' }}
-                                                        </span>
-
-                                                        <span class="text-xs text-gray-500">
-                                                            <span class="font-medium">To:</span>
-                                                            @if (isset($documentRecipients[$document->id]) && count($documentRecipients[$document->id]) > 0)
+                                                    </div>
+                                                    <div class="flex items-center text-xs text-gray-500">
+                                                        <span class="font-medium mr-1">Recipients:</span>
+                                                        @if (isset($documentRecipients[$document->id]) && count($documentRecipients[$document->id]) > 0)
+                                                            <span class="truncate max-w-xs">
                                                                 @foreach ($documentRecipients[$document->id] as $recipient)
-                                                                    <span class="inline-flex items-center">
-                                                                        {{ $recipient['name'] }}
-                                                                        @if (!$loop->last), @endif
-                                                                    </span>
+                                                                    {{ $recipient['name'] }}@if (!$loop->last), @endif
                                                                 @endforeach
-                                                            @else
-                                                                N/A
-                                                            @endif
-                                                        </span>
-
-                                                        <span class="text-xs text-gray-500">
-                                                            <span class="font-medium">Uploaded:</span>
-                                                            {{ $document->created_at->format('M d, Y H:i') }}
-                                                        </span>
-
-                                                        <span class="text-xs text-gray-500">
-                                                            <span class="font-medium">Last Updated:</span>
-                                                            {{ $document->updated_at->format('M d, Y H:i') }}
-                                                        </span>
+                                                            </span>
+                                                        @else
+                                                            <span class="italic">No recipients</span>
+                                                        @endif
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                @include('documents.partials.document-actions', ['document' => $document])
+                                            <td class="px-6 py-4">
+                                                <div class="flex flex-col space-y-1.5">
+                                                    <div class="text-xs text-gray-500 space-y-1">
+                                                        <div>
+                                                            <span class="font-medium">Created:</span>
+                                                            {{ $document->created_at->format('M d, Y H:i') }}
+                                                        </div>
+                                                        <div>
+                                                            <span class="font-medium">Updated:</span>
+                                                            {{ $document->updated_at->format('M d, Y H:i') }}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4 text-center">
+                                                <div class="flex justify-center space-x-2">
+                                                    @include('documents.partials.document-actions', ['document' => $document])
+                                                </div>
                                             </td>
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="3" class="px-6 py-4 text-center text-sm text-gray-500">
-                                                <div class="flex flex-col items-center justify-center py-6">
-                                                    <svg class="h-12 w-12 text-gray-400 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                            <td colspan="6" class="px-6 py-4">
+                                                <div class="flex flex-col items-center justify-center py-12 border-2 border-dashed border-gray-200 rounded-lg bg-gray-50/50 mx-4 my-6">
+                                                    <svg class="h-12 w-12 text-gray-400 mb-4" xmlns="http://www.w3.org/2000/svg"
+                                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                                     </svg>
-                                                    <p class="text-gray-500 text-base">No documents found</p>
-                                                    <p class="text-gray-400 text-sm mt-1">Try adjusting your search criteria</p>
+                                                    <p class="text-gray-900 font-medium text-lg mb-2">No documents found</p>
+                                                    <p class="text-gray-500 text-base">Try adjusting your search criteria or create a new document.</p>
                                                 </div>
                                             </td>
                                         </tr>
@@ -446,95 +460,126 @@
                             <table class="min-w-full divide-y divide-gray-200">
                                 <thead>
                                     <tr>
-                                        <th class="bg-white px-6 py-3 text-left text-xs font-medium text-red-700 uppercase tracking-wider border-b border-red-200">
-                                            No</th>
-                                        <th class="bg-white px-6 py-3 text-left text-xs font-medium text-red-700 uppercase tracking-wider border-b border-red-200">
-                                            Details</th>
-                                        <th class="bg-white px-6 py-3 text-right text-xs font-medium text-red-700 uppercase tracking-wider border-b border-red-200">
-                                            Action</th>
+                                        <th class="bg-white px-6 py-3 text-left text-xs font-medium text-red-700 uppercase tracking-wider border-b border-red-200">No</th>
+                                        <th class="bg-white px-6 py-3 text-left text-xs font-medium text-red-700 uppercase tracking-wider border-b border-red-200">Title</th>
+                                        <th class="bg-white px-6 py-3 text-left text-xs font-medium text-red-700 uppercase tracking-wider border-b border-red-200">Uploader</th>
+                                        <th class="bg-white px-6 py-3 text-left text-xs font-medium text-red-700 uppercase tracking-wider border-b border-red-200">Status</th>
+                                        <th class="bg-white px-6 py-3 text-left text-xs font-medium text-red-700 uppercase tracking-wider border-b border-red-200">Rejected By</th>
+                                        <th class="bg-white px-6 py-3 text-left text-xs font-medium text-red-700 uppercase tracking-wider border-b border-red-200">Remarks</th>
+                                        <th class="bg-white px-6 py-3 text-left text-xs font-medium text-red-700 uppercase tracking-wider border-b border-red-200">Tracking</th>
+                                        <th class="bg-white px-6 py-3 text-center text-xs font-medium text-red-700 uppercase tracking-wider border-b border-red-200">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody class="bg-white divide-y divide-gray-200">
                                     @php
+                                        $rejectedCounter = ($documents->currentPage() - 1) * $documents->perPage() + 1;
                                         $rejectedDocuments = $documents->filter(function($document) {
                                             $status = $document->status?->status ? strtolower($document->status->status) : '';
                                             return in_array($status, ['rejected']);
                                         });
-                                        $rejectedCounter = 1;
                                     @endphp
                                     @forelse ($rejectedDocuments as $document)
                                         <tr class="hover:bg-red-50 transition-colors border-l-4 border-red-300">
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $rejectedCounter++ }}</td>
                                             <td class="px-6 py-4">
-                                                <div class="flex flex-col space-y-2">
-                                                    <div class="text-sm font-medium text-gray-900">{{ $document->title }}</div>
-
-                                                    <div class="flex items-center">
-                                                        <div class="flex-shrink-0 h-8 w-8 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center text-white font-bold shadow-sm">
-                                                            {{ $document->user?->first_name ? substr($document->user->first_name, 0, 1) : 'N' }}
-                                                        </div>
-                                                        <div class="ml-3 text-sm text-gray-700">
-                                                            {{ ($document->user?->first_name ?? 'Unknown') . ' ' . ($document->user?->last_name ?? 'User') }}
-                                                        </div>
+                                                <div class="text-sm font-medium text-gray-900">{{ $document->title }}</div>
+                                                <div class="text-xs text-gray-500 mt-1">
+                                                    <span class="font-medium">From:</span>
+                                                    {{ $document->transaction?->fromOffice?->name ?? $document->user?->offices?->first()?->name ?? 'N/A' }}
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                <div class="flex items-center">
+                                                    <div class="flex-shrink-0 h-8 w-8 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center text-white font-bold shadow-sm">
+                                                        {{ $document->user?->first_name ? substr($document->user->first_name, 0, 1) : 'N' }}
                                                     </div>
+                                                    <div class="ml-3 text-sm text-gray-700">
+                                                        {{ ($document->user?->first_name ?? 'Unknown') . ' ' . ($document->user?->last_name ?? 'User') }}
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                <div class="flex flex-col space-y-2">
+                                                    <!-- Status Badge -->
+                                                    <span class="inline-flex items-center px-2.5 py-1 text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800 self-start">
+                                                        {{ $document->status?->status ?? 'Rejected' }}
+                                                    </span>
 
-                                                    <div class="flex flex-wrap gap-2 items-center">
-                                                        <span class="px-2.5 py-1 text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-                                                            {{ $document->status?->status ?? 'Rejected' }}
-                                                        </span>
-
-                                                        <span class="text-xs text-gray-500">
-                                                            <span class="font-medium">From:</span>
-                                                            {{ $document->transaction?->fromOffice?->name ?? $document->user?->offices?->first()?->name ?? 'N/A' }}
-                                                        </span>
-
-                                                        <span class="text-xs text-gray-500">
-                                                            <span class="font-medium">To:</span>
-                                                            @if (isset($documentRecipients[$document->id]) && count($documentRecipients[$document->id]) > 0)
-                                                                @foreach ($documentRecipients[$document->id] as $recipient)
-                                                                    <span class="inline-flex items-center">
-                                                                        {{ $recipient['name'] }}
-                                                                        @if (!$loop->last), @endif
-                                                                    </span>
-                                                                @endforeach
-                                                            @else
-                                                                N/A
-                                                            @endif
-                                                        </span>
-
-                                                        @php
-                                                            $latestWorkflow = $document->documentWorkflow()
-                                                                ->where('status', 'rejected')
-                                                                ->latest()
-                                                                ->first();
-                                                        @endphp
-                                                        @if ($latestWorkflow && $latestWorkflow->remarks)
-                                                            <span class="text-xs text-red-600 bg-red-50 px-2 py-1 rounded">
-                                                                <span class="font-medium">Reason:</span>
-                                                                {{ Str::limit($latestWorkflow->remarks, 50) }}
-                                                            </span>
+                                                    <!-- Recipients -->
+                                                    <div class="flex items-center text-xs text-gray-600 space-x-1">
+                                                        <span class="font-medium">To:</span>
+                                                        <span>
+                                                        @if (isset($documentRecipients[$document->id]) && count($documentRecipients[$document->id]) > 0)
+                                                            @foreach ($documentRecipients[$document->id] as $recipient)
+                                                                <span class="inline-flex items-center">
+                                                                    {{ $recipient['name'] }}@if (!$loop->last), @endif
+                                                                </span>
+                                                            @endforeach
+                                                        @else
+                                                            N/A
                                                         @endif
-
-                                                        <span class="text-xs text-gray-500">
-                                                            <span class="font-medium">Rejected:</span>
-                                                            {{ $document->updated_at->format('M d, Y H:i') }}
                                                         </span>
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <td class="px-6 py-4">
+                                                @php
+                                                    $latestWorkflow = $document->documentWorkflow()
+                                                        ->where('status', 'rejected')
+                                                        ->latest()
+                                                        ->first();
+                                                @endphp
+                                                <div class="flex items-center">
+                                                    @if($latestWorkflow && $latestWorkflow->user)
+                                                        <div class="flex-shrink-0 h-8 w-8 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center text-white font-bold shadow-sm">
+                                                            {{ $latestWorkflow->user->first_name ? substr($latestWorkflow->user->first_name, 0, 1) : 'N' }}
+                                                        </div>
+                                                        <div class="ml-3 text-sm text-gray-700">
+                                                            {{ ($latestWorkflow->user->first_name ?? 'Unknown') . ' ' . ($latestWorkflow->user->last_name ?? 'User') }}
+                                                        </div>
+                                                    @else
+                                                        <span class="text-sm text-gray-500">N/A</span>
+                                                    @endif
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                @if ($latestWorkflow && $latestWorkflow->remarks)
+                                                    <div class="text-sm text-gray-600">
+                                                        {{ $latestWorkflow->remarks }}
+                                                    </div>
+                                                @else
+                                                    <span class="text-sm text-gray-500">No remarks</span>
+                                                @endif
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                <div class="flex flex-col space-y-1.5">
+                                                    <div class="text-xs text-gray-500 space-y-1">
+                                                        <div>
+                                                            <span class="font-medium">Rejected:</span>
+                                                            {{ $document->updated_at->format('M d, Y H:i') }}
+                                                        </div>
+                                                        <div>
+                                                            <span class="font-medium">Last Updated:</span>
+                                                            {{ $latestWorkflow ? $latestWorkflow->updated_at->format('M d, Y H:i') : 'N/A' }}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                                                 @include('documents.partials.document-actions', ['document' => $document])
                                             </td>
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="3" class="px-6 py-4 text-center text-sm text-gray-500">
-                                                <div class="flex flex-col items-center justify-center py-6">
-                                                    <svg class="h-12 w-12 text-green-400 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            <td colspan="8" class="px-6 py-4">
+                                                <div class="flex flex-col items-center justify-center py-12 border-2 border-dashed border-red-100 rounded-lg bg-red-50/50 mx-4 my-6">
+                                                    <svg class="h-12 w-12 text-red-300 mb-4" xmlns="http://www.w3.org/2000/svg"
+                                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                                     </svg>
-                                                    <p class="text-green-600 text-base font-medium">Excellent Work!</p>
-                                                    <p class="text-gray-500 text-sm mt-1">No rejected documents found</p>
+                                                    <p class="text-gray-900 font-medium text-lg mb-2">No rejected documents</p>
+                                                    <p class="text-gray-500 text-base">Great! You have no rejected documents at this time.</p>
                                                 </div>
                                             </td>
                                         </tr>
@@ -546,14 +591,14 @@
 
                 <!-- Pagination for both tabs -->
                 <div class="p-6 border-t border-gray-200">
-                    {{ $documents->links() }}
+                    {{ $documents->appends(['tab' => request('tab', 'all')])->links() }}
                 </div>
             </div>
         </div>
     </div>
 
         <!-- Audit Logs -->
-        <div class="max-w-7xl mx-auto mt-8 bg-white rounded-xl overflow-hidden border border-blue-200/80 mb-8 transition-all duration-300 hover:border-blue-300/80">
+        {{-- <div class="max-w-7xl mx-auto mt-8 bg-white rounded-xl overflow-hidden border border-blue-200/80 mb-8 transition-all duration-300 hover:border-blue-300/80">
             <div class="bg-white p-6 border-b border-blue-200/60 flex justify-between items-center">
                 <div class="flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600 mr-2" fill="none"
@@ -654,13 +699,25 @@
 
             <div class="p-6 border-t border-gray-200">
                 {{ $auditLogs->links() }}
-            </div>
+            </div>--}}
         </div>
     </div>
 
     <script>
         // Tab switching functionality
         function switchTab(tabName) {
+            // Update URL and reload the page with the new tab
+            const url = new URL(window.location.href);
+            url.searchParams.set('tab', tabName === 'all-documents' ? 'all' : 'rejected');
+            // Force page reload to get fresh data for the selected tab
+            window.location.href = url.toString();
+        }
+
+        // Set active tab based on URL parameter when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const activeTab = urlParams.get('tab') === 'rejected' ? 'rejected-documents' : 'all-documents';
+
             // Hide all tab contents
             document.querySelectorAll('.tab-content').forEach(content => {
                 content.classList.add('hidden');
@@ -673,15 +730,15 @@
             });
 
             // Show selected tab content
-            document.getElementById(tabName + '-content').classList.remove('hidden');
-            document.getElementById(tabName + '-content').classList.add('active');
+            document.getElementById(activeTab + '-content').classList.remove('hidden');
+            document.getElementById(activeTab + '-content').classList.add('active');
 
             // Add active class to selected tab
-            document.getElementById('tab-' + tabName).classList.add('active-tab');
+            document.getElementById('tab-' + activeTab).classList.add('active-tab');
 
             // Update counts
             updateTabCounts();
-        }
+        });
 
         // Update tab counts
         function updateTabCounts() {
@@ -831,6 +888,19 @@
                 const tableRows = document.querySelectorAll('tbody tr');
 
                 tableRows.forEach(row => {
+                    let found = false;
+                    if (searchField === 'general') {
+                        // Search all cells except actions
+                        for (let i = 0; i < row.cells.length - 1; i++) {
+                            if (row.cells[i].textContent.toLowerCase().includes(searchText)) {
+                                found = true;
+                                break;
+                            }
+                        }
+                        row.style.display = found ? '' : 'none';
+                        return;
+                    }
+
                     let cellIndex;
                     switch (searchField) {
                         case 'title':
@@ -1242,6 +1312,50 @@
     </style>
 
     <script>
+        // Toggle Image Search Section
+        function toggleImageSearch() {
+            const section = document.getElementById('image-search-section');
+            const button = document.getElementById('image-search-toggle-btn');
+            const imageIcon = button.querySelector('.image-icon');
+            const closeIcon = button.querySelector('.close-icon');
+            const buttonText = button.querySelector('span');
+            const isHidden = section.classList.contains('hidden');
+
+            if (isHidden) {
+                // Show section
+                section.classList.remove('hidden');
+                section.style.opacity = '0';
+                section.style.transform = 'translateY(-10px)';
+                setTimeout(() => {
+                    section.style.transition = 'all 0.3s ease-out';
+                    section.style.opacity = '1';
+                    section.style.transform = 'translateY(0)';
+                }, 10);
+
+                // Update button style
+                button.classList.add('bg-blue-50', 'border-blue-500', 'text-blue-600');
+                imageIcon.classList.add('opacity-0');
+                closeIcon.classList.remove('opacity-0');
+                if (buttonText) buttonText.textContent = 'Close Image Search';
+            } else {
+                // Hide section
+                section.style.opacity = '0';
+                section.style.transform = 'translateY(-10px)';
+                setTimeout(() => {
+                    section.classList.add('hidden');
+                    section.style.transition = '';
+                    section.style.opacity = '';
+                    section.style.transform = '';
+                }, 300);
+
+                // Reset button style
+                button.classList.remove('bg-blue-50', 'border-blue-500', 'text-blue-600');
+                imageIcon.classList.remove('opacity-0');
+                closeIcon.classList.add('opacity-0');
+                if (buttonText) buttonText.textContent = 'Image Search';
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             // Show popup notifications for session messages
             @if(session('success'))
