@@ -17,14 +17,14 @@ class DashboardController extends Controller
     public function index()
     {
         $user = auth()->user();
-        
+
         // First check if user is a super-admin and redirect accordingly
         if ($user->hasRole('super-admin')) {
             return redirect()->route('admin.dashboard');
         }
-        
+
         $userCompany = $user->companies()->first();
-        
+
         // If user is a company-admin and has an active subscription, redirect to company dashboard
         if ($user->hasRole('company-admin')) {
             $hasActiveSubscription = false;
@@ -33,13 +33,13 @@ class DashboardController extends Controller
             $trialEndDate = DB::table('company_users')
                 ->where('user_id', $user->id)
                 ->value('trial_ends_at');
-            
-            if (($trialEndDate && now()->lessThan($trialEndDate)) || 
+
+            if (($trialEndDate && now()->lessThan($trialEndDate)) ||
                 ($userCompany && CompanySubscription::active()->where('company_id', $userCompany->id)->exists())) {
                 return redirect()->route('reports.company-dashboard');
             }
         }
-        
+
         // Check if user is an office lead
         $isOfficeLead = Office::where('office_lead', $user->id)->exists();
         $ledOffice = null;
@@ -48,13 +48,13 @@ class DashboardController extends Controller
         $officeDocumentCount = 0;
         $officeDocumentsTodayCount = 0;
         $officePendingWorkflowsCount = 0;
-        
+
         if ($isOfficeLead) {
             $ledOffice = Office::where('office_lead', $user->id)->first();
             if ($ledOffice) {
                 // Get office members
                 $officeMembers = $ledOffice->users()->get();
-                
+
                 // Get office document statistics - Using the correct column (from_office) instead of office_id
                 $officeDocuments = Document::whereIn('uploader', $officeMembers->pluck('id'))
                     ->orWhereHas('transaction', function($query) use ($ledOffice) {
@@ -64,20 +64,20 @@ class DashboardController extends Controller
                     ->latest()
                     ->take(10)
                     ->get();
-                    
+
                 $officeDocumentCount = Document::whereIn('uploader', $officeMembers->pluck('id'))
                     ->orWhereHas('transaction', function($query) use ($ledOffice) {
                         $query->where('from_office', $ledOffice->id);
                     })
                     ->count();
-                    
+
                 $officeDocumentsTodayCount = Document::whereIn('uploader', $officeMembers->pluck('id'))
                     ->orWhereHas('transaction', function($query) use ($ledOffice) {
                         $query->where('from_office', $ledOffice->id);
                     })
                     ->whereDate('created_at', today())
                     ->count();
-                    
+
                 $officePendingWorkflowsCount = DocumentWorkflow::whereIn('sender_id', $officeMembers->pluck('id'))
                     ->orWhereIn('recipient_id', $officeMembers->pluck('id'))
                     ->where('status', 'pending')
@@ -88,7 +88,7 @@ class DashboardController extends Controller
         // Set up subscription information for view
         $activeSubscription = null;
         $needsSubscription = false;
-        
+
         // ** Free Trial Check **
         $trialEndDate = DB::table('company_users')
             ->where('user_id', $user->id)
@@ -100,7 +100,7 @@ class DashboardController extends Controller
             $activeSubscription = CompanySubscription::active()
                 ->where('company_id', $userCompany->id)
                 ->first();
-                
+
             // Set flag for showing subscription banner to company admins
             if (!$activeSubscription && $user->hasRole('company-admin')) {
                 $needsSubscription = true;
@@ -117,9 +117,9 @@ class DashboardController extends Controller
             $countPendingDocs = 0;
             $countRecentDocs = 0;
             $countCompanyUsers = 0;
-            $incomingDocuments = 0; 
+            $incomingDocuments = 0;
             $countOffices = "No Offices Found";
-            
+
             return view('dashboard-office-user', compact(
                 'totalDocuments',
                 'recentDocuments',
@@ -147,24 +147,46 @@ class DashboardController extends Controller
         $document = new Document;
         $recentTransactions = $document->transactions()->latest()->paginate(5);
 
-        $totalDocuments = Document::whereIn(
-            'uploader',
-            $userCompany ? $userCompany->employees->pluck('id')->push($user->id)->unique() : collect()
-        )->count();
-
-        $recentDocuments = Document::with('user', 'office', 'categories')->latest()->take(5)->get();
-
-        $pendingDocuments = DocumentWorkflow::where('status', 'pending')
-            ->whereIn('document_id', function ($query) use ($userCompany, $user) {
-                $query->select('id')
-                    ->from('documents')
-                    ->whereIn('uploader', $userCompany ? $userCompany->employees->pluck('id')->push($user->id)->unique() : collect());
+        // Get total documents for current user
+        $totalDocuments = Document::where('uploader', $user->id)
+            ->orWhereHas('workflow', function($query) use ($user) {
+                $query->where('recipient_id', $user->id);
             })
             ->count();
 
-        $todayDocuments = Document::whereDate('created_at', today())->count();
+        $recentDocuments = Document::where('uploader', $user->id)
+            ->orWhereHas('workflow', function($query) use ($user) {
+                $query->where('recipient_id', $user->id);
+            })
+            ->with('user', 'office', 'categories')
+            ->latest()
+            ->take(5)
+            ->get();
+
+        // Get pending documents for current user
+        $pendingDocuments = DocumentWorkflow::where('status', 'pending')
+            ->where(function($query) use ($user) {
+                $query->where('sender_id', $user->id)
+                    ->orWhere('recipient_id', $user->id);
+            })
+            ->count();
+
+        // Get today's documents for current user
+        $todayDocuments = Document::where(function($query) use ($user) {
+                $query->where('uploader', $user->id)
+                    ->orWhereHas('workflow', function($q) use ($user) {
+                        $q->where('recipient_id', $user->id);
+                    });
+            })
+            ->whereDate('created_at', today())
+            ->count();
         $countPendingDocs = $pendingDocuments;
-        $countRecentDocs = $recentDocuments->count();
+        $countRecentDocs = Document::where('uploader', $user->id)
+            ->orWhereHas('workflow', function($query) use ($user) {
+                $query->where('recipient_id', $user->id)
+                    ->whereIn('status', ['approved', 'rejected']);
+            })
+            ->count();
         $countOffices = $userCompany ? Office::where('company_id', $userCompany->id)->count() : "No Offices Found";
 
         $processedDocuments = DocumentWorkflow::where('recipient_id', $user->id)
@@ -200,8 +222,8 @@ class DashboardController extends Controller
                 'officePendingWorkflowsCount',
                 'needsSubscription'
             ));
-        } 
-        
+        }
+
         // For regular company users, use the office user dashboard
         return view('dashboard-office-user', compact(
             'totalDocuments',

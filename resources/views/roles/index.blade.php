@@ -3,7 +3,7 @@
 <div class="min-h-screen bg-gradient-to-b from-blue-50 to-white" x-data="{ showDeleteModal: false, deleteId: null }">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->
-        <div class="bg-white rounded-xl shadow-xl mb-6 border border-blue-100 overflow-hidden p-4 mt-8">
+        <div class="bg-white rounded-lg p-6 border border-gray-200 mb-8 mt-8">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3">
                     <svg class="h-8 w-8 text-[#0066FF]" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -31,9 +31,9 @@
             </div>
         </div>
 
-        <!-- Search/Filter Section -->
-        <div class="mb-6">
-            <form action="{{ route('roles.index') }}" method="GET">
+        <!-- Search Section -->
+        <form action="{{ route('roles.index') }}" method="GET" id="rolesFilterForm">
+            <div class="mb-6">
                 <div class="flex space-x-4">
                     <div class="flex-1 relative">
                         <input type="text" name="role_search" value="{{ request('role_search') }}"
@@ -47,20 +47,28 @@
                             </svg>
                         </div>
                     </div>
-                    <button type="submit"
-                        class="inline-flex items-center px-4 py-2 bg-[#EEF2FF] text-[#0066FF] text-sm font-medium rounded-md hover:bg-[#0066FF]/10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0066FF] transition-colors duration-150 shadow-sm">
-                        <svg class="h-5 w-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                        {{ __('Search') }}
-                    </button>
+                    <div class="flex space-x-2">
+                        <button type="submit"
+                            class="inline-flex items-center px-4 py-2 bg-[#EEF2FF] text-[#0066FF] text-sm font-medium rounded-md hover:bg-[#0066FF]/10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0066FF] transition-colors duration-150 shadow-sm">
+                            <svg class="h-5 w-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                            {{ __('Search') }}
+                        </button>
+                        @if(request()->has('role_search'))
+                            <a href="{{ route('roles.index', request()->except('role_search')) }}"
+                                class="inline-flex items-center px-4 py-2 bg-red-50 text-red-600 text-sm font-medium rounded-md hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-150 shadow-sm">
+                                <svg class="h-5 w-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                                {{ __('Clear Search') }}
+                            </a>
+                        @endif
+                    </div>
                 </div>
-            </form>
-        </div>
-
-        @if (session('success'))
-        <div class="rounded-md bg-[#0066FF]/10 p-4 mb-8 shadow-md">
+            </div>        @if (session('success'))
+        <div class="bg-white border-l-4 border-emerald-500 text-emerald-700 p-4 mb-6 rounded-r-lg shadow-md">
             <div class="flex">
                 <div class="flex-shrink-0">
                     <svg class="h-5 w-5 text-[#0066FF]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
@@ -110,7 +118,7 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
             <!-- Total Roles Card -->
             <div
-                class="flex items-center p-6 bg-white rounded-xl shadow-xl border border-blue-100 hover:shadow-2xl transition-shadow duration-300 transform hover:-translate-y-1">
+                class="flex items-center p-6 bg-white rounded-lg border border-gray-200">
                 <div class="p-3 mr-4 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-md">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
@@ -126,7 +134,7 @@
 
             <!-- Active Roles Card -->
             <div
-                class="flex items-center p-6 bg-white rounded-xl shadow-xl border border-blue-100 hover:shadow-2xl transition-shadow duration-300 transform hover:-translate-y-1">
+                class="flex items-center p-6 bg-white rounded-lg border border-gray-200">
                 <div class="p-3 mr-4 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl shadow-md">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
@@ -140,33 +148,20 @@
                 </div>
             </div>
 
-            <!-- Filter Card -->
-            <div
-                class="p-6 bg-white rounded-xl shadow-xl border border-blue-100 hover:shadow-2xl transition-shadow duration-300">
-                <form action="" method="GET" class="flex flex-col h-full">
-                    <h3 class="text-sm font-medium text-gray-600 mb-3">Quick Filter</h3>
-                    <div class="flex-1">
-                        <input type="text" name="role_search" value="{{ request('role_search') }}" placeholder="Search roles by name..."
-                            class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm" />
+            <!-- Stats Card -->
+            <div class="p-6 bg-white rounded-lg border border-gray-200">
+                <div class="flex items-center justify-center space-x-4">
+                    <div class="text-center">
+                        <p class="text-sm font-medium text-gray-600">Found</p>
+                        <p class="text-3xl font-bold text-[#0066FF]">{{ $roles->total() }}</p>
+                        <p class="text-sm text-gray-500">roles</p>
                     </div>
-                    <div class="mt-4">
-                        <button type="submit"
-                            class="w-full inline-flex justify-center items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-md transition-colors">
-                            <svg class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none">
-                                <path
-                                    d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z"
-                                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                </path>
-                            </svg>
-                            Apply Filter
-                        </button>
-                    </div>
-                </form>
+                </div>
             </div>
         </div>
 
         <!-- Roles Table -->
-        <div class="mb-6 bg-white rounded-lg shadow-xl relative border border-blue-100">
+        <div class="mb-6 bg-white rounded-lg p-6 border border-gray-200 relative">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead>
                     <tr>
@@ -174,13 +169,54 @@
                             {{ __('NO') }}
                         </th>
                         <th scope="col" class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
-                            {{ __('NAME') }}
+                            <div class="flex items-center space-x-1">
+                                <span>{{ __('NAME') }}</span>
+                                <a href="{{ route('roles.index', array_merge(request()->query(), ['sort' => request('sort') === 'asc' ? 'desc' : 'asc'])) }}" class="text-blue-700 hover:text-blue-900">
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                                    </svg>
+                                </a>
+                            </div>
                         </th>
                         <th scope="col" class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
-                            {{ __('PERMISSIONS') }}
+                            <div class="flex items-center space-x-1">
+                                <span>{{ __('PERMISSIONS') }}</span>
+                                <div x-data="{ open: false }" class="relative inline-block text-left">
+                                    <button @click="open = !open" type="button" class="text-blue-700 hover:text-blue-900">
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707L16.293 11l-4.5 4.5a1 1 0 01-1.414 0L6 11 1.293 7.293A1 1 0 011 6.586V4z"/>
+                                        </svg>
+                                    </button>
+                                    <div x-show="open" @click.away="open = false"
+                                        x-cloak
+                                        class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
+                                        <div class="py-1">
+                                            <a href="{{ request()->fullUrlWithQuery(['permission_filter' => '0-5'] + array_diff_key(request()->query(), ['permission_filter' => ''])) }}"
+                                                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request('permission_filter') === '0-5' ? 'bg-gray-100' : '' }}">
+                                                0-5 permissions
+                                            </a>
+                                            <a href="{{ request()->fullUrlWithQuery(['permission_filter' => '6-10'] + array_diff_key(request()->query(), ['permission_filter' => ''])) }}"
+                                                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request('permission_filter') === '6-10' ? 'bg-gray-100' : '' }}">
+                                                6-10 permissions
+                                            </a>
+                                            <a href="{{ request()->fullUrlWithQuery(['permission_filter' => '10+'] + array_diff_key(request()->query(), ['permission_filter' => ''])) }}"
+                                                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request('permission_filter') === '10+' ? 'bg-gray-100' : '' }}">
+                                                10+ permissions
+                                            </a>
+                                            @if(request()->has('permission_filter'))
+                                                <div class="border-t border-gray-100 my-1"></div>
+                                                <a href="{{ route('roles.index', request()->except('permission_filter')) }}"
+                                                    class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+                                                    Clear filter
+                                                </a>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </th>
                         <th scope="col" class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
-                            {{ __('STATUS') }}
+                            <span>{{ __('STATUS') }}</span>
                         </th>
                         <th scope="col" class="bg-white px-6 py-3 text-right text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
                             {{ __('ACTION') }}

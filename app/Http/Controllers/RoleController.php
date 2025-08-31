@@ -9,11 +9,13 @@ use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Validation\Rules;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use Spatie\Permission\Traits\HasRoles;
 
 class RoleController extends Controller
 {
     function __construct()
-    {   
+    {
         // Check if user has any of these permissions
         $this->middleware('permission:role-list|role-create|role-edit|role-delete', ['only' => ['index','store']]);
         $this->middleware('permission:role-create', ['only' => ['create','store']]);
@@ -23,25 +25,32 @@ class RoleController extends Controller
 
         public function index(Request $request): View
     {
-        // If the user is a superadmin, show all roles
-        if (auth()->user()->isSuperAdmin()) {
-            $query = Role::orderBy('id', 'DESC');
-            $filterRoles = Role::all();
-        } elseif (auth()->user()->hasRole('company-admin')) {
-            $query = Role::where('name', '!=', 'super-admin')->orderBy('id', 'DESC');
-            $filterRoles = Role::where('name', '!=', 'super-admin')->get();
-        } else {
-            $query = Role::query()->whereRaw('0=1'); // No roles
-            $filterRoles = collect();
-        }
+        $query = Role::withCount('permissions')->orderBy('id', 'DESC');
 
-        // Filtering by role name if requested
         if ($request->filled('role_search')) {
             $query->where('name', 'like', '%' . $request->input('role_search') . '%');
         }
-        $roles = $query->paginate(5);
 
-        return view('roles.index', compact('roles', 'filterRoles'))
+        if ($request->filled('permission_filter')) {
+            $filter = $request->input('permission_filter');
+            switch ($filter) {
+                case '0-5':
+                    $query->having('permissions_count', '>=', 0)
+                          ->having('permissions_count', '<=', 5);
+                    break;
+                case '6-10':
+                    $query->having('permissions_count', '>=', 6)
+                          ->having('permissions_count', '<=', 10);
+                    break;
+                case '10+':
+                    $query->having('permissions_count', '>', 10);
+                    break;
+            }
+        }
+
+        $roles = $query->paginate(5)->withQueryString();
+
+        return view('roles.index', compact('roles'))
             ->with('i', ($request->input('page', 1) - 1) * 5);
     }
     public function create(): View
@@ -61,10 +70,10 @@ class RoleController extends Controller
             function($value) { return (int)$value; },
             $request->input('permission')
         );
-    
+
         $role = Role::create(['name' => $request->input('name')]);
         $role->syncPermissions($permissionsID);
-    
+
         return redirect()->route('roles.index')
                         ->with('success', 'Role created successfully');
     }
@@ -72,23 +81,23 @@ class RoleController extends Controller
     public function show($id): View
     {
         $role = Role::find($id);
-        
+
         $rolePermissions = Permission::join("role_has_permissions", "role_has_permissions.permission_id", "=", "permissions.id")
             ->where("role_has_permissions.role_id", $id)
             ->get();
-    
+
         return view('roles.show', compact('role', 'rolePermissions'));
     }
 
     public function edit($id): View
     {
         $role = Role::find($id);
-        
+
         $permission = Permission::get();
         $rolePermissions = DB::table("role_has_permissions")->where("role_has_permissions.role_id", $id)
             ->pluck('role_has_permissions.permission_id', 'role_has_permissions.permission_id')
             ->all();
-    
+
         return view('roles.edit', compact('role', 'permission', 'rolePermissions'));
     }
 
@@ -96,11 +105,11 @@ class RoleController extends Controller
     {
         $request->validate([
             'name' => 'required',
-            'permission' => 'required',         
+            'permission' => 'required',
         ]);
-    
+
         $role = Role::find($id);
-        
+
         $role->name = $request->input('name');
         $role->save();
 
@@ -108,9 +117,9 @@ class RoleController extends Controller
             function($value) { return (int)$value; },
             $request->input('permission')
         );
-    
+
         $role->syncPermissions($permissionsID);
-    
+
         return redirect()->route('roles.index')
                         ->with('success', 'Role updated successfully');
     }
@@ -118,7 +127,7 @@ class RoleController extends Controller
     public function destroy($id): RedirectResponse
     {
         $role = Role::find($id);
-        
+
         DB::table("roles")->where('id', $id)->delete();
         return redirect()->route('roles.index')
                         ->with('success', 'Role deleted successfully');

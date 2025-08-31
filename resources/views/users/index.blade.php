@@ -4,7 +4,7 @@
 <div class="min-h-screen bg-gradient-to-b from-blue-50 to-white" x-data="{ showDeleteModal: false, deleteId: null }">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->
-        <div class="bg-white rounded-lg shadow-xl p-4 mt-8 border border-blue-100">
+        <div class="bg-white rounded-lg p-6 border border-gray-200 mb-8 mt-8">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3">
                     <svg class="h-8 w-8 text-[#0066FF]" xmlns="http://www.w3.org/2000/svg" fill="none"
@@ -29,7 +29,7 @@
         </div>
 
         <!-- Filters -->
-        <div class="mt-4 mb-8 bg-white rounded-lg shadow-md p-6">
+        <div class="bg-white rounded-lg p-6 border border-gray-200 mb-8">
             <form method="GET" action="{{ route('users.search') }}" x-data="{ searchType: 'name' }">
                 <div class="flex flex-col space-y-4">
                     <div class="flex flex-col md:flex-row md:items-end md:space-x-4">
@@ -111,7 +111,7 @@
         @endif
 
         @if (session('success'))
-        <div class="rounded-md bg-[#0066FF]/10 p-4 mb-8 shadow-md">
+        <div class="bg-white border-l-4 border-emerald-500 text-emerald-700 p-4 mb-6 rounded-r-lg shadow-md">
             <div class="flex">
                 <div class="flex-shrink-0">
                     <svg class="h-5 w-5 text-[#0066FF]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
@@ -131,7 +131,7 @@
         @endif
 
         <!-- Users Table -->
-        <div class="mt-4 bg-white rounded-lg shadow-md relative">
+        <div class="bg-white rounded-lg p-6 border border-gray-200 relative">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead>
                     <tr>
