@@ -1,22 +1,26 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="container mx-auto px-4 py-8">
-        <div class="bg-white rounded-lg shadow p-6 mb-6">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between">
-                <div class="flex items-center">
-                    <div class="bg-blue-600 p-2 rounded-lg mr-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
+        <div class="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Header Box -->
+            <div class="bg-white rounded-xl mb-8 border border-blue-200/80 overflow-hidden">
+                <div class="bg-white p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg shadow-md">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h1 class="text-2xl font-bold text-gray-800">Create Document</h1>
+                            <p class="text-sm text-gray-500">Create and upload new document</p>
+                        </div>
                     </div>
-                    <div>
-                        <h1 class="text-xl font-bold text-black-600">Create Document</h1>
-                    </div>
-                </div>
-                <a href="{{ route('documents.index') }}" class="inline-flex items-center text-blue-600 hover:underline mt-3 md:mt-0">
+                <a href="{{ route('documents.index') }}"
+                    class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                     </svg>
@@ -29,15 +33,17 @@
             @csrf
 
             <!-- Document Information Card -->
-            <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
-                <div class="bg-white px-6 py-4 border-b border-gray-200">
-                    <div class="flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600 mr-2" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <h2 class="text-lg font-medium text-gray-800">Document Information</h2>
+            <div class="bg-white rounded-xl overflow-hidden border border-blue-200/80 transition-all duration-300 hover:border-blue-300/80">
+                <div class="bg-white p-6 border-b border-blue-200/60">
+                    <div class="flex items-center space-x-3">
+                        <div class="p-2 bg-blue-100 rounded-lg">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                        </div>
+                        <h2 class="text-lg font-semibold text-gray-800">Document Information</h2>
                     </div>
                 </div>
 
@@ -228,16 +234,16 @@
                     </div>
 
                     <!-- Form Actions -->
-                    <div class="border-t border-gray-200 pt-6">
+                    <div class="border-t border-blue-200/60 pt-6">
                         <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
                             <!-- Checkboxes -->
                             <div class="flex items-center space-x-6 mb-4 md:mb-0">
-                                <label class="inline-flex items-center">
+                                <label class="inline-flex items-center bg-white px-3 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors">
                                     <input type="checkbox" name="archive" value="1"
                                         class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                                     <span class="ml-2 text-sm text-gray-700">Add to Archives</span>
                                 </label>
-                                <label class="inline-flex items-center">
+                                <label class="inline-flex items-center bg-white px-3 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors">
                                     <input type="checkbox" name="forward" value="1"
                                         class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                                     <span class="ml-2 text-sm text-gray-700">Forward to user/s</span>
@@ -247,9 +253,9 @@
                             <!-- Buttons -->
                             <div class="flex items-center space-x-4">
                                 <a href="{{ route('documents.index') }}"
-                                    class="text-sm text-gray-700 hover:text-gray-500 transition-colors">Cancel</a>
+                                    class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">Cancel</a>
                                 <button type="submit"
-                                    class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                                    class="inline-flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none"
                                         viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
