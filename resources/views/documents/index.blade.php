@@ -277,7 +277,7 @@
                     <!-- Tabbed Navigation -->
                     <div class="bg-white border-b border-blue-200">
                         <div class="p-6 pb-0">
-                            <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center justify-between mb-8">
                                 <div class="flex items-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600 mr-2" fill="none"
                                         viewBox="0 0 24 24" stroke="currentColor">
@@ -286,309 +286,208 @@
                                     </svg>
                                     <h2 class="text-lg font-semibold text-gray-800">Document Management</h2>
                                 </div>
-                                <div class="flex items-center space-x-2">
+                                {{-- <div class="flex items-center space-x-2">
                                     <span class="text-sm text-gray-500">{{ $documents->total() }} total documents</span>
 
+                                </div> --}}
+                            </div>
+                                    <!-- Unified Document Counter -->
+                            <div class="flex flex-wrap items-center gap-2 mb-3">
+                                <!-- Total Documents -->
+                                <div class="flex items-center space-x-2 bg-blue-50 px-3 py-1.5 rounded-lg cursor-pointer hover:bg-blue-100 transition-colors"
+                                     onclick="filterDocumentsByStatus('all')"
+                                     title="Show all documents">
+                                    <svg class="h-4 w-4 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    <span class="text-sm font-medium text-blue-700">Total: {{ $documents->total() }}</span>
                                 </div>
-                            </div>
-                            <!-- Tab Navigation -->
-                            <div class="flex space-x-1 bg-blue-50 p-1 rounded-lg mb-3">
-                                <button onclick="switchTab('all-documents')" id="tab-all-documents"
-                                    class="tab-button flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors active-tab">
-                                    <div class="flex items-center justify-center space-x-2">
-                                        <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+
+                                @php
+                                    $statusIcons = [
+                                        'pending' => 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
+                                        'forwarded' => 'M13 7l5 5m0 0l-5 5m5-5H6',
+                                        'received' => 'M5 13l4 4L19 7',
+                                        'approved' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
+                                        'rejected' => 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
+                                        'recalled' => 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15',
+                                        'archived' => 'M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4'
+                                    ];
+
+                                    $statusColors = [
+                                        'pending' => ['bg' => 'bg-yellow-50', 'text' => 'text-yellow-600'],
+                                        'forwarded' => ['bg' => 'bg-indigo-50', 'text' => 'text-indigo-600'],
+                                        'received' => ['bg' => 'bg-green-50', 'text' => 'text-green-600'],
+                                        'approved' => ['bg' => 'bg-emerald-50', 'text' => 'text-emerald-600'],
+                                        'rejected' => ['bg' => 'bg-red-50', 'text' => 'text-red-600'],
+                                        'recalled' => ['bg' => 'bg-purple-50', 'text' => 'text-purple-600'],
+                                        'archived' => ['bg' => 'bg-gray-50', 'text' => 'text-gray-600']
+                                    ];
+
+                                    // Get document counts for each status
+                                    $documentCounts = [
+                                        'pending' => $documents->filter(fn($doc) => strtolower($doc->status?->status) === 'pending')->count(),
+                                        'forwarded' => $documents->filter(fn($doc) => strtolower($doc->status?->status) === 'forwarded')->count(),
+                                        'received' => $documents->filter(fn($doc) => strtolower($doc->status?->status) === 'received')->count(),
+                                        'approved' => $documents->filter(fn($doc) => strtolower($doc->status?->status) === 'complete')->count(),
+                                        'rejected' => $documents->filter(fn($doc) => strtolower($doc->status?->status) === 'rejected')->count(),
+                                        'recalled' => $documents->filter(fn($doc) => strtolower($doc->status?->status) === 'recalled')->count(),
+                                        'archived' => $documents->filter(fn($doc) => strtolower($doc->status?->status) === 'archived')->count()
+                                    ];
+                                @endphp
+
+                                <!-- Status Badges - Always Show All -->
+                                @foreach($documentCounts as $status => $count)
+                                    <div
+                                        class="flex items-center space-x-2 border border-gray-200/80 hover:border-{{ explode('-', $statusColors[$status]['text'])[1] }}-400/50 transition-colors px-3 py-1.5 rounded-lg cursor-pointer hover:bg-gray-50"
+                                        onclick="filterDocumentsByStatus('{{ $status }}')"
+                                        data-status="{{ $status }}"
+                                    >
+                                        <svg class="h-4 w-4 {{ $statusColors[$status]['text'] }}/75" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="{{ $statusIcons[$status] }}" />
                                         </svg>
-                                        <span>All Documents</span>
-                                        <span class="bg-white/80 text-blue-700 px-2 py-0.5 rounded-full text-xs font-semibold" id="all-count">
-                                            @php
-                                                $regularCount = $documents->filter(function($document) {
-                                                    $status = $document->status?->status ? strtolower($document->status->status) : '';
-                                                    return !in_array($status, ['rejected']);
-                                                })->count();
-                                            @endphp
-                                            {{ $regularCount }}
-                                        </span>
+                                        <span class="text-sm font-medium text-gray-600">{{ ucfirst($status) }}: <span class="{{ $statusColors[$status]['text'] }}">{{ $count }}</span></span>
                                     </div>
-                                </button>
-                                <button onclick="switchTab('rejected-documents')" id="tab-rejected-documents"
-                                    class="tab-button flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors">
-                                    <div class="flex items-center justify-center space-x-2">
-                                        <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                                        </svg>
-                                        <span>Rejected Documents</span>
-                                        <span class="bg-white/80 text-red-700 px-2 py-0.5 rounded-full text-xs font-semibold" id="rejected-count">
-                                            @php
-                                                $rejectedCount = $documents->filter(function($document) {
-                                                    $status = $document->status?->status ? strtolower($document->status->status) : '';
-                                                    return in_array($status, ['rejected']);
-                                                })->count();
-                                            @endphp
-                                            {{ $rejectedCount }}
-                                        </span>
-                                    </div>
-                                </button>
+                                @endforeach
                             </div>
                         </div>
                     </div>
 
-                    <!-- Tab Content Areas -->
-                    <div id="all-documents-content" class="tab-content active">
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <thead>
-                                    <tr>
-                                        <th class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200 w-12">#</th>
-                                        <th class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">Title</th>
-                                        <th class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">Uploader</th>
-                                        <th class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">Status & Workflow</th>
-                                        <th class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">Tracking</th>
-                                        <th class="bg-white px-6 py-3 text-center text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200 w-24">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
+                    <!-- Unified Document List -->
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead>
+                                <tr>
+                                    <th class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200 w-12">#</th>
+                                    <th class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">Title</th>
+                                    <th class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">Uploader</th>
+                                    <th class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">Status & Workflow</th>
+                                    <th class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">Tracking</th>
+                                    <th class="bg-white px-6 py-3 text-center text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200 w-24">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                @php
+                                    $counter = ($documents->currentPage() - 1) * $documents->perPage() + 1;
+                                @endphp
+                                @forelse ($documents as $document)
                                     @php
-                                        $counter = ($documents->currentPage() - 1) * $documents->perPage() + 1;
-                                        $regularDocuments = $documents->filter(function($document) {
-                                            $status = $document->status?->status ? strtolower($document->status->status) : '';
-                                            return !in_array($status, ['rejected']);
-                                        });
-                                    @endphp
-                                    @forelse ($regularDocuments as $document)
-                                        <tr class="hover:bg-gray-50 transition-colors">
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500">{{ $counter++ }}</td>
-                                            <td class="px-6 py-4">
-                                                <div class="text-sm font-medium text-gray-900 truncate">{{ $document->title }}</div>
-                                            </td>
-                                            <td class="px-6 py-4">
-                                                <div class="flex flex-col space-y-2">
-                                                    <div class="flex items-center">
-                                                        <div class="flex-shrink-0 h-6 w-6 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-sm">
-                                                            {{ $document->user?->first_name ? substr($document->user->first_name, 0, 1) : 'N' }}
-                                                        </div>
-                                                        <div class="ml-2 text-sm text-gray-700 font-medium truncate">
-                                                            {{ ($document->user?->first_name ?? 'Unknown') . ' ' . ($document->user?->last_name ?? 'User') }}
-                                                        </div>
-                                                    </div>
-                                                    @if($document->transaction?->fromOffice)
-                                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 self-start">
-                                                            {{ $document->transaction?->fromOffice?->name }}
-                                                        </span>
-                                                    @endif
-                                                </div>
-                                            </td>
-                                            <td class="px-6 py-4">
-                                                <div class="flex flex-col space-y-1.5">
-                                                    @php
-                                                        $statusColor = 'gray';
-                                                        $status = $document->status?->status ? strtolower($document->status->status) : '';
+                                        $status = $document->status?->status ? strtolower($document->status->status) : '';
+                                        $isRejected = in_array($status, ['rejected']);
+                                        $statusColor = 'gray';
 
-                                                        if ($status == 'approved') {
-                                                            $statusColor = 'emerald';
-                                                        } elseif ($status == 'pending') {
-                                                            $statusColor = 'amber';
-                                                        } elseif ($status == 'forwarded') {
-                                                            $statusColor = 'blue';
-                                                        } elseif ($status == 'recalled') {
-                                                            $statusColor = 'purple';
-                                                        } elseif ($status == 'uploaded') {
-                                                            $statusColor = 'indigo';
-                                                        }
-                                                    @endphp
-                                                    <div class="flex items-center space-x-2">
-                                                        <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-{{ $statusColor }}-100 text-{{ $statusColor }}-800">
-                                                            {{ $document->status?->status ?? 'N/A' }}
-                                                        </span>
-                                                    </div>
-                                                    <div class="flex items-center text-xs text-gray-500">
-                                                        <span class="font-medium mr-1">Recipients:</span>
-                                                        @if (isset($documentRecipients[$document->id]) && count($documentRecipients[$document->id]) > 0)
-                                                            <span class="truncate max-w-xs">
-                                                                @foreach ($documentRecipients[$document->id] as $recipient)
-                                                                    {{ $recipient['name'] }}@if (!$loop->last), @endif
-                                                                @endforeach
-                                                            </span>
-                                                        @else
-                                                            <span class="italic">No recipients</span>
-                                                        @endif
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td class="px-6 py-4">
-                                                <div class="flex flex-col space-y-1.5">
-                                                    <div class="text-xs text-gray-500 space-y-1">
-                                                        <div>
-                                                            <span class="font-medium">Created:</span>
-                                                            {{ $document->created_at->format('M d, Y H:i') }}
-                                                        </div>
-                                                        <div>
-                                                            <span class="font-medium">Updated:</span>
-                                                            {{ $document->updated_at->format('M d, Y H:i') }}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td class="px-6 py-4 text-center">
-                                                <div class="flex justify-center space-x-2">
-                                                    @include('documents.partials.document-actions', ['document' => $document])
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="6" class="px-6 py-4">
-                                                <div class="flex flex-col items-center justify-center py-12 border-2 border-dashed border-gray-200 rounded-lg bg-gray-50/50 mx-4 my-6">
-                                                    <svg class="h-12 w-12 text-gray-400 mb-4" xmlns="http://www.w3.org/2000/svg"
-                                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                                    </svg>
-                                                    <p class="text-gray-900 font-medium text-lg mb-2">No documents found</p>
-                                                    <p class="text-gray-500 text-base">Try adjusting your search criteria or create a new document.</p>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                                        if ($status == 'approved') {
+                                            $statusColor = 'emerald';
+                                        } elseif ($status == 'pending') {
+                                            $statusColor = 'amber';
+                                        } elseif ($status == 'forwarded') {
+                                            $statusColor = 'blue';
+                                        } elseif ($status == 'recalled') {
+                                            $statusColor = 'purple';
+                                        } elseif ($status == 'uploaded') {
+                                            $statusColor = 'indigo';
+                                        } elseif ($status == 'rejected') {
+                                            $statusColor = 'red';
+                                        }
 
-                    <!-- Rejected Documents Tab -->
-                    <div id="rejected-documents-content" class="tab-content hidden">
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <thead>
-                                    <tr>
-                                        <th class="bg-white px-6 py-3 text-left text-xs font-medium text-red-700 uppercase tracking-wider border-b border-red-200">No</th>
-                                        <th class="bg-white px-6 py-3 text-left text-xs font-medium text-red-700 uppercase tracking-wider border-b border-red-200">Title</th>
-                                        <th class="bg-white px-6 py-3 text-left text-xs font-medium text-red-700 uppercase tracking-wider border-b border-red-200">Uploader</th>
-                                        <th class="bg-white px-6 py-3 text-left text-xs font-medium text-red-700 uppercase tracking-wider border-b border-red-200">Status</th>
-                                        <th class="bg-white px-6 py-3 text-left text-xs font-medium text-red-700 uppercase tracking-wider border-b border-red-200">Rejected By</th>
-                                        <th class="bg-white px-6 py-3 text-left text-xs font-medium text-red-700 uppercase tracking-wider border-b border-red-200">Remarks</th>
-                                        <th class="bg-white px-6 py-3 text-left text-xs font-medium text-red-700 uppercase tracking-wider border-b border-red-200">Tracking</th>
-                                        <th class="bg-white px-6 py-3 text-center text-xs font-medium text-red-700 uppercase tracking-wider border-b border-red-200">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
-                                    @php
-                                        $rejectedCounter = ($documents->currentPage() - 1) * $documents->perPage() + 1;
-                                        $rejectedDocuments = $documents->filter(function($document) {
-                                            $status = $document->status?->status ? strtolower($document->status->status) : '';
-                                            return in_array($status, ['rejected']);
-                                        });
+                                        $latestWorkflow = $isRejected ? $document->documentWorkflow()
+                                            ->where('status', 'rejected')
+                                            ->latest()
+                                            ->first() : null;
                                     @endphp
-                                    @forelse ($rejectedDocuments as $document)
-                                        <tr class="hover:bg-red-50 transition-colors border-l-4 border-red-300">
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $rejectedCounter++ }}</td>
-                                            <td class="px-6 py-4">
-                                                <div class="text-sm font-medium text-gray-900">{{ $document->title }}</div>
-                                                <div class="text-xs text-gray-500 mt-1">
-                                                    <span class="font-medium">From:</span>
-                                                    {{ $document->transaction?->fromOffice?->name ?? $document->user?->offices?->first()?->name ?? 'N/A' }}
-                                                </div>
-                                            </td>
-                                            <td class="px-6 py-4">
+                                    <tr class="hover:bg-gray-50 transition-colors">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500">{{ $counter++ }}</td>
+                                        <td class="px-6 py-4">
+                                            <div class="text-sm font-medium text-gray-900 truncate">{{ $document->title }}</div>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <div class="flex flex-col space-y-2">
                                                 <div class="flex items-center">
-                                                    <div class="flex-shrink-0 h-8 w-8 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center text-white font-bold shadow-sm">
+                                                    <div class="flex-shrink-0 h-6 w-6 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-sm">
                                                         {{ $document->user?->first_name ? substr($document->user->first_name, 0, 1) : 'N' }}
                                                     </div>
-                                                    <div class="ml-3 text-sm text-gray-700">
+                                                    <div class="ml-2 text-sm text-gray-700 font-medium truncate">
                                                         {{ ($document->user?->first_name ?? 'Unknown') . ' ' . ($document->user?->last_name ?? 'User') }}
                                                     </div>
                                                 </div>
-                                            </td>
-                                            <td class="px-6 py-4">
-                                                <div class="flex flex-col space-y-2">
-                                                    <!-- Status Badge -->
-                                                    <span class="inline-flex items-center px-2.5 py-1 text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800 self-start">
-                                                        {{ $document->status?->status ?? 'Rejected' }}
+                                                @if($document->transaction?->fromOffice)
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-{{ $isRejected ? 'red' : 'blue' }}-100 text-{{ $isRejected ? 'red' : 'blue' }}-800 self-start">
+                                                        {{ $document->transaction?->fromOffice?->name }}
                                                     </span>
-
-                                                    <!-- Recipients -->
-                                                    <div class="flex items-center text-xs text-gray-600 space-x-1">
-                                                        <span class="font-medium">To:</span>
-                                                        <span>
-                                                        @if (isset($documentRecipients[$document->id]) && count($documentRecipients[$document->id]) > 0)
-                                                            @foreach ($documentRecipients[$document->id] as $recipient)
-                                                                <span class="inline-flex items-center">
-                                                                    {{ $recipient['name'] }}@if (!$loop->last), @endif
-                                                                </span>
-                                                            @endforeach
-                                                        @else
-                                                            N/A
-                                                        @endif
-                                                        </span>
-                                                    </div>
+                                                @endif
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <div class="flex flex-col space-y-2">
+                                                <!-- Status Badge -->
+                                                <div class="flex items-center space-x-2">
+                                                    <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-{{ $statusColor }}-100 text-{{ $statusColor }}-800">
+                                                        {{ $document->status?->status ?? 'N/A' }}
+                                                    </span>
                                                 </div>
-                                            </td>
-                                            <td class="px-6 py-4">
-                                                @php
-                                                    $latestWorkflow = $document->documentWorkflow()
-                                                        ->where('status', 'rejected')
-                                                        ->latest()
-                                                        ->first();
-                                                @endphp
-                                                <div class="flex items-center">
-                                                    @if($latestWorkflow && $latestWorkflow->user)
-                                                        <div class="flex-shrink-0 h-8 w-8 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center text-white font-bold shadow-sm">
-                                                            {{ $latestWorkflow->user->first_name ? substr($latestWorkflow->user->first_name, 0, 1) : 'N' }}
-                                                        </div>
-                                                        <div class="ml-3 text-sm text-gray-700">
-                                                            {{ ($latestWorkflow->user->first_name ?? 'Unknown') . ' ' . ($latestWorkflow->user->last_name ?? 'User') }}
-                                                        </div>
+
+                                                <!-- Recipients -->
+                                                <div class="flex items-center text-xs text-gray-500">
+                                                    <span class="font-medium mr-1">Recipients:</span>
+                                                    @if (isset($documentRecipients[$document->id]) && count($documentRecipients[$document->id]) > 0)
+                                                        <span class="truncate max-w-xs">
+                                                            @foreach ($documentRecipients[$document->id] as $recipient)
+                                                                {{ $recipient['name'] }}@if (!$loop->last), @endif
+                                                            @endforeach
+                                                        </span>
                                                     @else
-                                                        <span class="text-sm text-gray-500">N/A</span>
+                                                        <span class="italic">No recipients</span>
                                                     @endif
                                                 </div>
-                                            </td>
-                                            <td class="px-6 py-4">
-                                                @if ($latestWorkflow && $latestWorkflow->remarks)
-                                                    <div class="text-sm text-gray-600">
-                                                        {{ $latestWorkflow->remarks }}
+
+                                                <!-- Rejection Information -->
+                                                @if($isRejected && $latestWorkflow && $latestWorkflow->remarks)
+                                                    <div class="mt-1">
+                                                        <span class="text-xs text-red-600"><b>Remarks:</b> {{ $latestWorkflow->remarks }}</span>
                                                     </div>
-                                                @else
-                                                    <span class="text-sm text-gray-500">No remarks</span>
                                                 @endif
-                                            </td>
-                                            <td class="px-6 py-4">
-                                                <div class="flex flex-col space-y-1.5">
-                                                    <div class="text-xs text-gray-500 space-y-1">
-                                                        <div>
-                                                            <span class="font-medium">Rejected:</span>
-                                                            {{ $document->updated_at->format('M d, Y H:i') }}
-                                                        </div>
-                                                        <div>
-                                                            <span class="font-medium">Last Updated:</span>
-                                                            {{ $latestWorkflow ? $latestWorkflow->updated_at->format('M d, Y H:i') : 'N/A' }}
-                                                        </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <div class="flex flex-col space-y-1.5">
+                                                <div class="text-xs text-gray-500 space-y-1">
+                                                    <div>
+                                                        <span class="font-medium">Created:</span>
+                                                        {{ $document->created_at->format('M d, Y H:i') }}
+                                                    </div>
+                                                    <div>
+                                                        <span class="font-medium">Updated:</span>
+                                                        {{ $document->updated_at->format('M d, Y H:i') }}
                                                     </div>
                                                 </div>
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 text-center">
+                                            <div class="flex justify-center space-x-2">
                                                 @include('documents.partials.document-actions', ['document' => $document])
-                                            </td>
-                                        </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="8" class="px-6 py-4">
-                                                <div class="flex flex-col items-center justify-center py-12 border-2 border-dashed border-red-100 rounded-lg bg-red-50/50 mx-4 my-6">
-                                                    <svg class="h-12 w-12 text-red-300 mb-4" xmlns="http://www.w3.org/2000/svg"
-                                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                                    </svg>
-                                                    <p class="text-gray-900 font-medium text-lg mb-2">No rejected documents</p>
-                                                    <p class="text-gray-500 text-base">Great! You have no rejected documents at this time.</p>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="6" class="px-6 py-4">
+                                            <div class="flex flex-col items-center justify-center py-12 border-2 border-dashed border-gray-200 rounded-lg bg-gray-50/50 mx-4 my-6">
+                                                <svg class="h-12 w-12 text-gray-400 mb-4" xmlns="http://www.w3.org/2000/svg"
+                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                </svg>
+                                                <p class="text-gray-900 font-medium text-lg mb-2">No documents found</p>
+                                                <p class="text-gray-500 text-base">Try adjusting your search criteria or create a new document.</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
                     </div>
+
+
 
                 <!-- Pagination for both tabs -->
                 <div class="p-6 border-t border-gray-200">
@@ -705,54 +604,6 @@
     </div>
 
     <script>
-        // Tab switching functionality
-        function switchTab(tabName) {
-            // Update URL and reload the page with the new tab
-            const url = new URL(window.location.href);
-            url.searchParams.set('tab', tabName === 'all-documents' ? 'all' : 'rejected');
-            // Force page reload to get fresh data for the selected tab
-            window.location.href = url.toString();
-        }
-
-        // Set active tab based on URL parameter when page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const activeTab = urlParams.get('tab') === 'rejected' ? 'rejected-documents' : 'all-documents';
-
-            // Hide all tab contents
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.add('hidden');
-                content.classList.remove('active');
-            });
-
-            // Remove active class from all tabs
-            document.querySelectorAll('.tab-button').forEach(button => {
-                button.classList.remove('active-tab');
-            });
-
-            // Show selected tab content
-            document.getElementById(activeTab + '-content').classList.remove('hidden');
-            document.getElementById(activeTab + '-content').classList.add('active');
-
-            // Add active class to selected tab
-            document.getElementById('tab-' + activeTab).classList.add('active-tab');
-
-            // Update counts
-            updateTabCounts();
-        });
-
-        // Update tab counts
-        function updateTabCounts() {
-            const allRows = document.querySelectorAll('#all-documents-content tbody tr:not(.hidden)');
-            const rejectedRows = document.querySelectorAll('#rejected-documents-content tbody tr:not(.hidden)');
-
-            // Count visible rows (excluding "no documents" rows)
-            const allCount = Array.from(allRows).filter(row => !row.querySelector('td[colspan]')).length;
-            const rejectedCount = Array.from(rejectedRows).filter(row => !row.querySelector('td[colspan]')).length;
-
-            document.getElementById('all-count').textContent = allCount;
-            document.getElementById('rejected-count').textContent = rejectedCount;
-        }
 
         // Show contact modal for rejected documents
         function showContactModal(reviewerName, reviewerEmail) {
@@ -1310,6 +1161,22 @@
         .status-badge:hover::before {
             left: 100%;
         }
+
+        /* Animation for row transitions */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
     </style>
 
     <script>
@@ -1357,6 +1224,35 @@
             }
         }
 
+        // Function to filter documents by status
+        function filterDocumentsByStatus(status) {
+            const tableRows = document.querySelectorAll('tbody tr');
+            const badges = document.querySelectorAll('[data-status]');
+
+            // Reset all badges to default state
+            badges.forEach(badge => {
+                const badgeStatus = badge.getAttribute('data-status');
+                if (badgeStatus === status) {
+                    badge.classList.add('bg-gray-50', 'ring-2', 'ring-offset-2', `ring-${badgeStatus === 'approved' ? 'emerald' : badgeStatus === 'pending' ? 'yellow' : badgeStatus === 'rejected' ? 'red' : 'blue'}-500`);
+                } else {
+                    badge.classList.remove('bg-gray-50', 'ring-2', 'ring-offset-2', 'ring-emerald-500', 'ring-yellow-500', 'ring-red-500', 'ring-blue-500');
+                }
+            });
+
+            tableRows.forEach(row => {
+                const statusCell = row.querySelector('td:nth-child(4)'); // Status column
+                if (!statusCell) return;
+
+                const rowStatus = statusCell.textContent.trim().toLowerCase();
+                if (status === 'all' || rowStatus.includes(status.toLowerCase())) {
+                    row.style.display = '';
+                    row.classList.add('animate-fade-in');
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             // Show popup notifications for session messages
             @if(session('success'))
@@ -1366,6 +1262,12 @@
             @if(session('error'))
                 showPopup('{{ session('error') }}', 'error');
             @endif
+
+            // Initialize all status badges with interactive styles
+            const statusBadges = document.querySelectorAll('[data-status]');
+            statusBadges.forEach(badge => {
+                badge.classList.add('cursor-pointer', 'hover:bg-gray-50', 'transition-colors');
+            });
         });
 
         // Function to show popup notifications
