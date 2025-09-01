@@ -18,13 +18,26 @@
                         <p class="text-sm text-gray-500">Documents forwarded to you</p>
                     </div>
                 </div>
-                <div>
-                    <a href="{{ route('documents.index') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-md text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                <div class="flex gap-2">
+                    <a href="{{ route('documents.pending') }}" class="inline-flex items-center px-4 py-2 border border-blue-600 text-sm font-medium rounded-lg text-blue-600 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
                         <svg class="mr-2 -ml-1 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                         </svg>
-                        {{ __('Back to List') }}
+                        {{ __('Go to Pending Actions') }}
                     </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Flow Instructions -->
+        <div class="bg-blue-50 rounded-xl border border-blue-200 p-4">
+            <div class="flex items-start">
+                <svg class="h-6 w-6 text-blue-600 mt-0.5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                    <p class="text-sm text-blue-800 font-medium">Document Flow:</p>
+                    <p class="mt-1 text-sm text-blue-600">Click "Receive Document" to acknowledge receipt. After receiving, documents will appear in your Pending Actions tab where you can process them further. You can access your pending documents anytime through the "Go to Pending Actions" button above.</p>
                 </div>
             </div>
         </div>
@@ -58,109 +71,56 @@
                         <table class="min-w-full divide-y divide-blue-200/60">
                             <thead>
                                 <tr>
-                                    <th class="bg-blue-50/40 px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200/60">Document</th>
-                                    <th class="bg-blue-50/40 px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200/60">Sent By</th>
-                                    <th class="bg-blue-50/40 px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200/60">Status</th>
-                                    <th class="bg-blue-50/40 px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200/60">Date Forwarded</th>
-                                    <th class="bg-blue-50/40 px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200/60">Actions</th>
+                                    <th class="bg-blue-50/40 px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200/60">Document Title</th>
+                                    <th class="bg-blue-50/40 px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200/60">From</th>
+                                    <th class="bg-blue-50/40 px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200/60">Date Sent</th>
+                                    <th class="bg-blue-50/40 px-6 py-3 text-center text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200/60">Action</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-blue-200/60">
                                 @foreach($documents as $document)
                                     <tr class="hover:bg-blue-50/40 transition-colors duration-150">
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="flex items-center">
-                                                <div>
-                                                    <div class="text-sm font-medium text-gray-900">
-                                                        {{ $document->title }}
-                                                    </div>
-                                                    <div class="text-sm text-gray-500">
-                                                        {{ $document->reference_number }}
-                                                    </div>
-                                                </div>
-                                            </div>
+                                        <td class="px-6 py-4">
+                                            <div class="text-sm font-medium text-gray-900">{{ $document->title }}</div>
+                                            @if($document->reference_number)
+                                                <div class="text-sm text-gray-500">{{ $document->reference_number }}</div>
+                                            @endif
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
+                                        <td class="px-6 py-4">
                                             <div class="text-sm text-gray-900">
                                                 {{ $document->transaction->fromOffice->name ?? ($document->user->offices->first()->name ?? 'Admin') }}
                                             </div>
                                             <div class="text-sm text-gray-500">
                                                 {{ $document->user->first_name ?? 'Unknown' }} {{ $document->user->last_name ?? 'Admin' }}
-                                                @if($document->user && $document->user->hasRole('company-admin'))
-                                                    <span class="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100/80 text-blue-700">Admin</span>
-                                                @endif
                                             </div>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            @php
-                                                $statusInfo = DocumentStatusService::getEffectiveStatus($document);
-                                                $statusDisplay = DocumentStatusService::getStatusDisplay($statusInfo['status']);
-                                            @endphp
-
-                                            <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {{ $statusDisplay['bg_class'] }} {{ $statusDisplay['text_class'] }}">
-                                                {{ $statusDisplay['label'] }}
-                                                @if($statusInfo['source'] === 'workflow')
-                                                    <span class="ml-1 text-xs opacity-75">(W)</span>
-                                                @endif
-                                                @if($statusInfo['is_overdue'])
-                                                    <span class="ml-1 text-xs">⚠️</span>
-                                                @endif
-                                            </span>
-
-                                            @if($statusInfo['urgency'])
-                                                <div class="mt-1">
-                                                    <span class="px-2 py-0.5 text-xs rounded-full font-medium
-                                                        @if($statusInfo['urgency'] === 'critical') bg-red-100/80 text-red-700
-                                                        @elseif($statusInfo['urgency'] === 'high') bg-amber-100/80 text-amber-700
-                                                        @elseif($statusInfo['urgency'] === 'medium') bg-yellow-100/80 text-yellow-700
-                                                        @else bg-blue-100/80 text-blue-700
-                                                        @endif">
-                                                        {{ ucfirst($statusInfo['urgency']) }}
-                                                    </span>
-                                                </div>
-                                            @endif
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <td class="px-6 py-4 text-sm text-gray-500">
                                             {{ $document->documentWorkflow->where('recipient_id', auth()->id())->first()?->created_at?->format('M d, Y h:i A') ??
-                                               $document->transaction?->created_at?->format('M d, Y h:i A') ??
                                                $document->created_at->format('M d, Y h:i A') }}
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <a href="{{ route('documents.show', $document->id) }}" class="text-indigo-600 hover:text-indigo-900 mr-3">View</a>
-
+                                        <td class="px-6 py-4 text-center">
                                             @php
-                                                $canReceive = DocumentStatusService::canReceiveDocument($document);
-                                                $statusInfo = DocumentStatusService::getEffectiveStatus($document);
-                                                $canAccessWorkflow = DocumentStatusService::canAccessWorkflow($document);
-                                                $isRecalled = $document->status && $document->status->status === 'recalled';
+                                                $workflow = $document->documentWorkflow->first();
+                                                $isReceived = $workflow && $workflow->status === 'received';
                                             @endphp
 
-                                            @if ($isRecalled)
-                                                <span class="text-red-600 font-semibold">Document Recalled</span>
-                                                <div class="text-xs text-red-500 mt-1">This document has been recalled by the sender</div>
-                                            @elseif ($canReceive && $statusInfo['can_receive'])
-                                                <form method="POST" action="{{ route('documents.receive.confirm', $document->id) }}" class="inline">
+                                            @if($isReceived)
+                                                <span class="inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-medium bg-emerald-50 text-emerald-700">
+                                                    <svg class="w-4 h-4 mr-1.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                    Received, pending actions
+                                                </span>
+                                            @else
+                                                <form action="{{ route('documents.receive.confirm', $document->id) }}" method="POST" class="inline-block">
                                                     @csrf
-                                                    <button type="submit" class="text-green-600 hover:text-green-900 hover:underline mr-3">
-                                                        Receive
+                                                    <button type="submit" class="inline-flex items-center px-3 py-1.5 border border-blue-600 text-sm font-medium rounded-md text-blue-600 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                                                        <svg class="w-4 h-4 mr-1.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                        </svg>
+                                                        Receive Document
                                                     </button>
                                                 </form>
-                                            @elseif($statusInfo['status'] === 'received' && $statusInfo['source'] === 'workflow')
-                                                <span class="text-green-600 font-semibold mr-3">Received</span>
-                                                @if($canAccessWorkflow)
-                                                    <a href="{{ route('documents.workflows') }}" class="text-blue-600 hover:text-blue-900 hover:underline">
-                                                        Access Workflow
-                                                    </a>
-                                                @endif
-                                            @elseif($statusInfo['status'] === 'pending')
-                                                <span class="text-yellow-600 font-semibold">Awaiting Receipt</span>
-                                            @else
-                                                <span class="text-gray-500">{{ ucfirst($statusInfo['status']) }}</span>
-                                                @if($canAccessWorkflow)
-                                                    <a href="{{ route('documents.workflows') }}" class="text-blue-600 hover:text-blue-900 hover:underline ml-3">
-                                                        Access Workflow
-                                                    </a>
-                                                @endif
                                             @endif
                                         </td>
                                     </tr>

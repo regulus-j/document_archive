@@ -84,60 +84,31 @@
                 </div>
             @endif
 
-            <!-- Pending Documents that need to be received first -->
+            <!-- Pending Documents Notice -->
             @if(isset($pendingReceive) && $pendingReceive->count() > 0)
-                <div class="bg-white rounded-xl mb-6 border border-orange-200/80 overflow-hidden">
-                    <div class="bg-gradient-to-r from-orange-50 to-white p-6 border-b border-orange-200/60">
-                        <div class="flex justify-between items-center">
-                            <div class="flex items-center">
-                                <svg class="h-5 w-5 text-orange-600 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.98-.833-2.75 0L4.064 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                                </svg>
-                                <div>
-                                    <h3 class="text-lg font-semibold text-gray-800">Documents Pending Receipt</h3>
-                                    <p class="text-sm text-gray-600">You must receive these documents first before they appear in your workflow.</p>
-                                </div>
-                            </div>
-                            <span class="text-sm text-orange-600 bg-orange-50 py-1 px-3 rounded-full border border-orange-200/60">{{ $pendingReceive->count() }} pending</span>
+                <div class="bg-white rounded-xl mb-6 border-l-4 border-orange-500 border-t border-b border-r border-orange-200/80">
+                    <div class="p-4 flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <p class="text-sm text-gray-600">
+                                <span class="font-medium text-orange-600">{{ $pendingReceive->count() }}</span> document(s) awaiting receipt
+                            </p>
                         </div>
-                    </div>
-                    <div class="p-6">
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Document</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">From</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Sent</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
-                                    @foreach($pendingReceive as $pending)
-                                        <tr>
-                                            <td class="px-6 py-4 whitespace-nowrap">
-                                                <div class="text-sm font-medium text-gray-900">{{ $pending->document->title }}</div>
-                                                <div class="text-sm text-gray-500">{{ $pending->document->reference_number ?? 'No reference' }}</div>
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap">
-                                                <div class="text-sm text-gray-900">{{ $pending->sender->first_name }} {{ $pending->sender->last_name }}</div>
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                {{ $pending->created_at->format('M d, Y h:i A') }}
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap">
-                                                <a href="{{ route('documents.receive.index') }}" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
-                                                    Go to Receive
-                                                </a>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
+                        <a href="{{ route('documents.receive.index') }}" class="inline-flex items-center px-3 py-1.5 border border-orange-600 text-sm font-medium rounded-md text-orange-600 hover:bg-orange-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors">
+                            Go to Receive
+                        </a>
                     </div>
                 </div>
             @endif
+
+            <!-- Workflow Instructions -->
+            <div class="bg-white rounded-xl mb-6 border-l-4 border-blue-500 border-t border-b border-r border-blue-200/80">
+                <div class="p-4 flex items-start space-x-3">
+                    <p class="text-sm text-gray-600">
+                        <span class="font-medium text-blue-600">Document Tracking:</span>
+                        This page shows the tracking status of all documents in the workflow. Use the "View Details" button to see complete information about any document. For actions like receiving or reviewing documents, please visit the respective pages from the navigation menu.
+                    </p>
+                </div>
+            </div>
 
             <!-- Main Content -->
             <div class="bg-white rounded-xl overflow-hidden border border-blue-200/80 transition-all duration-300 hover:border-blue-300/80">
@@ -246,47 +217,8 @@
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm">
                                                 <div class="flex flex-wrap space-x-2">
-                                                    @if($workflow->sender_id != auth()->id())
-                                                        {{-- Only show receive/review options if user is not the sender --}}
-                                                        @if($workflow->status === 'pending')
-                                                            <a href="{{ route('documents.receive', $workflow->id) }}"
-                                                                class="text-green-500 hover:underline mr-2">Receive</a>
-                                                        @endif
-
-                                                        @if($workflow->status === 'received')
-                                                            <a href="{{ route('documents.review', $workflow->id) }}"
-                                                                class="text-green-500 hover:underline mr-2">Review</a>
-                                                        @endif
-
-                                                        {{-- @if($workflow->status === 'returned')
-                                                            <span class="text-amber-500 italic">Returned to uploader</span>
-                                                        @endif --}}
-
-                                                        {{-- @if($workflow->status === 'rejected')
-                                                            <span class="text-red-500 italic">Rejected</span>
-                                                        @endif --}}
-
-                                                        {{-- @if($workflow->status === 'referred')
-                                                            <span class="text-blue-500 italic">Referred to others</span>
-                                                        @endif --}}
-
-                                                        {{-- @if($workflow->status === 'forwarded')
-                                                            <span class="text-purple-500 italic">Forwarded</span>
-                                                        @endif --}}
-                                                    {{-- @else --}}
-                                                        {{-- Sender can only view document details --}}
-                                                        {{-- <span class="text-gray-500 italic">Forwarded by you</span> --}}
-                                                    @endif
-
-                                                    {{-- Everyone can view document details --}}
                                                     <a href="{{ route('documents.show', $workflow->document_id) }}"
-                                                        class="text-blue-500 hover:underline ml-2">View</a>
-
-                                                    {{-- Only senders can edit their documents --}}
-                                                    @if($workflow->sender_id == auth()->id())
-                                                        <a href="{{ route('documents.edit', $workflow->document_id) }}"
-                                                            class="text-yellow-500 hover:underline ml-2">Edit</a>
-                                                    @endif
+                                                        class="text-blue-500 hover:underline">View Details</a>
                                                 </div>
                                             </td>
                                         </tr>

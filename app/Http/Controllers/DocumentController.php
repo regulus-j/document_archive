@@ -93,6 +93,56 @@ class DocumentController extends Controller
         return view('documents.index', compact('documents', 'auditLogs', 'documentRecipients'));
     }
 
+    /**
+     * Display pending documents (sent but not received, or received but not actioned)
+     */
+    public function showPending(Request $request): View
+    {
+        $currentUserId = auth()->id();
+        $tab = $request->query('tab', 'received'); // Default to received tab
+
+        // Base query with common relations
+        $baseQuery = Document::with(['user', 'status', 'transaction.fromOffice', 'transaction.toOffice', 'documentWorkflow']);
+
+        if ($tab === 'received') {
+            // Get documents that have been received but not yet actioned by current user
+            $documents = $baseQuery->whereHas('documentWorkflow', function($query) use ($currentUserId) {
+                $query->where('recipient_id', $currentUserId)
+                      ->where('status', 'received');
+            });
+        } else {
+            // Get documents sent by current user that have been received but not yet actioned by recipients
+            $documents = $baseQuery->whereHas('documentWorkflow', function($query) use ($currentUserId) {
+                $query->where('sender_id', $currentUserId)
+                      ->where('status', 'received');
+            });
+        }
+
+        // Common status filter
+        $documents = $documents->whereHas('status', function($q) {
+                $q->whereNotIn('status', ['complete', 'archived', 'recalled']);
+            })
+            ->latest()
+            ->paginate(10);
+
+        // Get document recipients for display
+        $documentRecipients = [];
+        foreach ($documents as $doc) {
+            $documentRecipients[$doc->id] = $doc->documentWorkflow()
+                ->with(['recipient:id,first_name,last_name', 'sender:id,first_name,last_name'])
+                ->get()
+                ->map(function ($workflow) {
+                    return [
+                        'name' => optional($workflow->recipient)->first_name . ' ' . optional($workflow->recipient)->last_name,
+                        'sender' => optional($workflow->sender)->first_name . ' ' . optional($workflow->sender)->last_name,
+                        'received_at' => $workflow->received_at,
+                        'received' => $workflow->status === 'received',
+                        'purpose' => $workflow->purpose ?? null
+                    ];
+                });
+        }        return view('documents.pending', compact('documents', 'documentRecipients', 'tab'));
+    }
+
     public function showArchive(Request $request): View
     {
         $search = $request->input('search');

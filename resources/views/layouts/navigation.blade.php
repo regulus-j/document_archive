@@ -10,13 +10,13 @@
                         <span class="ml-2 text-gray-900 text-lg font-semibold">DocTrack</span>
                     </a>
                 </div>
-                
+
                 <!-- Desktop Navigation Links -->
                 <div class="hidden lg:block">
-                    <div class="ml-10 flex items-baseline space-x-4">   
+                    <div class="ml-10 flex items-baseline space-x-4">
                         <!-- Primary Navigation -->
-                        <x-nav-link 
-                            :href="route('dashboard')" 
+                        <x-nav-link
+                            :href="route('dashboard')"
                             :active="request()->routeIs('dashboard') || request()->routeIs('admin.dashboard')"
                             class="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50">
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -26,8 +26,8 @@
                         </x-nav-link>
 
                         @can('document-list')
-                            <x-nav-link 
-                                :href="route('documents.index')" 
+                            <x-nav-link
+                                :href="route('documents.index')"
                                 :active="request()->routeIs('documents.index')"
                                 class="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -37,8 +37,8 @@
                             </x-nav-link>
                         @endcan
 
-                        <x-nav-link 
-                            :href="route('reports.index')" 
+                        <x-nav-link
+                            :href="route('reports.index')"
                             :active="request()->routeIs('reports.index')"
                             class="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50">
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -77,6 +77,14 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-2m-4-1v8m0 0l-4-4m4 4l4-4"></path>
                                             </svg>
                                             {{ __('Receive') }}
+                                        </div>
+                                    </x-dropdown-link>
+                                    <x-dropdown-link :href="route('documents.pending')" class="hover:bg-blue-50 hover:text-blue-600">
+                                        <div class="flex items-center">
+                                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                            </svg>
+                                            {{ __('Pending') }}
                                         </div>
                                     </x-dropdown-link>
                                     <x-dropdown-link :href="route('documents.archive')" class="hover:bg-blue-50 hover:text-blue-600">
@@ -220,17 +228,16 @@
         <div class="py-2 bg-white border-t border-gray-200">
             <!-- Mobile Nav Links -->
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">{{ __('Dashboard') }}</x-responsive-nav-link>
-            
-            @can('document-list')
+
+                @can('document-list')
                 <div class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mt-2">Documents</div>
                 <x-responsive-nav-link :href="route('documents.index')" :active="request()->routeIs('documents.index')">{{ __('View Documents') }}</x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('documents.create')" :active="request()->routeIs('documents.create')">{{ __('Upload Document') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('documents.pending')" :active="request()->routeIs('documents.pending')">{{ __('Pending Documents') }}</x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('documents.receive.index')" :active="request()->routeIs('documents.receive.index')">{{ __('Receive Documents') }}</x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('documents.archive')" :active="request()->routeIs('documents.archive')">{{ __('Archives') }}</x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('documents.workflows')" :active="request()->routeIs('documents.workflows')">{{ __('Workflows') }}</x-responsive-nav-link>
-            @endcan
-
-            <div class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mt-2">Reports</div>
+            @endcan            <div class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mt-2">Reports</div>
             <x-responsive-nav-link :href="route('reports.index')" :active="request()->routeIs('reports.index')">{{ __('View Reports') }}</x-responsive-nav-link>
 
             @if(auth()->user()->isSuperAdmin())
@@ -258,7 +265,7 @@
                     <x-responsive-nav-link :href="route('plans.select')">{{ __('Subscription') }}</x-responsive-nav-link>
                 @endif
                 <x-responsive-nav-link :href="route('userManual.manual', auth()->id())">{{ __('Manual') }}</x-responsive-nav-link>
-                
+
                 <form method="POST" action="{{ route('logout') }}" class="mt-2">
                     @csrf
                     <x-responsive-nav-link :href="route('logout')" onclick="event.preventDefault(); this.closest('form').submit();" class="text-red-600 hover:text-red-800 hover:bg-red-50">
