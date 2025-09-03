@@ -44,7 +44,7 @@ class CompanyController extends Controller
                     ->with('error', 'You already own a company. Each user can only own one company.');
             }
         }
-        
+
         // Show the form for creating a new company.
         return view('companies.create');
     }
@@ -53,7 +53,7 @@ class CompanyController extends Controller
     {
         // Use custom validation rules from the model to enforce one company per user
         $request->validate(CompanyAccount::rules());
-        
+
         $validated = $request->only([
             'user_id',
             'company_name',
@@ -70,7 +70,7 @@ class CompanyController extends Controller
             'zip_code' => 'required|string|max:20',
             'country'  => 'required|string|max:255',
             ]);
-            
+
             // Update the company with address details
             CompanyAccount::create($validated);
             $company = CompanyAccount::latest()->first();
@@ -93,12 +93,16 @@ class CompanyController extends Controller
 
     public function edit(CompanyAccount $company)
     {
-        if(auth()->user()->isAdmin())
-        {
-           $users = User::paginate(10);
+        // Get the authenticated user
+        $authUser = auth()->guard('web')->user();
+
+        // Initialize $users based on role
+        if($authUser && $authUser->isAdmin()) {
+            $users = User::paginate(10);
+        } else {
+            $users = $company->employees()->paginate(10);
         }
 
-        $users = $company->employees()->paginate(10);
         // Show the form for editing the specified company.
         return view('companies.edit', compact('company', 'users'));
     }
@@ -108,7 +112,7 @@ class CompanyController extends Controller
         // Use custom validation rules from the model to enforce one company per user
         // Passing the company ID to exclude the current company from validation
         $request->validate(CompanyAccount::rules($company->id));
-        
+
         $validated = $request->only([
             'user_id',
             'company_name',
@@ -118,7 +122,7 @@ class CompanyController extends Controller
         ]);
 
         $company->update($validated);
-        
+
         // Check if the current user is an admin or the company owner
         if (auth()->user()->isSuperAdmin()) {
             return redirect()->route('companies.index')->with('success', 'Company updated successfully.');
