@@ -304,32 +304,39 @@
                                 </div>
 
                                 @php
-                                    $statusIcons = [
-                                        'pending' => 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
-                                        'forwarded' => 'M13 7l5 5m0 0l-5 5m5-5H6',
-                                        'received' => 'M5 13l4 4L19 7',
-                                        'approved' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
-                                        'rejected' => 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
-                                        'recalled' => 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15',
-                                        'archived' => 'M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4'
-                                    ];
+                    $statusIcons = [
+                        'pending' => 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
+                        'forwarded' => 'M13 7l5 5m0 0l-5 5m5-5H6',
+                        'received' => 'M5 13l4 4L19 7',
+                        'approved' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
+                        'acknowledged' => 'M5 13l4 4L19 7M9 5h7a2 2 0 012 2v10a2 2 0 01-2 2H9a2 2 0 01-2-2V7a2 2 0 012-2z',
+                        'commented' => 'M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z',
+                        'returned' => 'M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6',
+                        'rejected' => 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
+                        'recalled' => 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15',
+                        'archived' => 'M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4'
+                    ];
 
-                                    $statusColors = [
-                                        'pending' => ['bg' => 'bg-yellow-50', 'text' => 'text-yellow-600'],
-                                        'forwarded' => ['bg' => 'bg-indigo-50', 'text' => 'text-indigo-600'],
-                                        'received' => ['bg' => 'bg-green-50', 'text' => 'text-green-600'],
-                                        'approved' => ['bg' => 'bg-emerald-50', 'text' => 'text-emerald-600'],
-                                        'rejected' => ['bg' => 'bg-red-50', 'text' => 'text-red-600'],
-                                        'recalled' => ['bg' => 'bg-purple-50', 'text' => 'text-purple-600'],
-                                        'archived' => ['bg' => 'bg-gray-50', 'text' => 'text-gray-600']
-                                    ];
-
-                                    // Get document counts for each status
+                    $statusColors = [
+                        'pending' => ['bg' => 'bg-yellow-50', 'text' => 'text-yellow-600'],
+                        'forwarded' => ['bg' => 'bg-indigo-50', 'text' => 'text-indigo-600'],
+                        'received' => ['bg' => 'bg-green-50', 'text' => 'text-green-600'],
+                        'approved' => ['bg' => 'bg-emerald-50', 'text' => 'text-emerald-600'],
+                        'acknowledged' => ['bg' => 'bg-blue-50', 'text' => 'text-blue-600'],
+                        'commented' => ['bg' => 'bg-cyan-50', 'text' => 'text-cyan-600'],
+                        'returned' => ['bg' => 'bg-orange-50', 'text' => 'text-orange-600'],
+                        'rejected' => ['bg' => 'bg-red-50', 'text' => 'text-red-600'],
+                        'recalled' => ['bg' => 'bg-purple-50', 'text' => 'text-purple-600'],
+                        'archived' => ['bg' => 'bg-gray-50', 'text' => 'text-gray-600']
+                    ];                                    // Get document counts for each status
                                     $documentCounts = [
                                         'pending' => $documents->filter(fn($doc) => strtolower($doc->status?->status) === 'pending')->count(),
                                         'forwarded' => $documents->filter(fn($doc) => strtolower($doc->status?->status) === 'forwarded')->count(),
                                         'received' => $documents->filter(fn($doc) => strtolower($doc->status?->status) === 'received')->count(),
                                         'approved' => $documents->filter(fn($doc) => strtolower($doc->status?->status) === 'complete')->count(),
+                                        'acknowledged' => $documents->filter(fn($doc) => in_array(strtolower($doc->status?->status), ['acknowledged', 'acknowledge']))->count(),
+                                        'commented' => $documents->filter(fn($doc) => strtolower($doc->status?->status) === 'commented')->count(),
+                                        'returned' => $documents->filter(fn($doc) => strtolower($doc->status?->status) === 'returned')->count(),
                                         'rejected' => $documents->filter(fn($doc) => strtolower($doc->status?->status) === 'rejected')->count(),
                                         'recalled' => $documents->filter(fn($doc) => strtolower($doc->status?->status) === 'recalled')->count(),
                                         'archived' => $documents->filter(fn($doc) => strtolower($doc->status?->status) === 'archived')->count()
@@ -376,8 +383,9 @@
                                         $isRejected = in_array($status, ['rejected']);
                                         $statusColor = 'gray';
 
-                                        if ($status == 'approved') {
+                                        if ($status == 'approved' || $status == 'complete') {
                                             $statusColor = 'emerald';
+                                            $status = 'approved';
                                         } elseif ($status == 'pending') {
                                             $statusColor = 'amber';
                                         } elseif ($status == 'forwarded') {
@@ -1244,11 +1252,32 @@
                 if (!statusCell) return;
 
                 const rowStatus = statusCell.textContent.trim().toLowerCase();
-                if (status === 'all' || rowStatus.includes(status.toLowerCase())) {
+                if (status === 'all') {
                     row.style.display = '';
                     row.classList.add('animate-fade-in');
+                } else if (status === 'approved') {
+                    // Show both 'approved' and 'complete' status documents
+                    if (rowStatus.includes('approved') || rowStatus.includes('complete')) {
+                        row.style.display = '';
+                        row.classList.add('animate-fade-in');
+                    } else {
+                        row.style.display = 'none';
+                    }
+                } else if (status === 'acknowledged') {
+                    // Show both 'acknowledged' and 'acknowledge' status documents
+                    if (rowStatus.includes('acknowledged') || rowStatus.includes('acknowledge')) {
+                        row.style.display = '';
+                        row.classList.add('animate-fade-in');
+                    } else {
+                        row.style.display = 'none';
+                    }
                 } else {
-                    row.style.display = 'none';
+                    if (rowStatus.includes(status.toLowerCase())) {
+                        row.style.display = '';
+                        row.classList.add('animate-fade-in');
+                    } else {
+                        row.style.display = 'none';
+                    }
                 }
             });
         }
