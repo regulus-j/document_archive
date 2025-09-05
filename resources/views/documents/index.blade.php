@@ -294,13 +294,22 @@
                                     <!-- Unified Document Counter -->
                             <div class="flex flex-wrap items-center gap-2 mb-3">
                                 <!-- Total Documents -->
+                                @php
+                                    // Get total count regardless of filter
+                                    $totalCount = \App\Models\Document::when(!\Auth::user()->hasRole('company-admin'), function($query) {
+                                        $userOfficeIds = \Auth::user()->offices->pluck('id')->toArray();
+                                        return $query->whereHas('user.offices', function ($q) use ($userOfficeIds) {
+                                            $q->whereIn('offices.id', $userOfficeIds);
+                                        });
+                                    })->count();
+                                @endphp
                                 <div class="flex items-center space-x-2 bg-blue-50 px-3 py-1.5 rounded-lg cursor-pointer hover:bg-blue-100 transition-colors"
                                      onclick="filterDocumentsByStatus('all')"
                                      title="Show all documents">
                                     <svg class="h-4 w-4 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                     </svg>
-                                    <span class="text-sm font-medium text-blue-700">Total: {{ $documents->total() }}</span>
+                                    <span class="text-sm font-medium text-blue-700">Total: {{ $totalCount }}</span>
                                 </div>
 
                                 @php
@@ -330,16 +339,16 @@
                         'archived' => ['bg' => 'bg-gray-50', 'text' => 'text-gray-600']
                     ];                                    // Get document counts for each status
                                     $documentCounts = [
-                                        'pending' => $documents->filter(fn($doc) => strtolower($doc->status?->status) === 'pending')->count(),
-                                        'forwarded' => $documents->filter(fn($doc) => strtolower($doc->status?->status) === 'forwarded')->count(),
-                                        'received' => $documents->filter(fn($doc) => strtolower($doc->status?->status) === 'received')->count(),
-                                        'approved' => $documents->filter(fn($doc) => strtolower($doc->status?->status) === 'complete')->count(),
-                                        'acknowledged' => $documents->filter(fn($doc) => in_array(strtolower($doc->status?->status), ['acknowledged', 'acknowledge']))->count(),
-                                        'commented' => $documents->filter(fn($doc) => strtolower($doc->status?->status) === 'commented')->count(),
-                                        'returned' => $documents->filter(fn($doc) => strtolower($doc->status?->status) === 'returned')->count(),
-                                        'rejected' => $documents->filter(fn($doc) => strtolower($doc->status?->status) === 'rejected')->count(),
-                                        'recalled' => $documents->filter(fn($doc) => strtolower($doc->status?->status) === 'recalled')->count(),
-                                        'archived' => $documents->filter(fn($doc) => strtolower($doc->status?->status) === 'archived')->count()
+                                        'pending' => \App\Models\Document::whereHas('status', fn($q) => $q->where('status', 'pending'))->count(),
+                                        'forwarded' => \App\Models\Document::whereHas('status', fn($q) => $q->where('status', 'forwarded'))->count(),
+                                        'received' => \App\Models\Document::whereHas('status', fn($q) => $q->where('status', 'received'))->count(),
+                                        'approved' => \App\Models\Document::whereHas('status', fn($q) => $q->where('status', 'complete'))->count(),
+                                        'acknowledged' => \App\Models\Document::whereHas('status', fn($q) => $q->whereIn('status', ['acknowledged', 'acknowledge']))->count(),
+                                        'commented' => \App\Models\Document::whereHas('status', fn($q) => $q->where('status', 'commented'))->count(),
+                                        'returned' => \App\Models\Document::whereHas('status', fn($q) => $q->where('status', 'returned'))->count(),
+                                        'rejected' => \App\Models\Document::whereHas('status', fn($q) => $q->where('status', 'rejected'))->count(),
+                                        'recalled' => \App\Models\Document::whereHas('status', fn($q) => $q->where('status', 'recalled'))->count(),
+                                        'archived' => \App\Models\Document::whereHas('status', fn($q) => $q->where('status', 'archived'))->count()
                                     ];
                                 @endphp
 
@@ -1234,52 +1243,43 @@
 
         // Function to filter documents by status
         function filterDocumentsByStatus(status) {
-            const tableRows = document.querySelectorAll('tbody tr');
-            const badges = document.querySelectorAll('[data-status]');
+            // Get current URL
+            const url = new URL(window.location);
 
-            // Reset all badges to default state
+            // Update status parameter
+            if (status === 'all') {
+                url.searchParams.delete('status');
+            } else {
+                url.searchParams.set('status', status);
+            }
+
+            // Keep current page parameters like tab if they exist
+            url.searchParams.forEach((value, key) => {
+                if (key !== 'status' && key !== 'page') {
+                    url.searchParams.set(key, value);
+                }
+            });
+
+            // Reset to page 1 when filtering
+            url.searchParams.delete('page');
+
+            // Update badges visual state
+            const badges = document.querySelectorAll('[data-status]');
             badges.forEach(badge => {
                 const badgeStatus = badge.getAttribute('data-status');
-                if (badgeStatus === status) {
-                    badge.classList.add('bg-gray-50', 'ring-2', 'ring-offset-2', `ring-${badgeStatus === 'approved' ? 'emerald' : badgeStatus === 'pending' ? 'yellow' : badgeStatus === 'rejected' ? 'red' : 'blue'}-500`);
+                if (badgeStatus === status || (status === 'all' && badgeStatus === null)) {
+                    badge.classList.add('bg-gray-50', 'ring-2', 'ring-offset-2');
+                    if (badgeStatus === 'approved') badge.classList.add('ring-emerald-500');
+                    else if (badgeStatus === 'pending') badge.classList.add('ring-yellow-500');
+                    else if (badgeStatus === 'rejected') badge.classList.add('ring-red-500');
+                    else badge.classList.add('ring-blue-500');
                 } else {
                     badge.classList.remove('bg-gray-50', 'ring-2', 'ring-offset-2', 'ring-emerald-500', 'ring-yellow-500', 'ring-red-500', 'ring-blue-500');
                 }
             });
 
-            tableRows.forEach(row => {
-                const statusCell = row.querySelector('td:nth-child(4)'); // Status column
-                if (!statusCell) return;
-
-                const rowStatus = statusCell.textContent.trim().toLowerCase();
-                if (status === 'all') {
-                    row.style.display = '';
-                    row.classList.add('animate-fade-in');
-                } else if (status === 'approved') {
-                    // Show both 'approved' and 'complete' status documents
-                    if (rowStatus.includes('approved') || rowStatus.includes('complete')) {
-                        row.style.display = '';
-                        row.classList.add('animate-fade-in');
-                    } else {
-                        row.style.display = 'none';
-                    }
-                } else if (status === 'acknowledged') {
-                    // Show both 'acknowledged' and 'acknowledge' status documents
-                    if (rowStatus.includes('acknowledged') || rowStatus.includes('acknowledge')) {
-                        row.style.display = '';
-                        row.classList.add('animate-fade-in');
-                    } else {
-                        row.style.display = 'none';
-                    }
-                } else {
-                    if (rowStatus.includes(status.toLowerCase())) {
-                        row.style.display = '';
-                        row.classList.add('animate-fade-in');
-                    } else {
-                        row.style.display = 'none';
-                    }
-                }
-            });
+            // Navigate to filtered URL
+            window.location.href = url.toString();
         }
 
         document.addEventListener('DOMContentLoaded', function() {

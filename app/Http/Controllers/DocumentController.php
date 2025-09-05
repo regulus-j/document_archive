@@ -38,22 +38,32 @@ class DocumentController extends Controller
     /**
      * Display a listing of the documents.
      */
-    public function index(): View
+    public function index(Request $request): View
     {
-        if (auth()->user()->hasRole('company-admin')) {
-            $documents = Document::with(['user.offices', 'status', 'transaction.fromOffice', 'transaction.toOffice'])
-                ->latest()
-                ->paginate(5);
-        } else {
-            $userOfficeIds = auth()->user()->offices->pluck('id')->toArray();
+        // Base query for document access control
+        $query = Document::with(['user.offices', 'status', 'transaction.fromOffice', 'transaction.toOffice']);
 
-            $documents = Document::with(['user.offices', 'status', 'transaction.fromOffice', 'transaction.toOffice'])
-                ->whereHas('user.offices', function ($query) use ($userOfficeIds) {
-                    $query->whereIn('offices.id', $userOfficeIds);
-                })
-                ->latest()
-                ->paginate(5);
+        // Filter by office/company if not admin
+        if (!\Auth::user()->hasRole('company-admin')) {
+            $userOfficeIds = \Auth::user()->offices->pluck('id')->toArray();
+            $query->whereHas('user.offices', function ($q) use ($userOfficeIds) {
+                $q->whereIn('offices.id', $userOfficeIds);
+            });
         }
+
+        // Apply status filtering to the main query if requested
+        if ($request->has('status')) {
+            $status = strtolower($request->status);
+            if ($status === 'approved') {
+                $query->whereHas('status', fn($q) => $q->whereIn('status', ['approved', 'complete']));
+            } elseif ($status === 'acknowledged') {
+                $query->whereHas('status', fn($q) => $q->whereIn('status', ['acknowledged', 'acknowledge']));
+            } else {
+                $query->whereHas('status', fn($q) => $q->where('status', $status));
+            }
+        }
+
+        $documents = $query->latest()->paginate(5);
 
         $auditLogs = DocumentAudit::latest()->paginate(15);
 

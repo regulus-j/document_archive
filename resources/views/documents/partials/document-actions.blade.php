@@ -126,8 +126,21 @@
                     </a>
                 @endif
 
-                
-                @if ($document->status && $document->status->status != 'archived')
+
+                @php
+                    $documentComplete = false;
+                    $documentStatus = $document->status ? strtolower($document->status->status) : '';
+
+                    // Check if document is complete based on workflow statuses
+                    $allWorkflows = $document->documentWorkflow;
+                    if ($allWorkflows && $allWorkflows->count() > 0) {
+                        $documentComplete = $allWorkflows->every(function($workflow) {
+                            return in_array($workflow->status, ['approved', 'commented', 'acknowledged']);
+                        });
+                    }
+                @endphp
+
+                @if ($documentComplete && $documentStatus !== 'archived')
                     <form action="{{ route('documents.archive.store', $document) }}" method="POST" class="inline-block">
                         @csrf
                         <button type="submit" onclick="return handleArchiveDocument(this.form);"
