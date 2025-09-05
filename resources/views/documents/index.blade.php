@@ -352,19 +352,46 @@
                                     ];
                                 @endphp
 
-                                <!-- Status Badges - Always Show All -->
-                                @foreach($documentCounts as $status => $count)
-                                    <div
-                                        class="flex items-center space-x-2 border border-gray-200/80 hover:border-{{ explode('-', $statusColors[$status]['text'])[1] }}-400/50 transition-colors px-3 py-1.5 rounded-lg cursor-pointer hover:bg-gray-50"
-                                        onclick="filterDocumentsByStatus('{{ $status }}')"
-                                        data-status="{{ $status }}"
-                                    >
-                                        <svg class="h-4 w-4 {{ $statusColors[$status]['text'] }}/75" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="{{ $statusIcons[$status] }}" />
-                                        </svg>
-                                        <span class="text-sm font-medium text-gray-600">{{ ucfirst($status) }}: <span class="{{ $statusColors[$status]['text'] }}">{{ $count }}</span></span>
+                                <!-- Status Badges Dropdown -->
+                                <div x-data="{ open: false }" class="relative inline-block text-left">
+                                    <div>
+                                        <button @click="open = !open" type="button" class="inline-flex justify-between items-center w-30 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                            <span>Status</span>
+                                            <svg class="w- h-5 ml-2 -mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                            </svg>
+                                        </button>
                                     </div>
-                                @endforeach
+
+                                    <div x-show="open"
+                                        @click.away="open = false"
+                                        x-transition:enter="transition ease-out duration-100"
+                                        x-transition:enter-start="transform opacity-0 scale-95"
+                                        x-transition:enter-end="transform opacity-100 scale-100"
+                                        x-transition:leave="transition ease-in duration-75"
+                                        x-transition:leave-start="transform opacity-100 scale-100"
+                                        x-transition:leave-end="transform opacity-0 scale-95"
+                                        class="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 focus:outline-none z-50"
+                                    >
+                                        <div class="py-1">
+                                            @foreach($documentCounts as $status => $count)
+                                                <button
+                                                    onclick="filterDocumentsByStatus('{{ $status }}')"
+                                                    class="group flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                                                    data-status="{{ $status }}"
+                                                >
+                                                    <svg class="h-4 w-4 {{ $statusColors[$status]['text'] }} mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="{{ $statusIcons[$status] }}" />
+                                                    </svg>
+                                                    <span class="flex-1 text-left">{{ ucfirst($status) }}</span>
+                                                    <span class="inline-flex items-center justify-center px-2 py-0.5 ml-2 text-xs font-medium rounded-full bg-{{ explode('-', $statusColors[$status]['bg'])[1] }}-100 {{ $statusColors[$status]['text'] }}">
+                                                        {{ $count }}
+                                                    </span>
+                                                </button>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -514,109 +541,6 @@
         </div>
     </div>
 
-        <!-- Audit Logs -->
-        {{-- <div class="max-w-7xl mx-auto mt-8 bg-white rounded-xl overflow-hidden border border-blue-200/80 mb-8 transition-all duration-300 hover:border-blue-300/80">
-            <div class="bg-white p-6 border-b border-blue-200/60 flex justify-between items-center">
-                <div class="flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600 mr-2" fill="none"
-                        viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
-                    <h2 class="text-lg font-semibold text-gray-800">Document Audit Logs</h2>
-                </div>
-                <span class="text-sm text-gray-500">{{ $auditLogs->total() }} entries</span>
-            </div>
-
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead>
-                        <tr>
-                            <th
-                                class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
-                                Date/Time</th>
-                            <th
-                                class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
-                                Document</th>
-                            <th
-                                class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
-                                User</th>
-                            <th
-                                class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
-                                Action</th>
-                            <th
-                                class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
-                                Status</th>
-                            <th
-                                class="bg-white px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">
-                                Details</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        @forelse($auditLogs as $log)
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{ $log->created_at->format('M d, Y H:i') }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700">
-                                    {{ $log->document?->title ?? 'Deleted Document' }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        <div
-                                            class="flex-shrink-0 h-7 w-7 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold shadow-sm text-xs">
-                                            {{ substr($log->user->first_name, 0, 1) }}
-                                        </div>
-                                        <div class="ml-3 text-sm text-gray-700">
-                                            {{ $log->user->first_name }} {{ $log->user->last_name }}
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span
-                                        class="px-2.5 py-1 text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                                        {{ $log->action }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    @php
-                                        $statusColor = 'gray';
-                                        if ($log->status == 'Approved') {
-                                            $statusColor = 'emerald';
-                                        } elseif ($log->status == 'Pending') {
-                                            $statusColor = 'amber';
-                                        } elseif ($log->status == 'Rejected') {
-                                            $statusColor = 'rose';
-                                        }
-                                    @endphp
-                                    <span
-                                        class="px-2.5 py-1 text-xs leading-5 font-semibold rounded-full bg-{{ $statusColor }}-100 text-{{ $statusColor }}-800">
-                                        {{ $log->status }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4 text-sm text-gray-500">{{ $log->details }}</td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">
-                                    <div class="flex flex-col items-center justify-center py-6">
-                                        <svg class="h-12 w-12 text-gray-400 mb-3" xmlns="http://www.w3.org/2000/svg"
-                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                                        </svg>
-                                        <p class="text-gray-500 text-base">No audit logs found</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="p-6 border-t border-gray-200">
-                {{ $auditLogs->links() }}
-            </div>--}}
         </div>
     </div>
 
