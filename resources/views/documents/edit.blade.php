@@ -209,34 +209,44 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <!-- From Office -->
                         <div>
-                            <label for="from_office" class="block text-sm font-medium text-gray-700 mb-1">From Office</label>
-                            <select name="from_office" id="from_office"
-                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                                required>
-                                <option value="">Select From Office</option>
-                                @foreach($userOffice as $id => $name)
-                                    <option value="{{ $id }}"
-                                        {{ old('from_office', optional($document->transaction)->from_office) == $id ? 'selected' : '' }}>
-                                        {{ $name }}
-                                    </option>
-                                @endforeach
-                            </select>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">From Office</label>
+                            <div class="p-2 bg-gray-50 rounded-lg border border-gray-200">
+                                <p class="text-gray-800">{{ auth()->user()->offices->first()->name ?? 'N/A' }}</p>
+                            </div>
+                            <input type="hidden" name="from_office" value="{{ auth()->user()->offices->first()->id }}">
                         </div>
 
-                        <!-- To Office -->
+                        <!-- To Office / Recipient Status -->
                         <div>
-                            <label for="to_office" class="block text-sm font-medium text-gray-700 mb-1">To Office</label>
-                            <select name="to_office" id="to_office"
-                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                                required>
-                                <option value="">Select To Office</option>
-                                @foreach($offices as $office)
-                                    <option value="{{ $office->id }}"
-                                        {{ old('to_office', optional($document->transaction)->to_office) == $office->id ? 'selected' : '' }}>
-                                        {{ $office->name }}
-                                    </option>
-                                @endforeach
-                            </select>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Document Recipients</label>
+                            <div class="p-2 bg-gray-50 rounded-lg border border-gray-200">
+                                @php
+                                    $workflows = $document->documentWorkflow ?? collect();
+                                @endphp
+
+                                @if($workflows->isEmpty())
+                                    <p class="text-gray-600">Document has not been forwarded yet.</p>
+                                @else
+                                    <div class="space-y-2">
+                                        @foreach($workflows as $workflow)
+                                            <div class="flex flex-col text-sm">
+                                                @if($workflow->recipient)
+                                                    <span class="text-gray-900 font-medium">{{ $workflow->recipient->first_name }} {{ $workflow->recipient->last_name }}</span>
+                                                    @if($workflow->recipient->offices->first())
+                                                        <span class="text-gray-500">{{ $workflow->recipient->offices->first()->name }}</span>
+                                                    @endif
+                                                @elseif($workflow->recipientOffice)
+                                                    <span class="text-gray-900 font-medium">{{ $workflow->recipientOffice->name }}</span>
+                                                    <span class="text-gray-500">Entire Office</span>
+                                                @endif
+                                            </div>
+                                            @if(!$loop->last)
+                                                <hr class="border-gray-200">
+                                            @endif
+                                        @endforeach
+                                    </div>
+                                @endif
+                            </div>
                         </div>
                     </div>
 
@@ -298,7 +308,7 @@
                                         </label>
                                         <p class="pl-1">or drag and drop</p>
                                     </div>
-                                    <p class="text-xs text-gray-500">PDF, DOC, DOCX, JPG, JPEG, PNG up to 10MB</p>
+                                    <p class="text-xs text-gray-500">PDF, DOC, DOCX, JPG, JPEG, PNG up to 8MB</p>
                                 </div>
                             </div>
                             <div class="upload-feedback hidden mt-2 text-sm text-blue-600"></div>
@@ -319,11 +329,26 @@
                         <!-- Current Attachments -->
                         @if($document->attachments->count())
                         <div class="mb-6 bg-white rounded-lg border border-gray-200 p-4">
-                            <h4 class="text-sm font-medium text-gray-700 mb-3">Current Attachments</h4>
+                            <div class="flex justify-between items-center mb-3">
+                                <h4 class="text-sm font-medium text-gray-700">Current Attachments</h4>
+                                <div class="flex items-center gap-2">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="select-all-attachments" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                        <label for="select-all-attachments" class="ml-2 text-sm text-gray-600">Select All</label>
+                                    </div>
+                                    <button type="button" id="delete-selected-btn" style="display: none;" class="text-red-500 hover:text-red-700 flex items-center px-2 py-1 rounded-md hover:bg-red-50 transition-colors">
+                                        <svg class="h-4 w-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                        Delete Selected
+                                    </button>
+                                </div>
+                            </div>
                             <ul class="divide-y divide-gray-200 border border-gray-200 rounded-md overflow-hidden bg-gray-50">
                                 @foreach($document->attachments as $attachment)
                                     <li class="flex items-center justify-between p-3 hover:bg-white transition-colors">
                                         <div class="flex items-center">
+                                            <input type="checkbox" value="{{ $attachment->id }}" class="attachment-checkbox mr-3 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                                             <svg class="h-4 w-4 text-gray-500 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                             </svg>
@@ -338,7 +363,7 @@
                                                 @endif
                                             </div>
                                         </div>
-                                        <button type="button" onclick="deleteAttachment({{ $document->id }}, {{ $attachment->id }})"
+                                        <button type="button" onclick="showDeleteModal({{ $document->id }}, {{ $attachment->id }})"
                                             class="text-red-500 hover:text-red-700 flex items-center px-2 py-1 rounded-md hover:bg-red-50 transition-colors">
                                             <svg class="h-4 w-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -371,7 +396,7 @@
                                         </label>
                                         <p class="pl-1">or drag and drop</p>
                                     </div>
-                                    <p class="text-xs text-gray-500">PDF, DOC, DOCX, JPG, JPEG, PNG up to 10MB each (Maximum 5 attachments)</p>
+                                    <p class="text-xs text-gray-500">PDF, DOC, DOCX, JPG, JPEG, PNG up to 8MB each (Maximum 5 attachments)</p>
                                 </div>
                             </div>
 
@@ -417,26 +442,12 @@
                     <!-- Submit Button -->
                     <!-- Form Actions -->
                     <div class="border-t border-blue-200/60 pt-6">
-                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
-                            <!-- Checkboxes -->
-                            <div class="flex items-center space-x-6 mb-4 md:mb-0">
-                                <label class="inline-flex items-center bg-white px-3 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors">
-                                    <input type="checkbox" name="archive" value="1" {{ old('archive', isset($document->archive_status) && $document->archive_status) ? 'checked' : '' }}
-                                        class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                                    <span class="ml-2 text-sm text-gray-700">Add to Archives</span>
-                                </label>
-                                <label class="inline-flex items-center bg-white px-3 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors">
-                                    <input type="checkbox" name="forward" value="1" {{ old('forward') ? 'checked' : '' }}
-                                        class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                                    <span class="ml-2 text-sm text-gray-700">Forward to user/s</span>
-                                </label>
-                            </div>
-
+                        <div class="flex flex-col md:flex-row justify-end items-start md:items-center">
                             <!-- Buttons -->
                             <div class="flex items-center space-x-4">
                                 <a href="{{ route('documents.index') }}"
                                     class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">Cancel</a>
-                                <button type="submit"
+                                <button id="submit-btn" type="submit"
                                     class="inline-flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none"
                                         viewBox="0 0 24 24" stroke="currentColor">
@@ -566,42 +577,148 @@ function closePopup(closeBtn) {
     setTimeout(() => popup.remove(), 300);
 }
 
-<script>
+// Format file size helper function
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// Get file icon helper function
+function getFileIcon(filename) {
+    const ext = filename.split('.').pop().toLowerCase();
+    const iconClass = 'h-5 w-5 text-gray-400';
+
+    switch(ext) {
+        case 'pdf':
+            return `<svg class="${iconClass}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>`;
+        case 'doc':
+        case 'docx':
+            return `<svg class="${iconClass}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>`;
+        case 'jpg':
+        case 'jpeg':
+        case 'png':
+            return `<svg class="${iconClass}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>`;
+        default:
+            return `<svg class="${iconClass}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>`;
+    }
+}
+
+// Function to toggle allowed viewers
 function toggleAllowedViewers(classification) {
     const allowedViewersSection = document.getElementById('allowed-viewers-section');
     if (classification === 'Private') {
-        allowedViewersSection.style.display = 'block';
+        allowedViewersSection.classList.remove('hidden');
     } else {
-        allowedViewersSection.style.display = 'none';
+        allowedViewersSection.classList.add('hidden');
     }
+}
+
+// Function to remove individual new attachment file
+function removeNewAttachmentFile(index) {
+    const attachmentsInput = document.getElementById('attachments');
+    const attachmentPreview = document.getElementById('new-attachment-files-preview');
+    const dt = new DataTransfer();
+
+    Array.from(attachmentsInput.files).forEach((file, i) => {
+        if (i !== index) {
+            dt.items.add(file);
+        }
+    });
+
+    attachmentsInput.files = dt.files;
+
+    // Hide preview if no files
+    if (attachmentsInput.files.length === 0) {
+        attachmentPreview.classList.add('hidden');
+    }
+
+    attachmentsInput.dispatchEvent(new Event('change'));
 }
 
 // Function to delete attachment via JavaScript
 function deleteAttachment(documentId, attachmentId) {
-    if (confirm('Are you sure you want to delete this attachment?')) {
-        // Create a temporary form to submit the DELETE request
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = `/documents/${documentId}/delete-attachment?attachment_id=${attachmentId}`;
+    hideDeleteModal();
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = `/documents/${documentId}/delete-attachment?attachment_id=${attachmentId}`;
 
-        // Add CSRF token
-        const csrfField = document.createElement('input');
-        csrfField.type = 'hidden';
-        csrfField.name = '_token';
-        csrfField.value = document.querySelector('meta[name="csrf-token"]').content;
-        form.appendChild(csrfField);
+    // Add CSRF token
+    const csrfField = document.createElement('input');
+    csrfField.type = 'hidden';
+    csrfField.name = '_token';
+    csrfField.value = document.querySelector('meta[name="csrf-token"]').content;
+    form.appendChild(csrfField);
 
-        // Add method override for DELETE
-        const methodField = document.createElement('input');
-        methodField.type = 'hidden';
-        methodField.name = '_method';
-        methodField.value = 'DELETE';
-        form.appendChild(methodField);
+    // Add method override for DELETE
+    const methodField = document.createElement('input');
+    methodField.type = 'hidden';
+    methodField.name = '_method';
+    methodField.value = 'DELETE';
+    form.appendChild(methodField);
 
-        // Submit the form
-        document.body.appendChild(form);
-        form.submit();
-    }
+    // Submit the form
+    document.body.appendChild(form);
+    form.submit();
+}
+
+// Function to show delete confirmation modal
+function showDeleteModal(documentId, attachmentId) {
+    document.getElementById('confirm-delete-modal').classList.remove('hidden');
+    document.getElementById('confirm-delete-btn').onclick = function() {
+        deleteAttachment(documentId, attachmentId);
+    };
+}
+
+// Function to hide modal
+function hideDeleteModal() {
+    document.getElementById('confirm-delete-modal').classList.add('hidden');
+}
+
+// Function to delete multiple attachments
+function deleteMultipleAttachments(attachmentIds) {
+    if (attachmentIds.length === 0) return;
+    hideDeleteModal();
+
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = `/documents/{{ $document->id }}/delete-attachments`;
+
+    // Add CSRF token
+    const csrfField = document.createElement('input');
+    csrfField.type = 'hidden';
+    csrfField.name = '_token';
+    csrfField.value = document.querySelector('meta[name="csrf-token"]').content;
+    form.appendChild(csrfField);
+
+    // Add method override for DELETE
+    const methodField = document.createElement('input');
+    methodField.type = 'hidden';
+    methodField.name = '_method';
+    methodField.value = 'DELETE';
+    form.appendChild(methodField);
+
+    // Add attachment IDs
+    attachmentIds.forEach(id => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'attachment_ids[]';
+        input.value = id;
+        form.appendChild(input);
+    });
+
+    document.body.appendChild(form);
+    form.submit();
 }
 
 // Ensure form submits with proper method override
@@ -619,18 +736,97 @@ document.addEventListener('DOMContentLoaded', function() {
         showPopup('Please check the form for errors.', 'error');
     @endif
 
+    // Initialize checkbox functionality
+    const selectAllCheckbox = document.getElementById('select-all-attachments');
+    const deleteSelectedBtn = document.getElementById('delete-selected-btn');
+    const attachmentCheckboxes = document.querySelectorAll('.attachment-checkbox');
+
+    if (selectAllCheckbox && deleteSelectedBtn) {
+        // Handle "Select All" checkbox
+        selectAllCheckbox.addEventListener('change', function() {
+            attachmentCheckboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+            updateDeleteButtonVisibility();
+        });
+
+        // Handle individual checkboxes
+        attachmentCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const allChecked = Array.from(attachmentCheckboxes).every(cb => cb.checked);
+                selectAllCheckbox.checked = allChecked;
+                updateDeleteButtonVisibility();
+            });
+        });
+
+        // Handle delete selected button
+        deleteSelectedBtn.addEventListener('click', function() {
+            const selectedIds = Array.from(document.querySelectorAll('.attachment-checkbox:checked')).map(cb => cb.value);
+            if (selectedIds.length > 0) {
+                document.getElementById('confirm-delete-modal').classList.remove('hidden');
+                document.getElementById('confirm-delete-btn').onclick = function() {
+                    deleteMultipleAttachments(selectedIds);
+                };
+            }
+        });
+    }
+
+    function updateDeleteButtonVisibility() {
+        const checkedBoxes = document.querySelectorAll('.attachment-checkbox:checked');
+        deleteSelectedBtn.style.display = checkedBoxes.length > 0 ? 'flex' : 'none';
+    }
+
+    // Initialize form elements
     const editForm = document.getElementById('editForm');
     const mainDocInput = document.getElementById('main_document');
     const mainDocFeedback = document.querySelector('.upload-feedback');
     const attachmentsInput = document.getElementById('attachments');
     const attachmentPreview = document.getElementById('new-attachment-files-preview');
     const attachmentList = document.getElementById('new-attachment-files-list');
+    const classification = document.getElementById('classification');
+    const viewerOffice = document.getElementById('viewer_office');
+    const viewerRows = document.querySelectorAll('.viewer-row');
+    const existingAttachmentCount = document.querySelectorAll('.attachment-checkbox').length;
 
-    // Main document feedback
+    // Main document upload handling
     if (mainDocInput && mainDocFeedback) {
         mainDocInput.addEventListener('change', function() {
-            if (mainDocInput.files.length > 0) {
-                const file = mainDocInput.files[0];
+            if (this.files.length > 0) {
+                const file = this.files[0];
+                const maxSize = 8 * 1024 * 1024; // 8MB in bytes
+
+                if (file.size > maxSize) {
+                    showPopup('File is too large. Maximum file size is 8MB.', 'error');
+                    this.value = '';
+                    mainDocFeedback.textContent = '';
+                    mainDocFeedback.classList.add('hidden');
+                    return;
+                }
+
+                mainDocFeedback.textContent = `Selected: ${file.name} (${formatFileSize(file.size)})`;
+                mainDocFeedback.classList.remove('hidden');
+            } else {
+                mainDocFeedback.textContent = '';
+                mainDocFeedback.classList.add('hidden');
+            }
+        });
+    }
+
+    // Main document upload handling
+    if (mainDocInput && mainDocFeedback) {
+        mainDocInput.addEventListener('change', function() {
+            if (this.files.length > 0) {
+                const file = this.files[0];
+                const maxSize = 8 * 1024 * 1024; // 8MB in bytes
+
+                if (file.size > maxSize) {
+                    showPopup('File is too large. Maximum file size is 8MB.', 'error');
+                    this.value = '';
+                    mainDocFeedback.textContent = '';
+                    mainDocFeedback.classList.add('hidden');
+                    return;
+                }
+
                 mainDocFeedback.textContent = `Selected: ${file.name} (${formatFileSize(file.size)})`;
                 mainDocFeedback.classList.remove('hidden');
             } else {
@@ -643,9 +839,28 @@ document.addEventListener('DOMContentLoaded', function() {
     // Enhanced attachments preview functionality
     if (attachmentsInput) {
         attachmentsInput.addEventListener('change', function() {
-            // Simple validation for max 5 files
-            if (this.files.length > 5) {
-                showPopup('Maximum 5 attachments allowed. Please select fewer files.', 'error');
+            // Validate total number of attachments (existing + new)
+            if (this.files.length + existingAttachmentCount > 5) {
+                showPopup('Total number of attachments (existing + new) cannot exceed 5.', 'error');
+                this.value = '';
+                attachmentPreview.classList.add('hidden');
+                return;
+            }
+
+            // Check file sizes
+            const maxSize = 8 * 1024 * 1024; // 8MB in bytes
+            let hasOversizedFile = false;
+            let oversizedFiles = [];
+
+            Array.from(this.files).forEach(file => {
+                if (file.size > maxSize) {
+                    hasOversizedFile = true;
+                    oversizedFiles.push(file.name);
+                }
+            });
+
+            if (hasOversizedFile) {
+                showPopup(`The following files exceed the 8MB size limit: ${oversizedFiles.join(', ')}`, 'error');
                 this.value = '';
                 attachmentPreview.classList.add('hidden');
                 return;
@@ -670,9 +885,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
                         </div>
                         <button type="button" onclick="removeNewAttachmentFile(${index})"
-                            class="text-red-500 hover:text-red-700 flex items-center px-2 py-1 rounded-md hover:bg-red-50 transition-colors">
+                            class="text-red-500 hover:text-red-700 text-sm">
                             <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                             </svg>
                         </button>
                     `;
@@ -689,21 +904,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Form submission handling
     if (editForm) {
         editForm.addEventListener('submit', function(e) {
-            // Ensure _method field exists and is set to PUT
-            let methodField = editForm.querySelector('input[name="_method"]');
-            if (!methodField) {
-                methodField = document.createElement('input');
-                methodField.type = 'hidden';
-                methodField.name = '_method';
-                methodField.value = 'PUT';
-                editForm.appendChild(methodField);
-            } else {
-                methodField.value = 'PUT';
-            }
-
-            // Disable submit button and show loading state
-            const submitBtn = editForm.querySelector('button[type="submit"]');
+            const submitBtn = document.getElementById('submit-btn');
             if (submitBtn) {
+                const originalContent = submitBtn.innerHTML;
                 submitBtn.disabled = true;
                 submitBtn.innerHTML = `
                     <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -712,6 +915,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     </svg>
                     Updating Document...
                 `;
+
+                // Re-enable after 10s in case of failure
+                setTimeout(() => {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalContent;
+                }, 10000);
             }
         });
     }
@@ -723,7 +932,7 @@ document.addEventListener('DOMContentLoaded', function() {
             zone.addEventListener(eventName, preventDefaults, false);
         });
 
-        function preventDefaults (e) {
+        function preventDefaults(e) {
             e.preventDefault();
             e.stopPropagation();
         }
@@ -756,9 +965,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     showPopup('Maximum 5 attachments allowed. Please select fewer files.', 'error');
                     return;
                 }
-            }
-
-            if (input.multiple) {
                 input.files = files;
             } else {
                 input.files = new FileList([files[0]]);
@@ -768,6 +974,78 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+// Function to delete multiple attachments
+function deleteMultipleAttachments(attachmentIds) {
+    if (!attachmentIds || attachmentIds.length === 0) return;
+    hideDeleteModal();
+
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/documents/{{ $document->id }}/delete-attachments';
+
+    // CSRF token
+    const csrfToken = document.createElement('input');
+    csrfToken.type = 'hidden';
+    csrfToken.name = '_token';
+    csrfToken.value = document.querySelector('meta[name="csrf-token"]').content;
+    form.appendChild(csrfToken);
+
+    // Method spoofing
+    const methodField = document.createElement('input');
+    methodField.type = 'hidden';
+    methodField.name = '_method';
+    methodField.value = 'DELETE';
+    form.appendChild(methodField);
+
+    // Add attachment IDs
+    attachmentIds.forEach(id => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'attachment_ids[]';
+        input.value = id;
+        form.appendChild(input);
+    });
+
+    document.body.appendChild(form);
+    form.submit();
+}
+
+// Function to delete multiple attachments
+function deleteMultipleAttachments(attachmentIds) {
+    if (attachmentIds.length === 0) return;
+    hideDeleteModal();
+
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = `/documents/{{ $document->id }}/delete-attachments`;
+
+    // Add CSRF token
+    const csrfToken = document.createElement('input');
+    csrfToken.type = 'hidden';
+    csrfToken.name = '_token';
+    csrfToken.value = document.querySelector('meta[name="csrf-token"]').content;
+    form.appendChild(csrfToken);
+
+    // Method spoofing
+    const methodField = document.createElement('input');
+    methodField.type = 'hidden';
+    methodField.name = '_method';
+    methodField.value = 'DELETE';
+    form.appendChild(methodField);
+
+    // Add attachment IDs
+    attachmentIds.forEach(id => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'attachment_ids[]';
+        input.value = id;
+        form.appendChild(input);
+    });
+
+    document.body.appendChild(form);
+    form.submit();
+}
 
 // Helper function to format file sizes
 function formatFileSize(bytes) {
@@ -786,23 +1064,23 @@ function getFileIcon(filename) {
     switch(ext) {
         case 'pdf':
             return `<svg class="${iconClass}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>`;
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>`;
         case 'doc':
         case 'docx':
             return `<svg class="${iconClass}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>`;
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>`;
         case 'jpg':
         case 'jpeg':
         case 'png':
             return `<svg class="${iconClass}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>`;
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>`;
         default:
             return `<svg class="${iconClass}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>`;
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>`;
     }
 }
 
@@ -825,5 +1103,37 @@ function removeNewAttachmentFile(index) {
     attachmentsInput.dispatchEvent(new Event('change'));
 }
 </script>
+
+<!-- Delete Confirmation Modal -->
+<div id="confirm-delete-modal" class="hidden fixed z-10 inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-center justify-center min-h-screen">
+        <!-- Background overlay -->
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+
+        <!-- Modal panel -->
+        <div class="relative bg-white rounded-lg max-w-md w-full mx-4 shadow-xl">
+            <div class="p-6">
+                <div class="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full">
+                    <svg class="w-6 h-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                </div>
+                <div class="mt-4 text-center">
+                    <h3 class="text-lg font-medium text-gray-900" id="modal-title">Confirm Deletion</h3>
+                    <p class="mt-2 text-sm text-gray-500">Are you sure you want to delete the selected attachment(s)? This action cannot be undone.</p>
+                </div>
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button type="button" onclick="hideDeleteModal()" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Cancel
+                    </button>
+                    <button type="button" id="confirm-delete-btn" class="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                        Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
 

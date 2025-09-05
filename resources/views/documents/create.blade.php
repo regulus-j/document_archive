@@ -193,7 +193,7 @@
                                         </label>
                                         <p class="pl-1">or drag and drop</p>
                                     </div>
-                                    <p class="text-xs text-gray-500">PDF, DOC, DOCX up to 10MB</p>
+                                    <p class="text-xs text-gray-500">PDF, DOC, DOCX up to 8MB</p>
                                 </div>
                             </div>
                             <div class="upload-feedback hidden mt-2 text-sm text-blue-600"></div>
@@ -220,7 +220,7 @@
                                         </label>
                                         <p class="pl-1">or drag and drop</p>
                                     </div>
-                                    <p class="text-xs text-gray-500">PDF, DOC, DOCX, JPG, JPEG, PNG up to 10MB each (Maximum 5 attachments)</p>
+                                    <p class="text-xs text-gray-500">PDF, DOC, DOCX, JPG, JPEG, PNG up to 8MB each (Maximum 5 attachments)</p>
                                 </div>
                             </div>
                             <!-- Attachment Files Preview -->
@@ -236,13 +236,8 @@
                     <!-- Form Actions -->
                     <div class="border-t border-blue-200/60 pt-6">
                         <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
-                            <!-- Checkboxes -->
+                            <!-- Forward Checkbox -->
                             <div class="flex items-center space-x-6 mb-4 md:mb-0">
-                                <label class="inline-flex items-center bg-white px-3 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors">
-                                    <input type="checkbox" name="archive" value="1"
-                                        class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                                    <span class="ml-2 text-sm text-gray-700">Add to Archives</span>
-                                </label>
                                 <label class="inline-flex items-center bg-white px-3 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors">
                                     <input type="checkbox" name="forward" value="1"
                                         class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
@@ -406,8 +401,19 @@
             const mainDocFeedback = document.querySelector('.upload-feedback');
             if (mainDocInput && mainDocFeedback) {
                 mainDocInput.addEventListener('change', function() {
-                    if (mainDocInput.files.length > 0) {
-                        mainDocFeedback.textContent = 'Selected: ' + mainDocInput.files[0].name;
+                    if (this.files.length > 0) {
+                        const file = this.files[0];
+                        const maxSize = 8 * 1024 * 1024; // 8MB in bytes
+
+                        if (file.size > maxSize) {
+                            showPopup('File is too large. Maximum file size is 8MB.', 'error');
+                            this.value = '';
+                            mainDocFeedback.textContent = '';
+                            mainDocFeedback.classList.add('hidden');
+                            return;
+                        }
+
+                        mainDocFeedback.textContent = `Selected: ${file.name} (${formatFileSize(file.size)})`;
                         mainDocFeedback.classList.remove('hidden');
                     } else {
                         mainDocFeedback.textContent = '';
@@ -427,10 +433,22 @@
 
                     // Simple validation for max 5 files
                     if (this.files.length > 5) {
-                        alert('Maximum 5 attachments allowed. Please select fewer files.');
+                        showPopup('Maximum 5 attachments allowed. Please select fewer files.', 'error');
                         this.value = '';
                         attachmentPreview.classList.add('hidden');
                         return;
+                    }
+
+                    // Check file sizes
+                    const maxSize = 8 * 1024 * 1024; // 8MB in bytes
+                    for (let i = 0; i < this.files.length; i++) {
+                        const file = this.files[i];
+                        if (file.size > maxSize) {
+                            showPopup(`File "${file.name}" is too large. Maximum file size is 8MB.`, 'error');
+                            this.value = '';
+                            attachmentPreview.classList.add('hidden');
+                            return;
+                        }
                     }
 
                     // Display selected files with names and sizes

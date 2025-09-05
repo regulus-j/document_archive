@@ -156,6 +156,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/forward/{document}', [DocumentController::class, 'forwardDocument'])->name('documents.forward');
         Route::get('/documents/restore/{id}', [DocumentController::class, 'restore'])->name('documents.restore');
 
+        Route::delete('/{document}/delete-attachments', [DocumentController::class, 'deleteMultipleAttachments'])->name('documents.attachments.delete-multiple');
+
         Route::prefix('workflows')->group(function () {
             Route::get('/', [DocumentWorkflowController::class, 'workflowManagement'])
                 ->name('documents.workflows');

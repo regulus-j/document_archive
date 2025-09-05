@@ -198,7 +198,7 @@ class DocumentController extends Controller
             'classification' => 'required|string',
             'category' => 'nullable|integer',
             'from_office' => 'required|exists:offices,id',
-            'main_document' => 'required|file',
+            'main_document' => 'required|file|max:10240|mimes:pdf,doc,docx,jpg,jpeg,png',
             'attachments.*' => 'file|mimes:jpeg,png,jpg,gif,pdf,docx|max:10240',
             'archive' => 'nullable|string',
             'forward' => 'nullable|string',
@@ -239,12 +239,12 @@ class DocumentController extends Controller
                 }
             }
 
-            // Set initial status based on whether document is being forwarded
+            // Always set the initial status based on whether document is being forwarded
             $initialStatus = ($request->forward == '1') ? 'pending' : 'uploaded';
             $document->status()->create([
-                'status' => $initialStatus,
+                'status' => 'uploaded',  // Always set to uploaded first
             ]);
-            \Log::info('Initial document status set to ' . $initialStatus, ['document_id' => $document->id]);
+            \Log::info('Initial document status set to uploaded', ['document_id' => $document->id]);
 
             $tracking_number = $this->generateTrackingNumber($request->from_office, $request->classification);
             \Log::info('Generated tracking number', ['tracking_number' => $tracking_number]);
@@ -293,16 +293,12 @@ class DocumentController extends Controller
             $data = $this->generateTrackingSlip($document->id, auth()->id(), $tracking_number);
             \Log::info('Tracking slip generated', ['document_id' => $document->id]);
 
-            if ($request->archive == '1') {
-                $document->status()->update(['status' => 'archived']);
-                \Log::info('Document status updated to archived', ['document_id' => $document->id]);
-            }
-
             if ($request->forward == '1') {
                 \Log::info('Redirecting to forward route', ['document_id' => $document->id]);
+                // Document is already created with 'uploaded' status, now redirect to forward page
                 return redirect()->route('documents.forward', $document->id)
                     ->with('data', $data)
-                    ->with('success', 'Document uploaded successfully');
+                    ->with('success', 'Document uploaded successfully. Please select users to forward to.');
             } else {
                 \Log::info('Redirecting to index route', ['document_id' => $document->id]);
                 return redirect()->route('documents.index')
@@ -778,8 +774,6 @@ class DocumentController extends Controller
             'from_office' => 'required|exists:offices,id',
             'main_document' => 'nullable|file|mimes:jpeg,png,jpg,gif,pdf,docx|max:10240',
             'attachments.*' => 'file|mimes:jpeg,png,jpg,gif,pdf,docx|max:10240',
-            'archive' => 'nullable|string',
-            'forward' => 'nullable|string',
             'allowed_viewers' => 'array',
             'allowed_viewers.*' => 'integer',
         ]);
@@ -796,10 +790,16 @@ class DocumentController extends Controller
             ]);
             \Log::info('Document basic info updated', ['document_id' => $document->id]);
 
-            $document->status()->update([
-                'status' => 'forwarded',
-            ]);
-            \Log::info('Document status updated to forwarded', ['document_id' => $document->id]);
+            // Update status only if document is being forwarded
+            if ($request->forward == '1') {
+                $document->status()->update([
+                    'status' => 'forwarded',
+                ]);
+                \Log::info('Document status updated to forwarded', ['document_id' => $document->id]);
+            } else {
+                // Keep original status if not forwarding
+                \Log::info('Document status unchanged (not forwarding)', ['document_id' => $document->id]);
+            }
 
             // If document had rejected workflows, reset them to pending so receivers can receive again
             $rejectedWorkflows = \App\Models\DocumentWorkflow::where('document_id', $document->id)
@@ -1006,6 +1006,34 @@ class DocumentController extends Controller
         $document->status()->update(['status' => $real_status[0]->status]);
 
         return redirect()->back()->with('success', 'Attachment deleted successfully.');
+    }
+
+    public function deleteMultipleAttachments(Request $request, Document $document)
+    {
+        $request->validate([
+            'attachment_ids' => 'required|array',
+            'attachment_ids.*' => 'required|integer'
+        ]);
+
+        $attachmentIds = $request->attachment_ids;
+        $real_status = $document->status()->get();
+
+        // Get all valid attachments for this document
+        $attachments = DocumentAttachment::whereIn('id', $attachmentIds)
+                                     ->where('document_id', $document->id)
+                                     ->get();
+
+        foreach ($attachments as $attachment) {
+            // Delete the file from storage
+            Storage::disk('public')->delete($attachment->path);
+
+            // Delete the record from the database
+            $attachment->delete();
+        }
+
+        $document->status()->update(['status' => $real_status[0]->status]);
+
+        return redirect()->back()->with('success', count($attachments) . ' attachments deleted successfully.');
     }
 
     public function uploadImage(Request $request)
