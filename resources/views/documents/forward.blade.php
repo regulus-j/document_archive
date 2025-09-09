@@ -120,11 +120,11 @@
                             </div>
                             <div class="flex items-center space-x-4">
                                 <label class="inline-flex items-center">
-                                    <input type="radio" name="workflow_type" value="parallel" class="workflow-type-radio form-radio text-blue-600" checked>
+                                    <input type="radio" name="workflow_mode" value="parallel" class="workflow-type-radio form-radio text-blue-600" checked>
                                     <span class="ml-2 text-sm font-medium text-gray-700">Parallel Processing</span>
                                 </label>
                                 <label class="inline-flex items-center">
-                                    <input type="radio" name="workflow_type" value="sequential" class="workflow-type-radio form-radio text-blue-600">
+                                    <input type="radio" name="workflow_mode" value="sequential" class="workflow-type-radio form-radio text-blue-600">
                                     <span class="ml-2 text-sm font-medium text-gray-700">Sequential Processing</span>
                                 </label>
                             </div>
@@ -370,7 +370,8 @@
         let isSequentialMode = false;
 
         function updateWorkflowDisplay() {
-            const isSequential = document.querySelector('input[name="workflow_type"]:checked').value === 'sequential';
+            const checkedRadio = document.querySelector('input[name="workflow_mode"]:checked');
+            const isSequential = checkedRadio ? checkedRadio.value === 'sequential' : false;
             isSequentialMode = isSequential;
             
             // Toggle descriptions
@@ -696,7 +697,7 @@
             }
             
             // Add workflow type to form data
-            const workflowType = document.querySelector('input[name="workflow_type"]:checked').value;
+            const workflowType = document.querySelector('input[name="workflow_mode"]:checked').value;
             
             // Create hidden input for workflow type if it doesn't exist
             let workflowInput = document.querySelector('input[name="workflow_mode"]');
@@ -725,7 +726,7 @@
             });
 
             // Add event listeners for workflow type change
-            document.querySelectorAll('input[name="workflow_type"]').forEach(radio => {
+            document.querySelectorAll('input[name="workflow_mode"]').forEach(radio => {
                 radio.addEventListener('change', updateWorkflowDisplay);
             });
 

@@ -38,8 +38,23 @@ class DocumentWorkflowController extends Controller
             return true;
         }
         
-        // If user is recipient, they must have "received" the document first
+        // If user is recipient, check access based on workflow type
         if ($workflow->recipient_id === $userId) {
+            // For sequential workflows, check if it's their turn and auto-receive if needed
+            if ($workflow->isSequential() && $workflow->status === 'pending') {
+                // Auto-receive for sequential workflows and update status
+                if ($workflow->received_at === null) {
+                    $workflow->receive();
+                    \Log::info('Auto-received sequential workflow for user', [
+                        'workflow_id' => $workflowId,
+                        'user_id' => $userId,
+                        'document_id' => $workflow->document_id
+                    ]);
+                }
+                return true;
+            }
+            
+            // Normal access check for received workflows
             return in_array($workflow->status, ['received', 'approved', 'rejected', 'returned', 'referred', 'forwarded']);
         }
         
@@ -60,6 +75,29 @@ class DocumentWorkflowController extends Controller
         }
         
         if (!$this->canAccessWorkflow($workflowId)) {
+            // Check if it's a sequential workflow that needs special handling
+            if ($workflow && $workflow->isSequential() && $workflow->recipient_id === auth()->id()) {
+                if ($workflow->status === 'pending') {
+                    // This should have been auto-received in canAccessWorkflow, try again
+                    $workflow->receive();
+                    \Log::info('Manual receive attempt for sequential workflow', [
+                        'workflow_id' => $workflowId,
+                        'user_id' => auth()->id(),
+                        'status' => $workflow->status
+                    ]);
+                    
+                    // Check access again
+                    if ($this->canAccessWorkflow($workflowId)) {
+                        return null; // Access granted
+                    }
+                }
+                
+                if ($workflow->status === 'waiting') {
+                    return redirect()->route('documents.workflows')
+                        ->with('info', 'This document is in sequential workflow. Please wait for your turn to process it.');
+                }
+            }
+            
             return redirect()->route('documents.receive.index')
                 ->with('error', 'You must receive this document first before accessing the workflow. Please check the "Receive Documents" section.');
         }
@@ -106,6 +144,7 @@ class DocumentWorkflowController extends Controller
             'urgency_batch.*' => 'nullable|string|in:low,medium,high,critical',
             'due_date_batch' => 'nullable|array',
             'due_date_batch.*' => 'nullable|date|after_or_equal:today',
+            'workflow_mode' => 'required|string|in:parallel,sequential',
         ]);
 
         $document->status()->update(['status' => 'forwarded']);
@@ -123,6 +162,8 @@ class DocumentWorkflowController extends Controller
         );
 
         $recipientBatches = $request->recipient_batch ?? [];
+        $workflowMode = $request->workflow_mode ?? 'parallel';
+        $isSequential = $workflowMode === 'sequential';
         
         // Keep track of all recipient IDs to sync with document_recipients table
         $allRecipientIds = [];
@@ -137,6 +178,15 @@ class DocumentWorkflowController extends Controller
             $parts = explode('_', $recipientValue);
             $type = $parts[0];
             $id = intval($parts[1]);
+            
+            // Determine status based on workflow mode and step order
+            $stepOrder = $request->step_order[$batchIndex];
+            $status = 'pending'; // Default for parallel mode
+            
+            if ($isSequential) {
+                // In sequential mode, only the first step is pending, others wait
+                $status = ($stepOrder == 1) ? 'pending' : 'waiting';
+            }
             
             if ($type === 'user') {
                 // It's a user recipient
@@ -153,26 +203,33 @@ class DocumentWorkflowController extends Controller
                     'sender_id' => auth()->id(),
                     'recipient_id' => $recipientId,
                     'recipient_office' => $recipientOfficeId,
-                    'step_order' => $request->step_order[$batchIndex],
+                    'step_order' => $stepOrder,
+                    'workflow_type' => $workflowMode,
                     'remarks' => $request->remarks[$batchIndex] ?? null,
-                    'status' => 'pending',
+                    'status' => $status,
                     'received_at' => null,
                     'purpose' => $request->purpose_batch[$batchIndex] ?? null,
                     'urgency' => $request->urgency_batch[$batchIndex] ?? null,
                     'due_date' => $request->due_date_batch[$batchIndex] ?? null,
                 ]);
 
-                // Notify the user recipient
-                \App\Models\Notifications::create([
-                    'user_id' => $recipientId,
-                    'type' => 'document_forwarded',
-                    'data' => json_encode([
-                        'document_id' => $document->id,
-                        'message' => 'A document has been forwarded to you.',
-                        'title' => $document->title,
-                        'sender' => auth()->user()->first_name . ' ' . auth()->user()->last_name,
-                    ]),
-                ]);
+                // Notify the user recipient (only if status is pending)
+                if ($status === 'pending') {
+                    \App\Models\Notifications::create([
+                        'user_id' => $recipientId,
+                        'type' => 'document_forwarded',
+                        'data' => json_encode([
+                            'document_id' => $document->id,
+                            'message' => $isSequential ? 
+                                'A document has been forwarded to you in sequential workflow.' : 
+                                'A document has been forwarded to you.',
+                            'title' => $document->title,
+                            'sender' => auth()->user()->first_name . ' ' . auth()->user()->last_name,
+                            'workflow_type' => $workflowMode,
+                            'step_order' => $stepOrder,
+                        ]),
+                    ]);
+                }
             } else if ($type === 'office') {
                 // It's an office recipient
                 $officeId = $id;
@@ -183,9 +240,10 @@ class DocumentWorkflowController extends Controller
                     'sender_id' => auth()->id(),
                     'recipient_id' => null, // No specific recipient for office
                     'recipient_office' => $officeId,
-                    'step_order' => $request->step_order[$batchIndex],
+                    'step_order' => $stepOrder,
+                    'workflow_type' => $workflowMode,
                     'remarks' => $request->remarks[$batchIndex] ?? null,
-                    'status' => 'pending',
+                    'status' => $status,
                     'received_at' => null,
                     'purpose' => $request->purpose_batch[$batchIndex] ?? null,
                     'urgency' => $request->urgency_batch[$batchIndex] ?? null,
@@ -207,9 +265,13 @@ class DocumentWorkflowController extends Controller
         $docQR = $document->trackingNumber();
         $qrCodeData = app(DocumentController::class)->generateTrackingSlip($document->id, auth()->id(), $trackingNumber);
         
+        $successMessage = $isSequential ? 
+            'Document forwarded successfully with sequential workflow. Recipients will process in order.' :
+            'Document forwarded successfully with parallel workflow.';
+        
         return redirect()->route('documents.index')
         ->with('data', $qrCodeData)
-        ->with('success', 'Document forwarded successfully');
+        ->with('success', $successMessage);
     }
 
     public function approveWorkflow(Request $request, $id): RedirectResponse
@@ -241,35 +303,41 @@ class DocumentWorkflowController extends Controller
             $logMessage
         );
 
-        // Notify next recipient (if any)
-        $nextWorkflow = \App\Models\DocumentWorkflow::where('document_id', $workflow->document_id)
-            ->where('step_order', '>', $workflow->step_order)
-            ->orderBy('step_order')
-            ->first();
-        if ($nextWorkflow && $nextWorkflow->recipient_id && $nextWorkflow->recipient_id != auth()->id()) {
-            \App\Models\Notifications::create([
-                'user_id' => $nextWorkflow->recipient_id,
-                'type' => 'document_next_step',
-                'data' => json_encode([
-                    'document_id' => $workflow->document_id,
-                    'message' => 'A document is now assigned to you in the workflow.',
-                    'title' => $workflow->document->title,
-                    'from' => auth()->user()->first_name . ' ' . auth()->user()->last_name,
-                ]),
-            ]);
-        }
-        // Notify previous sender (if any)
-        if ($workflow->sender_id && $workflow->sender_id != auth()->id()) {
-            \App\Models\Notifications::create([
-                'user_id' => $workflow->sender_id,
-                'type' => 'document_next_step',
-                'data' => json_encode([
-                    'document_id' => $workflow->document_id,
-                    'message' => 'A document you forwarded has moved to the next step.',
-                    'title' => $workflow->document->title,
-                    'to' => $nextWorkflow && $nextWorkflow->recipient_id ? $nextWorkflow->recipient->first_name . ' ' . $nextWorkflow->recipient->last_name : null,
-                ]),
-            ]);
+        // Handle sequential workflow progression
+        $nextStepActivated = $this->activateNextSequentialStep($workflow);
+        
+        // For parallel workflows or when no next step was activated, use old notification logic
+        if (!$nextStepActivated) {
+            // Notify next recipient (if any) - for parallel workflows
+            $nextWorkflow = \App\Models\DocumentWorkflow::where('document_id', $workflow->document_id)
+                ->where('step_order', '>', $workflow->step_order)
+                ->orderBy('step_order')
+                ->first();
+            if ($nextWorkflow && $nextWorkflow->recipient_id && $nextWorkflow->recipient_id != auth()->id()) {
+                \App\Models\Notifications::create([
+                    'user_id' => $nextWorkflow->recipient_id,
+                    'type' => 'document_next_step',
+                    'data' => json_encode([
+                        'document_id' => $workflow->document_id,
+                        'message' => 'A document is now assigned to you in the workflow.',
+                        'title' => $workflow->document->title,
+                        'from' => auth()->user()->first_name . ' ' . auth()->user()->last_name,
+                    ]),
+                ]);
+            }
+            // Notify previous sender (if any)
+            if ($workflow->sender_id && $workflow->sender_id != auth()->id()) {
+                \App\Models\Notifications::create([
+                    'user_id' => $workflow->sender_id,
+                    'type' => 'document_next_step',
+                    'data' => json_encode([
+                        'document_id' => $workflow->document_id,
+                        'message' => 'A document you forwarded has moved to the next step.',
+                        'title' => $workflow->document->title,
+                        'to' => $nextWorkflow && $nextWorkflow->recipient_id ? $nextWorkflow->recipient->first_name . ' ' . $nextWorkflow->recipient->last_name : null,
+                    ]),
+                ]);
+            }
         }
 
         return redirect()->route('documents.index')
@@ -357,7 +425,29 @@ class DocumentWorkflowController extends Controller
 
     public function receiveWorkflow($id): RedirectResponse
     {
-        // This method is now deprecated - users should use the receive documents feature first
+        // Check if user can access this workflow
+        $accessCheck = $this->ensureWorkflowAccess($id);
+        if ($accessCheck) return $accessCheck;
+        
+        $workflow = DocumentWorkflow::findOrFail($id);
+        
+        // For sequential workflows that are already activated (pending), go directly to review
+        if ($workflow->isSequential() && $workflow->status === 'pending' && $workflow->recipient_id === auth()->id()) {
+            // Auto-receive if not already received
+            if ($workflow->received_at === null) {
+                $workflow->receive();
+                \Log::info('Auto-received sequential workflow in receiveWorkflow', [
+                    'workflow_id' => $id,
+                    'user_id' => auth()->id()
+                ]);
+            }
+            
+            // Redirect to review page for processing
+            return redirect()->route('documents.review', $workflow->id)
+                ->with('success', 'Document is ready for your action.');
+        }
+        
+        // For parallel workflows or other cases, use receive documents feature
         return redirect()->route('documents.receive.index')
             ->with('info', 'Please use the "Receive Documents" feature to receive documents first, then access them in the workflow.');
     }
@@ -695,9 +785,16 @@ class DocumentWorkflowController extends Controller
         $workflow->received_at = now();
         $workflow->save();
         
-        // Update document status directly
+        // Handle sequential workflow progression for comments
+        $nextStepActivated = $this->activateNextSequentialStep($workflow);
+        
+        // Update document status - but don't mark as "commented" if sequential workflow continues
         if ($workflow->document && $workflow->document->status) {
-            $workflow->document->status()->update(['status' => 'commented']);
+            if (!$nextStepActivated) {
+                // Only update to "commented" if this is the final step or parallel workflow
+                $workflow->document->status()->update(['status' => 'commented']);
+            }
+            // If next step was activated, let syncDocumentStatus handle the status
         }
         
         // Log the action
@@ -756,9 +853,16 @@ class DocumentWorkflowController extends Controller
         $workflow->received_at = now();
         $workflow->save();
         
-        // Update document status directly
+        // Handle sequential workflow progression for acknowledgments
+        $nextStepActivated = $this->activateNextSequentialStep($workflow);
+        
+        // Update document status - but don't mark as "acknowledged" if sequential workflow continues
         if ($workflow->document && $workflow->document->status) {
-            $workflow->document->status()->update(['status' => 'acknowledged']);
+            if (!$nextStepActivated) {
+                // Only update to "acknowledged" if this is the final step or parallel workflow
+                $workflow->document->status()->update(['status' => 'acknowledged']);
+            }
+            // If next step was activated, let syncDocumentStatus handle the status
         }
         
         // Log the action
@@ -792,5 +896,71 @@ class DocumentWorkflowController extends Controller
         }
 
         return redirect()->route('documents.workflows')->with('success', 'Document information acknowledged successfully.');
+    }
+
+    /**
+     * Activate the next step in sequential workflow
+     */
+    private function activateNextSequentialStep(DocumentWorkflow $currentWorkflow)
+    {
+        // Only process if current workflow is sequential
+        if (!$currentWorkflow->isSequential()) {
+            return false;
+        }
+
+        // Find the next step in the sequence
+        $nextStep = DocumentWorkflow::where('document_id', $currentWorkflow->document_id)
+            ->where('workflow_type', 'sequential')
+            ->where('step_order', $currentWorkflow->step_order + 1)
+            ->where('status', 'waiting')
+            ->first();
+
+        if ($nextStep) {
+            // Activate the next step
+            $nextStep->status = 'pending';
+            $nextStep->save();
+
+            // Send notification to the next recipient
+            if ($nextStep->recipient_id) {
+                \App\Models\Notifications::create([
+                    'user_id' => $nextStep->recipient_id,
+                    'type' => 'document_sequential_next',
+                    'data' => json_encode([
+                        'document_id' => $currentWorkflow->document_id,
+                        'message' => 'A document is now ready for your action in sequential workflow.',
+                        'title' => $currentWorkflow->document->title,
+                        'step_order' => $nextStep->step_order,
+                        'previous_step_completed_by' => auth()->user()->first_name . ' ' . auth()->user()->last_name,
+                        'workflow_type' => 'sequential',
+                        'previous_action' => $currentWorkflow->status, // Include what action was taken
+                    ]),
+                ]);
+            }
+
+            // Also notify the sender that the workflow progressed
+            if ($currentWorkflow->sender_id && $currentWorkflow->sender_id != auth()->id()) {
+                $actionText = $currentWorkflow->status === 'commented' ? 'commented on' : 'completed';
+                \App\Models\Notifications::create([
+                    'user_id' => $currentWorkflow->sender_id,
+                    'type' => 'document_sequential_progress',
+                    'data' => json_encode([
+                        'document_id' => $currentWorkflow->document_id,
+                        'message' => "Sequential workflow has progressed to the next step after being {$actionText}.",
+                        'title' => $currentWorkflow->document->title,
+                        'completed_step' => $currentWorkflow->step_order,
+                        'next_step' => $nextStep->step_order,
+                        'completed_by' => auth()->user()->first_name . ' ' . auth()->user()->last_name,
+                        'action_taken' => $currentWorkflow->status,
+                        'next_recipient' => $nextStep->recipient ? 
+                            $nextStep->recipient->first_name . ' ' . $nextStep->recipient->last_name : 
+                            'Office: ' . $nextStep->recipientOffice->name,
+                    ]),
+                ]);
+            }
+
+            return true;
+        }
+
+        return false;
     }
 }
