@@ -183,6 +183,31 @@
 
                             <!-- Purpose and Urgency Selection -->
                             <div class="bg-white p-5 rounded-xl border border-blue-200/60 mt-4">
+                                <!-- Template Selection (New Feature) -->
+                                <div class="mb-6 p-4 bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-lg">
+                                    <label class="flex items-center mb-3">
+                                        <input type="checkbox" id="useTemplate" name="use_template" class="rounded text-purple-600 focus:ring-purple-500">
+                                        <span class="ml-3 text-sm font-medium text-gray-700 flex items-center">
+                                            <svg class="w-5 h-5 mr-2 text-purple-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                                            </svg>
+                                            Apply Workflow Template
+                                        </span>
+                                    </label>
+                                    <div id="templateSelection" class="hidden">
+                                        <select name="template_id" class="w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring focus:ring-purple-200 mb-2">
+                                            <option value="">Select a template...</option>
+                                            <!-- Templates will be loaded here via JavaScript -->
+                                        </select>
+                                        <p class="text-xs text-purple-600 bg-white/60 p-2 rounded">
+                                            <svg class="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                                            </svg>
+                                            <span id="templateInfo">Template will apply predefined workflow steps to the recipients you select below</span>
+                                        </p>
+                                    </div>
+                                </div>
+
                                 <h3 class="text-sm font-semibold text-gray-800 mb-3 flex items-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600 mr-2"
                                         fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -276,6 +301,156 @@
 
     <script>
         let batchIndex = 1; // This is used to give a unique starting point for cloned batch elements before updateBatchOrders standardizes them.
+
+        // Template functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const useTemplateCheckbox = document.getElementById('useTemplate');
+            const templateSelection = document.getElementById('templateSelection');
+            const templateSelect = document.querySelector('select[name="template_id"]');
+            const batchesContainer = document.getElementById('batches-container');
+
+            // Toggle template selection visibility
+            if (useTemplateCheckbox) {
+                useTemplateCheckbox.addEventListener('change', function() {
+                    console.log('Template checkbox changed:', this.checked);
+                    if (this.checked) {
+                        templateSelection.classList.remove('hidden');
+                        loadTemplates();
+                        // Disable manual recipient selection
+                        toggleManualSelection(false);
+                    } else {
+                        templateSelection.classList.add('hidden');
+                        // Re-enable manual recipient selection
+                        toggleManualSelection(true);
+                    }
+                });
+            } else {
+                console.error('useTemplate checkbox not found');
+            }
+
+            // Function to enable/disable manual recipient selection
+            function toggleManualSelection(enable) {
+                const recipientBatches = batchesContainer.querySelectorAll('.batch-group');
+                
+                recipientBatches.forEach(batch => {
+                    const radioInputs = batch.querySelectorAll('input[type="radio"]');
+                    
+                    // Keep recipients enabled but visually indicate template mode
+                    radioInputs.forEach(input => {
+                        // Don't disable, just style differently when template is selected
+                        input.disabled = false;
+                    });
+
+                    // Visual feedback for the recipient selection area
+                    const recipientGrid = batch.querySelector('.grid');
+                    if (recipientGrid) {
+                        if (enable) {
+                            recipientGrid.style.opacity = '1';
+                            recipientGrid.style.backgroundColor = '';
+                        } else {
+                            // Show that template will be used but keep interactive
+                            recipientGrid.style.opacity = '0.8';
+                            recipientGrid.style.backgroundColor = 'rgba(147, 51, 234, 0.05)';
+                        }
+                    }
+                });
+
+                // Update info message
+                const templateInfo = document.getElementById('templateInfo');
+                if (templateInfo) {
+                    templateInfo.textContent = enable ? 
+                        'Select recipients manually' : 
+                        'Template will apply predefined workflow steps to the recipients you select below';
+                }
+            }
+
+            // Load available templates
+            async function loadTemplates() {
+                console.log('Loading templates...');
+                try {
+                    const response = await fetch('/api/workflow-templates', {
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        }
+                    });
+
+                    console.log('Template API response status:', response.status);
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        console.log('Template API data:', data);
+                        if (data.success && data.data) {
+                            populateTemplateOptions(data.data);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error loading templates:', error);
+                }
+            }
+
+            function populateTemplateOptions(templates) {
+                // Clear existing options except the first one
+                templateSelect.innerHTML = '<option value="">Select a template...</option>';
+                
+                templates.forEach(template => {
+                    const option = document.createElement('option');
+                    option.value = template.id;
+                    option.textContent = `${template.name} (${template.steps_count} steps, ${template.workflow_type})`;
+                    templateSelect.appendChild(option);
+                });
+            }
+
+            // Initialize other functionality
+            updateBatchOrders();
+            setupFormValidation();
+            setupEventListeners();
+        });
+
+        function setupFormValidation() {
+            // Add form validation
+            const form = document.querySelector('form');
+            form.addEventListener('submit', function(event) {
+                if (!validateForm()) {
+                    event.preventDefault();
+                }
+            });
+        }
+
+        function setupEventListeners() {
+            // Add event listeners for office filter dropdowns
+            document.querySelectorAll('.office-filter').forEach(filter => {
+                filter.addEventListener('change', function() {
+                    filterUsersByOffice(this);
+                });
+            });
+
+            // Add event listeners for office radio buttons to uncheck user radio buttons when an office is selected
+            document.querySelectorAll('.office-radio').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    if (this.checked) {
+                        const batch = this.closest('.batch-group');
+                        const userRadios = batch.querySelectorAll('.user-radio');
+                        userRadios.forEach(userRadio => {
+                            userRadio.checked = false;
+                        });
+                    }
+                });
+            });
+
+            // Add event listeners for user radio buttons to uncheck office radio buttons when a user is selected
+            document.querySelectorAll('.user-radio').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    if (this.checked) {
+                        const batch = this.closest('.batch-group');
+                        const officeRadios = batch.querySelectorAll('.office-radio');
+                        officeRadios.forEach(officeRadio => {
+                            officeRadio.checked = false;
+                        });
+                    }
+                });
+            });
+        }
 
         function updateBatchOrders() {
             const batches = document.querySelectorAll('#batches-container .batch-group');
@@ -386,11 +561,47 @@
 
         function validateForm() {
             const batches = document.querySelectorAll('.batch-group');
+            const useTemplateCheckbox = document.getElementById('useTemplate');
+            const templateSelect = document.querySelector('select[name="template_id"]');
             let isValid = true;
 
             // Remove any existing error messages
             document.querySelectorAll('.validation-error').forEach(el => el.remove());
 
+            // If using template mode, validate template selection
+            if (useTemplateCheckbox && useTemplateCheckbox.checked) {
+                if (!templateSelect || !templateSelect.value) {
+                    isValid = false;
+                    const errorMsg = document.createElement('div');
+                    errorMsg.className = 'validation-error text-red-600 mt-2 mb-2';
+                    errorMsg.textContent = 'Please select a workflow template.';
+                    templateSelect.parentNode.appendChild(errorMsg);
+                    return false;
+                }
+                
+                // For template mode, still require at least one recipient to be selected
+                let hasRecipient = false;
+                batches.forEach(batch => {
+                    const batchIdx = batch.dataset.index;
+                    const recipientSelected = batch.querySelector(`input[name="recipient_batch[${batchIdx}]"]:checked`);
+                    if (recipientSelected) {
+                        hasRecipient = true;
+                    }
+                });
+                
+                if (!hasRecipient) {
+                    isValid = false;
+                    const errorMsg = document.createElement('div');
+                    errorMsg.className = 'validation-error text-red-600 mt-2 mb-2';
+                    errorMsg.textContent = 'Please select at least one recipient. Templates apply workflow steps to the recipients you choose.';
+                    document.getElementById('batches-container').appendChild(errorMsg);
+                    return false;
+                }
+                
+                return true; // Template mode validation passed
+            }
+
+            // Standard validation for manual mode
             batches.forEach(batch => {
                 const batchIdx = batch.dataset.index; // string value
                 const batchNumForDisplay = parseInt(batchIdx) + 1;

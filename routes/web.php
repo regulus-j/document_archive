@@ -193,6 +193,11 @@ Route::middleware('auth')->group(function () {
                 ->name('documents.review.submit');
         });
 
+        // Workflow Templates (inside documents prefix)
+        Route::get('/workflow-templates', function () {
+            return view('workflows.templates.index');
+        })->name('documents.workflow-templates');
+
         Route::post('/{document}/forward', [DocumentWorkflowController::class, 'forwardDocumentSubmit'])
             ->name('documents.forward.submit');
 
@@ -202,9 +207,9 @@ Route::middleware('auth')->group(function () {
         Route::put('/{document}', [DocumentController::class, 'update'])->name('documents.update');
         Route::delete('/{document}/delete', [DocumentController::class, 'destroy'])->name('documents.destroy');
         Route::delete('/{document}/delete-attachment', [DocumentController::class, 'deleteAttachment'])->name('documents.attachments.destroy');
-        Route::post('/documents/{document}/cancel', [DocumentController::class, 'cancelWorkflow'])->name('documents.cancel');
-        Route::post('/documents/{document}/recall', [DocumentController::class, 'recallDocument'])->name('documents.recall');
-        Route::post('/documents/{document}/resume', [DocumentController::class, 'resumeDocument'])->name('documents.resume');
+        Route::post('/{document}/cancel', [DocumentController::class, 'cancelWorkflow'])->name('documents.cancel');
+        Route::post('/{document}/recall', [DocumentController::class, 'recallDocument'])->name('documents.recall');
+        Route::post('/{document}/resume', [DocumentController::class, 'resumeDocument'])->name('documents.resume');
 
         // Update status route
         // Route::get('/{document}/status', [DocumentController::class, 'confirmReleased'])->name('documents.confirmrelease');
@@ -215,6 +220,123 @@ Route::middleware('auth')->group(function () {
         Route::post('/search/tr', [DocumentController::class, 'searchByTr'])->name('trackingNumber-search');
         Route::post('/search', [DocumentController::class, 'search'])->name('documents.search');
         Route::get('/{id}/download', [DocumentController::class, 'downloadFile'])->name('documents.download');
+    });
+
+    // Sequential Workflow System (separate from existing workflows)
+    Route::middleware('auth')->group(function () {
+        // Sequential Workflows Management
+        Route::get('/sequential-workflows', function () {
+            return view('workflows.index');
+        })->name('sequential-workflows.index');
+
+        // Workflow Templates Management
+        Route::get('/workflow-templates', function () {
+            return view('workflows.templates.index');
+        })->name('workflow-templates.index');
+
+        // API Routes for Workflow Templates (moved from api.php for web authentication)
+        Route::prefix('api/workflow-templates')->group(function () {
+            Route::get('/', [\App\Http\Controllers\WorkflowTemplateController::class, 'index']);
+            Route::post('/', [\App\Http\Controllers\WorkflowTemplateController::class, 'store']);
+            Route::get('/{template}', [\App\Http\Controllers\WorkflowTemplateController::class, 'show']);
+            Route::put('/{template}', [\App\Http\Controllers\WorkflowTemplateController::class, 'update']);
+            Route::delete('/{template}', [\App\Http\Controllers\WorkflowTemplateController::class, 'destroy']);
+            Route::post('/{template}/clone', [\App\Http\Controllers\WorkflowTemplateController::class, 'clone']);
+            Route::post('/from-workflow/{workflowChain}', [\App\Http\Controllers\WorkflowTemplateController::class, 'createFromWorkflow']);
+            Route::get('/{template}/stats', [\App\Http\Controllers\WorkflowTemplateController::class, 'stats']);
+        });
+
+        // API Routes for Sequential Workflows (moved from api.php for web authentication)
+        Route::prefix('api/workflows')->group(function () {
+            Route::post('/', [\App\Http\Controllers\SequentialWorkflowController::class, 'create']);
+            Route::post('/from-template', [\App\Http\Controllers\SequentialWorkflowController::class, 'createFromTemplate']);
+            Route::patch('/step/{workflow}/process', [\App\Http\Controllers\SequentialWorkflowController::class, 'processStep']);
+            Route::get('/chain/{workflowChain}', [\App\Http\Controllers\SequentialWorkflowController::class, 'getChain']);
+            Route::get('/document/{document}/progress', [\App\Http\Controllers\SequentialWorkflowController::class, 'getProgress']);
+            Route::patch('/chain/{workflowChain}/toggle-pause', [\App\Http\Controllers\SequentialWorkflowController::class, 'togglePause']);
+            Route::patch('/chain/{workflowChain}/cancel', [\App\Http\Controllers\SequentialWorkflowController::class, 'cancel']);
+            Route::get('/dashboard', [\App\Http\Controllers\SequentialWorkflowController::class, 'getDashboard']);
+            Route::get('/analytics', [\App\Http\Controllers\SequentialWorkflowController::class, 'getAnalytics']);
+        });
+
+        // API route for users (needed for workflow assignment)
+        Route::get('/api/users', function() {
+            return response()->json([
+                'success' => true,
+                'data' => \App\Models\User::select('id', 'first_name', 'last_name', 'email')
+                    ->where('company_id', auth()->user()->company_id)
+                    ->get()
+                    ->map(function($user) {
+                        return [
+                            'id' => $user->id,
+                            'name' => $user->first_name . ' ' . $user->last_name,
+                            'email' => $user->email
+                        ];
+                    })
+            ]);
+        });
+
+        // API route for documents (needed for workflow creation)
+        Route::get('/api/documents', function() {
+            return response()->json([
+                'success' => true,
+                'data' => \App\Models\Document::select('id', 'title', 'tracking_number')
+                    ->where('company_id', auth()->user()->company_id)
+                    ->latest()
+                    ->take(50)
+                    ->get()
+            ]);
+        });
+
+        // Debug route to test template creation
+        Route::get('/api/debug/template-test', function() {
+            try {
+                $user = auth()->user();
+                Log::info('Debug: Testing template creation', [
+                    'user_id' => $user->id,
+                    'user_company_id' => $user->company_id ?? 'null'
+                ]);
+
+                // Test basic model creation
+                $testData = [
+                    'name' => 'Test Template',
+                    'description' => 'Test description',
+                    'company_id' => $user->company_id ?? null,
+                    'created_by' => $user->id,
+                    'workflow_type' => 'sequential',
+                    'steps_config' => json_encode([['step_name' => 'Test Step']]),
+                    'is_active' => true,
+                    'is_public' => false,
+                    'usage_count' => 0,
+                ];
+
+                Log::info('Debug: About to create template', ['data' => $testData]);
+                
+                $template = \App\Models\WorkflowTemplate::create($testData);
+                
+                Log::info('Debug: Template created successfully', ['id' => $template->id]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Template test successful',
+                    'template_id' => $template->id
+                ]);
+                
+            } catch (Exception $e) {
+                Log::error('Debug: Template test failed', [
+                    'error' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ]);
+                
+                return response()->json([
+                    'success' => false,
+                    'error' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ]);
+            }
+        });
     });
 
     Route::prefix('office')->group(function () {

@@ -103,6 +103,22 @@
                                             {{ __('Workflows') }}
                                         </div>
                                     </x-dropdown-link>
+                                    <x-dropdown-link :href="route('sequential-workflows.index')" class="hover:bg-blue-50 hover:text-blue-600">
+                                        <div class="flex items-center">
+                                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                                            </svg>
+                                            {{ __('Sequential Workflows') }}
+                                        </div>
+                                    </x-dropdown-link>
+                                    <x-dropdown-link :href="route('workflow-templates.index')" class="hover:bg-blue-50 hover:text-blue-600">
+                                        <div class="flex items-center">
+                                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                            </svg>
+                                            {{ __('Workflow Templates') }}
+                                        </div>
+                                    </x-dropdown-link>
                                 </x-slot>
                             </x-dropdown>
                         @endcan
@@ -237,6 +253,8 @@
                 <x-responsive-nav-link :href="route('documents.receive.index')" :active="request()->routeIs('documents.receive.index')">{{ __('Receive Documents') }}</x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('documents.archive')" :active="request()->routeIs('documents.archive')">{{ __('Archives') }}</x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('documents.workflows')" :active="request()->routeIs('documents.workflows')">{{ __('Workflows') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('sequential-workflows.index')" :active="request()->routeIs('sequential-workflows.index')">{{ __('Sequential Workflows') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('workflow-templates.index')" :active="request()->routeIs('workflow-templates.index')">{{ __('Workflow Templates') }}</x-responsive-nav-link>
             @endcan            <div class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mt-2">Reports</div>
             <x-responsive-nav-link :href="route('reports.index')" :active="request()->routeIs('reports.index')">{{ __('View Reports') }}</x-responsive-nav-link>
 

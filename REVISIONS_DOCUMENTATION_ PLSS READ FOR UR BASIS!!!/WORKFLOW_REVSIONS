@@ -1,0 +1,23 @@
+│ My Active Documents                 │
+├─────────────────────────────────────┤
+│ ⏳ CURRENT STEP (Requires Action)   │
+│ • Annual Report (Step 2 of 3)       │
+│   From: John Doe → You → Bob Wilson │
+│   [Review Document] [Approve] [Rej] │
+│                                     │
+│ ⏸️ WAITING MY TURN                 │
+│ • Budget Proposal (Step 1 of 2)     │
+│   Waiting for: Sarah Chen           │
+│   Your turn: Next                   │
+│                                     │
+│ 📤 SENT BY ME                      │
+│ • Policy Update (Step 3 of 4)       │
+│   Current: Mike Johnson             │
+│   Progress: 75% complete             │
+└─────────────────────────────────────┘
+
+Workflow Flexibility: Should senders be able to modify the order after creation?:it depends, only with admin previlege
+Rejection Handling: When someone rejects, should it go back to sender or previous step? to previous step
+Parallel Mixing: Do you want hybrid workflows (some steps sequential, some parallel)? yes we can impement that
+Templates: Should there be pre-defined workflow templates for common processes? yes its a great feature
+Deadlines: Should there be auto-escalation if someone doesn't act within timeframe? for now we dont it yet but sooner updated we can

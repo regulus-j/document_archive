@@ -10,6 +10,8 @@ use App\Models\User;
 use App\Models\CompanyUser;
 use App\Models\DocumentAttachment;
 use App\Models\DocumentAudit;
+use App\Models\WorkflowTemplate;
+use App\Services\SequentialWorkflowService;
 use Illuminate\Support\Facades\Storage;
 
 
@@ -97,17 +99,25 @@ class DocumentWorkflowController extends Controller
         $document = Document::findOrFail($id);
 
         $request->validate([
-            'recipient_batch' => 'required|array',
-            'recipient_batch.*' => 'required|string',
-            'step_order' => 'required|array',
-            'purpose_batch' => 'required|array',
-            'purpose_batch.*' => 'required|string|in:appropriate_action,dissemination,for_comment',
+            'recipient_batch' => 'required_without:use_template|array',
+            'recipient_batch.*' => 'required_without:use_template|string',
+            'step_order' => 'required_without:use_template|array',
+            'purpose_batch' => 'required_without:use_template|array',
+            'purpose_batch.*' => 'required_without:use_template|string|in:appropriate_action,dissemination,for_comment',
             'urgency_batch' => 'nullable|array',
             'urgency_batch.*' => 'nullable|string|in:low,medium,high,critical',
             'due_date_batch' => 'nullable|array',
             'due_date_batch.*' => 'nullable|date|after_or_equal:today',
+            'use_template' => 'nullable|boolean',
+            'template_id' => 'nullable|exists:workflow_templates,id',
         ]);
 
+        // Check if user wants to apply a workflow template
+        if ($request->use_template && $request->template_id) {
+            return $this->forwardDocumentWithTemplate($request, $document);
+        }
+
+        // Original forwarding logic (without template)
         $document->status()->update(['status' => 'forwarded']);
 
         // Generate tracking number
@@ -570,11 +580,19 @@ class DocumentWorkflowController extends Controller
             'recipients' => 'required|array',
             'recipients.*' => 'exists:users,id',
             'remarks' => 'nullable|string|max:1000',
+            'use_template' => 'nullable|boolean',
+            'template_id' => 'nullable|exists:workflow_templates,id',
         ]);
 
         $workflow = DocumentWorkflow::findOrFail($id);
         $document = Document::findOrFail($workflow->document_id);
         
+        // Check if user wants to apply a workflow template
+        if ($request->use_template && $request->template_id) {
+            return $this->forwardWithTemplate($request, $workflow, $document);
+        }
+        
+        // Original forward logic (without template)
         // Keep the current workflow unchanged but mark as forwarded
         $workflow->forward();
         $workflow->remarks = $request->remarks ?? '';
@@ -792,5 +810,145 @@ class DocumentWorkflowController extends Controller
         }
 
         return redirect()->route('documents.workflows')->with('success', 'Document information acknowledged successfully.');
+    }
+
+    /**
+     * Forward document using a workflow template (initial forwarding)
+     */
+    private function forwardDocumentWithTemplate(Request $request, Document $document)
+    {
+        try {
+            $template = WorkflowTemplate::findOrFail($request->template_id);
+            
+            // Extract recipients from the form data
+            $recipients = [];
+            $recipientBatches = $request->recipient_batch ?? [];
+            
+            foreach ($recipientBatches as $batchIndex => $recipientValue) {
+                if (empty($recipientValue)) {
+                    continue;
+                }
+                
+                // Parse the recipient value to determine if it's an office or user
+                $parts = explode('_', $recipientValue);
+                $type = $parts[0];
+                $id = intval($parts[1]);
+                
+                if ($type === 'user') {
+                    $recipients[] = ['user_id' => $id];
+                } else if ($type === 'office') {
+                    // For office recipients, get all users in that office
+                    $officeUsers = \App\Models\User::whereHas('offices', function($query) use ($id) {
+                        $query->where('offices.id', $id);
+                    })->get();
+                    
+                    foreach ($officeUsers as $user) {
+                        $recipients[] = ['user_id' => $user->id];
+                    }
+                }
+            }
+            
+            // Validate that we have recipients
+            if (empty($recipients)) {
+                throw new \Exception('No recipients selected. Please select at least one recipient or office.');
+            }
+            
+            // Update document status
+            $document->status()->update(['status' => 'forwarded']);
+
+            // Log the forward action
+            DocumentAudit::logDocumentAction(
+                $document->id,
+                auth()->id(),
+                'forward',
+                'forwarded',
+                'Document forwarded using template: ' . $template->name
+            );
+
+            // Use the sequential workflow service to create template-based workflow
+            $sequentialWorkflowService = app(SequentialWorkflowService::class);
+            
+            $overrides = [
+                'description' => 'Document forwarded using template: ' . $template->name,
+                'urgency' => $request->urgency_batch[0] ?? 'medium',
+                'recipients' => $recipients
+            ];
+
+            $workflowChain = $sequentialWorkflowService->createFromTemplate(
+                $template,
+                $document,
+                auth()->user(),
+                $overrides
+            );
+
+            // Generate QR code data for tracking
+            $trackingNumber = $this->createTrackingNumber($document, auth()->user());
+            $qrCodeData = app(DocumentController::class)->generateTrackingSlip($document->id, auth()->id(), $trackingNumber);
+
+            return redirect()->route('documents.index')
+                ->with('data', $qrCodeData)
+                ->with('success', "Document forwarded using template '{$template->name}' to " . count($recipients) . " recipient(s) with {$workflowChain->total_steps} workflow steps created.");
+
+        } catch (\Exception $e) {
+            \Log::error('Error forwarding document with template', [
+                'error' => $e->getMessage(),
+                'template_id' => $request->template_id,
+                'document_id' => $document->id
+            ]);
+
+            return redirect()->back()
+                ->with('error', 'Failed to apply workflow template: ' . $e->getMessage())
+                ->withInput();
+        }
+    }
+
+    /**
+     * Forward document using a workflow template (from workflow review)
+     */
+    private function forwardWithTemplate(Request $request, DocumentWorkflow $workflow, Document $document): RedirectResponse
+    {
+        try {
+            $template = WorkflowTemplate::findOrFail($request->template_id);
+            
+            // Mark current workflow as forwarded
+            $workflow->forward();
+            $workflow->remarks = $request->remarks ?? 'Forwarded using template: ' . $template->name;
+            $workflow->save();
+
+            // Prepare recipients for template application
+            $recipients = collect($request->recipients)->map(function($userId) {
+                return ['user_id' => $userId];
+            })->toArray();
+
+            // Use the sequential workflow service to create template-based workflow
+            $sequentialWorkflowService = app(SequentialWorkflowService::class);
+            
+            $overrides = [
+                'description' => $request->remarks,
+                'urgency' => 'medium',
+                'recipients' => $recipients
+            ];
+
+            $workflowChain = $sequentialWorkflowService->createFromTemplate(
+                $template,
+                $document,
+                auth()->user(),
+                $overrides
+            );
+
+            return redirect()->route('documents.workflows')
+                ->with('success', "Document forwarded using template '{$template->name}' with {$workflowChain->total_steps} workflow steps created.");
+
+        } catch (\Exception $e) {
+            \Log::error('Error forwarding with template', [
+                'error' => $e->getMessage(),
+                'template_id' => $request->template_id,
+                'document_id' => $document->id
+            ]);
+
+            return redirect()->back()
+                ->with('error', 'Failed to apply workflow template. Using standard forward instead.')
+                ->withInput();
+        }
     }
 }

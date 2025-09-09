@@ -206,6 +206,58 @@
                         }
                     });
                 }
+
+                // Template functionality
+                document.addEventListener('DOMContentLoaded', function() {
+                    const useTemplateCheckbox = document.getElementById('useTemplate');
+                    const templateSelection = document.getElementById('templateSelection');
+                    const templateSelect = document.querySelector('select[name="template_id"]');
+
+                    // Toggle template selection visibility
+                    if (useTemplateCheckbox) {
+                        useTemplateCheckbox.addEventListener('change', function() {
+                            if (this.checked) {
+                                templateSelection.classList.remove('hidden');
+                                loadTemplates();
+                            } else {
+                                templateSelection.classList.add('hidden');
+                            }
+                        });
+                    }
+
+                    // Load available templates
+                    async function loadTemplates() {
+                        try {
+                            const response = await fetch('/api/workflow-templates', {
+                                headers: {
+                                    'Accept': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                                }
+                            });
+
+                            if (response.ok) {
+                                const data = await response.json();
+                                if (data.success && data.data) {
+                                    populateTemplateOptions(data.data);
+                                }
+                            }
+                        } catch (error) {
+                            console.error('Error loading templates:', error);
+                        }
+                    }
+
+                    function populateTemplateOptions(templates) {
+                        // Clear existing options except the first one
+                        templateSelect.innerHTML = '<option value="">Select a template...</option>';
+                        
+                        templates.forEach(template => {
+                            const option = document.createElement('option');
+                            option.value = template.id;
+                            option.textContent = `${template.name} (${template.steps_count} steps)`;
+                            templateSelect.appendChild(option);
+                        });
+                    }
+                });
             </script>
 
             <!-- Action Forms -->
@@ -273,6 +325,22 @@
                     <h3 class="font-medium text-purple-800 mb-3">Forward Document</h3>
                     <form method="POST" action="{{ route('documents.forwardFromWorkflow', $workflow->id) }}">
                         @csrf
+                        
+                        <!-- Template Selection (New Feature) -->
+                        <div class="mb-4 p-3 bg-white border border-purple-300 rounded-md">
+                            <label class="flex items-center mb-2">
+                                <input type="checkbox" id="useTemplate" name="use_template" class="rounded text-purple-600 focus:ring-purple-500">
+                                <span class="ml-2 text-sm font-medium text-gray-700">Apply Workflow Template</span>
+                            </label>
+                            <div id="templateSelection" class="hidden">
+                                <select name="template_id" class="w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring focus:ring-purple-200">
+                                    <option value="">Select a template...</option>
+                                    <!-- Templates will be loaded here via JavaScript -->
+                                </select>
+                                <p class="text-xs text-gray-500 mt-1">Templates create predefined workflow steps for recipients</p>
+                            </div>
+                        </div>
+
                         <div class="mb-4">
                             <label class="block text-sm font-medium text-gray-700 mb-2">Forward To</label>
                             <select name="recipients[]" multiple class="w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring focus:ring-purple-200" required>

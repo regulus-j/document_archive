@@ -91,6 +91,16 @@ class Document extends Model
         return $this->hasOne(DocumentWorkflow::class, 'document_id');
     }
 
+    public function workflowChain()
+    {
+        return $this->hasOne(WorkflowChain::class);
+    }
+
+    public function workflowChains()
+    {
+        return $this->hasMany(WorkflowChain::class);
+    }
+
     public function originatingOffice()
     {
         return $this->belongsTo(Office::class, 'from_office'); // Assuming 'from_office' is the foreign key

@@ -11,17 +11,32 @@ class DocumentWorkflow extends Model
 
     protected $fillable = [
         'tracking_number',
+        'workflow_chain_id',
         'document_id',
         'sender_id',
         'recipient_id',
         'recipient_office',
         'step_order',
+        'is_current_step',
+        'workflow_type',
+        'workflow_group_id',
+        'completion_action',
+        'workflow_config',
+        'depends_on_step',
         'status',
         'purpose',
         'urgency',
         'due_date',
         'remarks',
         'is_paused',
+    ];
+
+    protected $casts = [
+        'workflow_config' => 'array',
+        'is_current_step' => 'boolean',
+        'is_paused' => 'boolean',
+        'received_at' => 'datetime',
+        'due_date' => 'datetime',
     ];
 
     public function document()
@@ -37,6 +52,11 @@ class DocumentWorkflow extends Model
     public function recipient()
     {
         return $this->belongsTo(User::class, 'recipient_id');
+    }
+
+    public function workflowChain()
+    {
+        return $this->belongsTo(WorkflowChain::class, 'workflow_chain_id');
     }
 
     public function recipientOffice()
@@ -234,5 +254,70 @@ class DocumentWorkflow extends Model
     public function isPaused()
     {
         return $this->is_paused === true;
+    }
+
+    // Sequential Workflow Helper Methods
+    
+    public function isCurrentStep()
+    {
+        return $this->is_current_step === true;
+    }
+    
+    public function isSequential()
+    {
+        return $this->workflow_type === 'sequential';
+    }
+    
+    public function isParallel()
+    {
+        return $this->workflow_type === 'parallel';
+    }
+    
+    public function activateStep()
+    {
+        $this->is_current_step = true;
+        $this->save();
+    }
+    
+    public function deactivateStep()
+    {
+        $this->is_current_step = false;
+        $this->save();
+    }
+    
+    public function getParallelWorkflows()
+    {
+        return self::where('document_id', $this->document_id)
+            ->where('step_order', $this->step_order)
+            ->where('workflow_group_id', $this->workflow_group_id)
+            ->where('id', '!=', $this->id)
+            ->get();
+    }
+    
+    public function getNextStepWorkflows()
+    {
+        return self::where('document_id', $this->document_id)
+            ->where('step_order', '>', $this->step_order)
+            ->orderBy('step_order')
+            ->get();
+    }
+    
+    public function getPreviousStepWorkflows()
+    {
+        return self::where('document_id', $this->document_id)
+            ->where('step_order', '<', $this->step_order)
+            ->orderBy('step_order', 'desc')
+            ->get();
+    }
+    
+    public function allParallelStepsCompleted()
+    {
+        $pendingCount = self::where('document_id', $this->document_id)
+            ->where('step_order', $this->step_order)
+            ->where('workflow_group_id', $this->workflow_group_id)
+            ->where('status', 'pending')
+            ->count();
+            
+        return $pendingCount === 0;
     }
 }
