@@ -48,13 +48,24 @@ class DocumentWorkflowController extends Controller
                     \Log::info('Auto-received sequential workflow for user', [
                         'workflow_id' => $workflowId,
                         'user_id' => $userId,
-                        'document_id' => $workflow->document_id
+                        'document_id' => $workflow->document_id,
+                        'step_order' => $workflow->step_order
                     ]);
                 }
                 return true;
             }
             
-            // Normal access check for received workflows
+            // For sequential workflows that are waiting, deny access
+            if ($workflow->isSequential() && $workflow->status === 'waiting') {
+                \Log::info('User tried to access sequential workflow that is waiting', [
+                    'workflow_id' => $workflowId,
+                    'user_id' => $userId,
+                    'step_order' => $workflow->step_order
+                ]);
+                return false;
+            }
+            
+            // Normal access check for received workflows (parallel or sequential that has been received)
             return in_array($workflow->status, ['received', 'approved', 'rejected', 'returned', 'referred', 'forwarded']);
         }
         
@@ -180,12 +191,18 @@ class DocumentWorkflowController extends Controller
             $id = intval($parts[1]);
             
             // Determine status based on workflow mode and step order
-            $stepOrder = $request->step_order[$batchIndex];
+            $stepOrder = intval($request->step_order[$batchIndex]);
             $status = 'pending'; // Default for parallel mode
             
             if ($isSequential) {
                 // In sequential mode, only the first step is pending, others wait
                 $status = ($stepOrder == 1) ? 'pending' : 'waiting';
+                \Log::info('Sequential workflow step created', [
+                    'step_order' => $stepOrder,
+                    'status' => $status,
+                    'recipient_type' => $type,
+                    'recipient_id' => $id
+                ]);
             }
             
             if ($type === 'user') {
@@ -388,13 +405,24 @@ class DocumentWorkflowController extends Controller
     {
         $currentUserId = auth()->id();
         
-        // Only show workflows where the user has already "received" the document
-        // This enforces the receive-first, then workflow logic
-        // Also exclude recalled documents
+        // Show workflows where the user can take action
+        // This includes:
+        // 1. Workflows they've received (status != 'pending' for parallel)
+        // 2. Sequential workflows that are pending and assigned to them
+        // 3. Workflows where they are the sender (monitoring)
         $workflows = DocumentWorkflow::with(['document.status', 'sender', 'recipient'])
             ->where(function($query) use ($currentUserId) {
                 $query->where('recipient_id', $currentUserId)
-                      ->where('status', '!=', 'pending'); // Must have moved past pending (i.e., received)
+                      ->where(function($subQuery) {
+                          // Include received workflows (parallel or sequential)
+                          $subQuery->where('status', '!=', 'pending')
+                                  ->where('status', '!=', 'waiting')
+                                  // OR include sequential workflows that are pending (ready for action)
+                                  ->orWhere(function($seqQuery) {
+                                      $seqQuery->where('workflow_type', 'sequential')
+                                              ->where('status', 'pending');
+                                  });
+                      });
             })
             ->orWhere(function($query) use ($currentUserId) {
                 // Also show workflows where user is the sender (they can monitor progress)
@@ -408,10 +436,17 @@ class DocumentWorkflowController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(15);
 
-        // Get pending documents that need to be received first (exclude recalled)
+        // Get pending documents that need to be received first (exclude recalled and sequential pending)
+        // For sequential workflows, pending means ready to process, not pending receipt
         $pendingReceive = DocumentWorkflow::with(['document.status', 'sender'])
             ->where('recipient_id', $currentUserId)
             ->where('status', 'pending')
+            ->where(function($query) {
+                // Only include parallel workflows in pending receive
+                // Sequential workflows with pending status are ready for action
+                $query->where('workflow_type', '!=', 'sequential')
+                      ->orWhereNull('workflow_type'); // Handle legacy workflows without type
+            })
             ->whereHas('document', function($query) {
                 $query->whereHas('status', function($statusQuery) {
                     $statusQuery->where('status', '!=', 'recalled');
@@ -905,8 +940,19 @@ class DocumentWorkflowController extends Controller
     {
         // Only process if current workflow is sequential
         if (!$currentWorkflow->isSequential()) {
+            \Log::info('Workflow is not sequential, skipping next step activation', [
+                'workflow_id' => $currentWorkflow->id,
+                'workflow_type' => $currentWorkflow->workflow_type
+            ]);
             return false;
         }
+
+        \Log::info('Attempting to activate next sequential step', [
+            'current_workflow_id' => $currentWorkflow->id,
+            'current_step_order' => $currentWorkflow->step_order,
+            'document_id' => $currentWorkflow->document_id,
+            'current_status' => $currentWorkflow->status
+        ]);
 
         // Find the next step in the sequence
         $nextStep = DocumentWorkflow::where('document_id', $currentWorkflow->document_id)
@@ -916,6 +962,12 @@ class DocumentWorkflowController extends Controller
             ->first();
 
         if ($nextStep) {
+            \Log::info('Found next sequential step, activating it', [
+                'next_workflow_id' => $nextStep->id,
+                'next_step_order' => $nextStep->step_order,
+                'next_recipient_id' => $nextStep->recipient_id
+            ]);
+
             // Activate the next step
             $nextStep->status = 'pending';
             $nextStep->save();
@@ -953,13 +1005,24 @@ class DocumentWorkflowController extends Controller
                         'action_taken' => $currentWorkflow->status,
                         'next_recipient' => $nextStep->recipient ? 
                             $nextStep->recipient->first_name . ' ' . $nextStep->recipient->last_name : 
-                            'Office: ' . $nextStep->recipientOffice->name,
+                            ($nextStep->recipientOffice ? 'Office: ' . $nextStep->recipientOffice->name : 'Unknown Office'),
                     ]),
                 ]);
             }
 
+            \Log::info('Successfully activated next sequential step', [
+                'next_workflow_id' => $nextStep->id,
+                'next_step_order' => $nextStep->step_order
+            ]);
+
             return true;
         }
+
+        \Log::info('No next sequential step found', [
+            'current_step_order' => $currentWorkflow->step_order,
+            'looking_for_step_order' => $currentWorkflow->step_order + 1,
+            'document_id' => $currentWorkflow->document_id
+        ]);
 
         return false;
     }

@@ -119,11 +119,11 @@
                                 <p class="text-sm text-gray-600 mt-1">Choose how recipients should process this document</p>
                             </div>
                             <div class="flex items-center space-x-4">
-                                <label class="inline-flex items-center">
+                                <label class="inline-flex items-center cursor-pointer">
                                     <input type="radio" name="workflow_mode" value="parallel" class="workflow-type-radio form-radio text-blue-600" checked>
                                     <span class="ml-2 text-sm font-medium text-gray-700">Parallel Processing</span>
                                 </label>
-                                <label class="inline-flex items-center">
+                                <label class="inline-flex items-center cursor-pointer">
                                     <input type="radio" name="workflow_mode" value="sequential" class="workflow-type-radio form-radio text-blue-600">
                                     <span class="ml-2 text-sm font-medium text-gray-700">Sequential Processing</span>
                                 </label>
@@ -140,6 +140,11 @@
                                     <div>
                                         <p class="text-sm font-medium text-gray-800">Parallel Processing (Default)</p>
                                         <p class="text-sm text-gray-600 mt-1">All recipients receive the document simultaneously and can process it at the same time. No waiting required.</p>
+                                        <ul class="text-xs text-gray-500 mt-2 space-y-1">
+                                            <li>• All recipients can act on the document immediately</li>
+                                            <li>• No dependency between recipients</li>
+                                            <li>• Faster overall processing time</li>
+                                        </ul>
                                     </div>
                                 </div>
                             </div>
@@ -150,7 +155,18 @@
                                     </svg>
                                     <div>
                                         <p class="text-sm font-medium text-gray-800">Sequential Processing</p>
-                                        <p class="text-sm text-gray-600 mt-1">Recipients process the document in order. Each recipient must complete their action before the next recipient can receive the document.</p>
+                                        <p class="text-sm text-gray-600 mt-1">Recipients process the document in strict order. Each recipient must complete their action (approve, reject, or comment) before the next recipient receives the document.</p>
+                                        <ul class="text-xs text-gray-500 mt-2 space-y-1">
+                                            <li>• <strong>Step-by-step processing:</strong> Recipients process in order</li>
+                                            <li>• <strong>Controlled workflow:</strong> Previous step must be completed first</li>
+                                            <li>• <strong>Drag to reorder:</strong> Change processing sequence by dragging steps</li>
+                                            <li>• <strong>Auto-notification:</strong> Next recipient is notified when their turn comes</li>
+                                        </ul>
+                                        <div class="mt-3 p-2 bg-amber-50 border border-amber-200 rounded">
+                                            <p class="text-xs text-amber-700 font-medium">
+                                                💡 Tip: Use sequential processing for approval chains, review processes, or when order matters.
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -158,18 +174,20 @@
                     </div>
 
                     <div id="batches-container" class="space-y-6">
-                        <div class="batch-group bg-blue-50/50 p-6 rounded-xl border border-blue-200/60 transition-all duration-200" data-index="0">
+                        <div class="batch-group bg-blue-50/50 p-6 rounded-xl border border-blue-200/60 transition-all duration-200 hover:shadow-lg" data-index="0">
                             <!-- Sequential Step Indicator -->
                             <div class="sequential-step-indicator hidden mb-4">
-                                <div class="flex items-center">
-                                    <div class="flex items-center text-sm text-gray-600">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <div class="flex items-center justify-between bg-white p-3 rounded-lg border border-amber-200">
+                                    <div class="flex items-center text-sm text-amber-700">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
-                                        <span>Sequential Step - Document will be sent to this recipient only after the previous step is completed</span>
+                                        <span class="font-medium">Sequential Step</span>
+                                        <span class="ml-2 text-amber-600">- Document will be sent to this recipient only after the previous step is completed</span>
                                     </div>
-                                    <div class="ml-auto">
-                                        <button type="button" class="drag-handle cursor-move p-1 text-gray-400 hover:text-gray-600">
+                                    <div class="flex items-center space-x-2">
+                                        <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">Drag to reorder</span>
+                                        <button type="button" class="drag-handle cursor-move p-2 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded transition-colors">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                                             </svg>
@@ -342,11 +360,20 @@
                         </button>
                         
                         <!-- Sequential Workflow Info -->
-                        <div id="sequential-info" class="sequential-only hidden items-center text-sm text-amber-600 bg-amber-50 px-3 py-2 rounded-lg border border-amber-200">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <span>Steps will be processed in order. Drag to reorder.</span>
+                        <div id="sequential-info" class="sequential-only hidden items-center text-sm bg-gradient-to-r from-amber-50 to-orange-50 px-4 py-3 rounded-lg border border-amber-200">
+                            <div class="flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <div class="text-amber-700">
+                                    <span class="font-medium">Sequential Processing Active</span>
+                                    <span class="ml-2">- Steps will be processed in order from top to bottom. Use the</span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mx-1 inline text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                                    </svg>
+                                    <span>drag handle to reorder steps.</span>
+                                </div>
+                            </div>
                         </div>
                         
                         <button type="submit"
@@ -370,8 +397,7 @@
         let isSequentialMode = false;
 
         function updateWorkflowDisplay() {
-            const checkedRadio = document.querySelector('input[name="workflow_mode"]:checked');
-            const isSequential = checkedRadio ? checkedRadio.value === 'sequential' : false;
+            const isSequential = document.querySelector('input[name="workflow_mode"]:checked').value === 'sequential';
             isSequentialMode = isSequential;
             
             // Toggle descriptions
@@ -426,8 +452,46 @@
             // Enable/disable drag and drop for sequential mode
             if (isSequential) {
                 enableDragAndDrop();
+                updateSequentialModeHelp();
             } else {
                 disableDragAndDrop();
+            }
+        }
+
+        function updateSequentialModeHelp() {
+            const batches = document.querySelectorAll('#batches-container .batch-group');
+            const sequentialInfo = document.getElementById('sequential-info');
+            
+            if (batches.length === 1) {
+                // Show helpful message for single step
+                sequentialInfo.innerHTML = `
+                    <div class="flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div class="text-blue-700">
+                            <span class="font-medium">Sequential Mode with Single Step</span>
+                            <span class="ml-2">- Add more steps to create a processing sequence.</span>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Show normal sequential message
+                sequentialInfo.innerHTML = `
+                    <div class="flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div class="text-amber-700">
+                            <span class="font-medium">Sequential Processing Active</span>
+                            <span class="ml-2">- Steps will be processed in order from top to bottom. Use the</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mx-1 inline text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
+                            <span>drag handle to reorder steps.</span>
+                        </div>
+                    </div>
+                `;
             }
         }
 
@@ -439,43 +503,174 @@
                 const isLast = index === batches.length - 1;
                 
                 if (isSequentialMode) {
-                    // In sequential mode, use different colors for each step
+                    // In sequential mode, use different colors for each step with better progression
                     const colors = [
-                        'from-blue-500 to-indigo-600',
-                        'from-green-500 to-emerald-600', 
-                        'from-amber-500 to-orange-600',
-                        'from-purple-500 to-violet-600',
-                        'from-pink-500 to-rose-600'
+                        'from-green-500 to-emerald-600',    // Start - Green for first step
+                        'from-blue-500 to-indigo-600',      // Process - Blue for middle steps
+                        'from-purple-500 to-violet-600',    // Review - Purple
+                        'from-amber-500 to-orange-600',     // Approve - Amber/Orange
+                        'from-pink-500 to-rose-600',        // Final - Pink/Rose
+                        'from-gray-500 to-slate-600'        // Additional - Gray
                     ];
                     
-                    stepIndicator.className = `step-number-indicator flex-shrink-0 h-8 w-8 bg-gradient-to-br ${colors[index % colors.length]} rounded-full flex items-center justify-center text-white font-bold shadow-sm`;
+                    stepIndicator.className = `step-number-indicator flex-shrink-0 h-10 w-10 bg-gradient-to-br ${colors[index % colors.length]} rounded-full flex items-center justify-center text-white font-bold shadow-lg ring-2 ring-white`;
                     
-                    // Hide arrow for last step
+                    // Add step progression arrows with better styling
                     const arrow = batch.querySelector('.sequential-arrow');
                     if (arrow) {
                         arrow.classList.toggle('hidden', isLast);
+                        if (!isLast) {
+                            arrow.innerHTML = `
+                                <div class="flex flex-col items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                                    </svg>
+                                    <span class="text-xs text-gray-500 mt-1">Then</span>
+                                </div>
+                            `;
+                        }
                     }
+                    
+                    // Update batch styling for sequential mode
+                    batch.classList.remove('bg-blue-50/50');
+                    batch.classList.add('bg-gradient-to-r', 'from-white', 'to-gray-50/50');
+                    
                 } else {
                     // In parallel mode, all use the same blue color
                     stepIndicator.className = 'step-number-indicator flex-shrink-0 h-8 w-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold shadow-sm';
+                    
+                    // Reset batch styling for parallel mode
+                    batch.classList.remove('bg-gradient-to-r', 'from-white', 'to-gray-50/50');
+                    batch.classList.add('bg-blue-50/50');
                 }
+            });
+        }
+
+        function addBatchEventListeners(batch) {
+            // Add event listeners for office radio buttons
+            batch.querySelectorAll('.office-radio').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    if (this.checked) {
+                        const batch = this.closest('.batch-group');
+                        const userRadios = batch.querySelectorAll('.user-radio');
+                        userRadios.forEach(userRadio => {
+                            userRadio.checked = false;
+                        });
+                    }
+                });
+            });
+
+            // Add event listeners for user radio buttons
+            batch.querySelectorAll('.user-radio').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    if (this.checked) {
+                        const batch = this.closest('.batch-group');
+                        const officeRadios = batch.querySelectorAll('.office-radio');
+                        officeRadios.forEach(officeRadio => {
+                            officeRadio.checked = false;
+                        });
+                    }
+                });
             });
         }
 
         function enableDragAndDrop() {
             const container = document.getElementById('batches-container');
             
+            // Debug logging
+            console.log('Enabling drag and drop, SortableJS available:', typeof Sortable !== 'undefined');
+            
+            // Destroy existing sortable instance if it exists
+            if (container.sortable) {
+                container.sortable.destroy();
+                console.log('Destroyed existing sortable instance');
+            }
+            
             // Enable sorting
             if (typeof Sortable !== 'undefined') {
-                new Sortable(container, {
+                container.sortable = new Sortable(container, {
                     handle: '.drag-handle',
-                    animation: 150,
-                    ghostClass: 'opacity-50',
-                    onEnd: function() {
+                    animation: 200,
+                    ghostClass: 'sortable-ghost',
+                    chosenClass: 'sortable-chosen',
+                    dragClass: 'sortable-drag',
+                    easing: "cubic-bezier(1, 0, 0, 1)",
+                    onStart: function(evt) {
+                        console.log('Drag started for element at index:', evt.oldIndex);
+                        // Add visual feedback when dragging starts
+                        evt.item.classList.add('dragging');
+                        document.querySelectorAll('.batch-group').forEach(batch => {
+                            if (batch !== evt.item) {
+                                batch.classList.add('drag-target');
+                            }
+                        });
+                    },
+                    onEnd: function(evt) {
+                        console.log('Drag ended, moved from', evt.oldIndex, 'to', evt.newIndex);
+                        // Remove visual feedback when dragging ends
+                        evt.item.classList.remove('dragging');
+                        document.querySelectorAll('.batch-group').forEach(batch => {
+                            batch.classList.remove('drag-target');
+                        });
+                        
+                        // Update orders and show success message
                         updateBatchOrders();
                         updateStepIndicators();
+                        
+                        // Show reorder success message
+                        showReorderSuccess(evt.oldIndex, evt.newIndex);
                     }
                 });
+                
+                console.log('Sortable instance created successfully');
+                
+                // Add CSS for drag effects if not already added
+                if (!document.getElementById('drag-styles')) {
+                    const style = document.createElement('style');
+                    style.id = 'drag-styles';
+                    style.textContent = `
+                        .sortable-chosen {
+                            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+                            border: 2px solid #fbbf24 !important;
+                            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%) !important;
+                            transform: scale(1.02);
+                            z-index: 1000;
+                        }
+                        .sortable-drag {
+                            transform: rotate(2deg) scale(1.05);
+                            opacity: 0.9;
+                        }
+                        .dragging {
+                            transform: rotate(5deg) scale(1.05);
+                            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+                            z-index: 1000;
+                        }
+                        .drag-target {
+                            opacity: 0.7;
+                            border: 2px dashed #fbbf24;
+                            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+                        }
+                        .batch-group:hover .drag-handle {
+                            opacity: 1;
+                            transform: scale(1.1);
+                        }
+                        .drag-handle {
+                            opacity: 0.6;
+                            transition: all 0.2s ease;
+                            cursor: move;
+                        }
+                        .sortable-ghost {
+                            opacity: 0.4;
+                            background: #fef3c7 !important;
+                            border: 2px dashed #fbbf24 !important;
+                            transform: rotate(3deg);
+                        }
+                    `;
+                    document.head.appendChild(style);
+                    console.log('Drag styles added');
+                }
+            } else {
+                console.error('SortableJS not loaded. Drag and drop functionality will not work.');
             }
         }
 
@@ -484,6 +679,40 @@
             const container = document.getElementById('batches-container');
             if (container.sortable) {
                 container.sortable.destroy();
+                container.sortable = null;
+            }
+        }
+
+        function showReorderSuccess(oldIndex, newIndex) {
+            if (oldIndex !== newIndex) {
+                // Create and show a temporary success message
+                const message = document.createElement('div');
+                message.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 transform transition-all duration-300';
+                message.innerHTML = `
+                    <div class="flex items-center">
+                        <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        Step reordered: ${oldIndex + 1} → ${newIndex + 1}
+                    </div>
+                `;
+                
+                document.body.appendChild(message);
+                
+                // Animate in
+                setTimeout(() => {
+                    message.style.transform = 'translateX(0)';
+                }, 100);
+                
+                // Remove after 3 seconds
+                setTimeout(() => {
+                    message.style.transform = 'translateX(100%)';
+                    setTimeout(() => {
+                        if (message.parentNode) {
+                            message.parentNode.removeChild(message);
+                        }
+                    }, 300);
+                }, 3000);
             }
         }
 
@@ -548,6 +777,11 @@
             
             // Update step indicators
             updateStepIndicators();
+            
+            // Update sequential mode help if in sequential mode
+            if (isSequentialMode) {
+                updateSequentialModeHelp();
+            }
         }
 
         function removeLastBatch() {
@@ -559,6 +793,12 @@
                 const lastBatch = batches[batches.length - 1];
                 container.removeChild(lastBatch);
                 updateBatchOrders();
+                
+                // Re-enable drag and drop for sequential mode to update the sortable instance
+                if (isSequentialMode) {
+                    enableDragAndDrop();
+                    updateSequentialModeHelp();
+                }
             }
         }
 
@@ -606,29 +846,13 @@
             }
             
             // Add event listeners for radio buttons in the new batch
-            newBatch.querySelectorAll('.office-radio').forEach(radio => {
-                radio.addEventListener('change', function() {
-                    if (this.checked) {
-                        const batch = this.closest('.batch-group');
-                        const userRadios = batch.querySelectorAll('.user-radio');
-                        userRadios.forEach(userRadio => {
-                            userRadio.checked = false;
-                        });
-                    }
-                });
-            });
-
-            newBatch.querySelectorAll('.user-radio').forEach(radio => {
-                radio.addEventListener('change', function() {
-                    if (this.checked) {
-                        const batch = this.closest('.batch-group');
-                        const officeRadios = batch.querySelectorAll('.office-radio');
-                        officeRadios.forEach(officeRadio => {
-                            officeRadio.checked = false;
-                        });
-                    }
-                });
-            });
+            addBatchEventListeners(newBatch);
+            
+            // Re-enable drag and drop for sequential mode to include the new batch
+            if (isSequentialMode) {
+                enableDragAndDrop();
+                updateSequentialModeHelp();
+            }
         }
 
         function validateForm() {
@@ -696,19 +920,7 @@
                 return false;
             }
             
-            // Add workflow type to form data
-            const workflowType = document.querySelector('input[name="workflow_mode"]:checked').value;
-            
-            // Create hidden input for workflow type if it doesn't exist
-            let workflowInput = document.querySelector('input[name="workflow_mode"]');
-            if (!workflowInput) {
-                workflowInput = document.createElement('input');
-                workflowInput.type = 'hidden';
-                workflowInput.name = 'workflow_mode';
-                document.querySelector('form').appendChild(workflowInput);
-            }
-            workflowInput.value = workflowType;
-            
+            // Form submission will work correctly since we're already using workflow_mode
             return true;
         }
 
@@ -740,30 +952,9 @@
                 });
             });
 
-            // Add event listeners for office radio buttons to uncheck user radio buttons when an office is selected
-            document.querySelectorAll('.office-radio').forEach(radio => {
-                radio.addEventListener('change', function() {
-                    if (this.checked) {
-                        const batch = this.closest('.batch-group');
-                        const userRadios = batch.querySelectorAll('.user-radio');
-                        userRadios.forEach(userRadio => {
-                            userRadio.checked = false;
-                        });
-                    }
-                });
-            });
-
-            // Add event listeners for user radio buttons to uncheck office radio buttons when a user is selected
-            document.querySelectorAll('.user-radio').forEach(radio => {
-                radio.addEventListener('change', function() {
-                    if (this.checked) {
-                        const batch = this.closest('.batch-group');
-                        const officeRadios = batch.querySelectorAll('.office-radio');
-                        officeRadios.forEach(officeRadio => {
-                            officeRadio.checked = false;
-                        });
-                    }
-                });
+            // Add event listeners for initial batches using helper function
+            document.querySelectorAll('.batch-group').forEach(batch => {
+                addBatchEventListeners(batch);
             });
         });
     </script>

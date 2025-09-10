@@ -1250,16 +1250,10 @@ public function receiveConfirm(Document $document)
         // Find the specific workflow for this user (if exists)
         $userWorkflow = DocumentWorkflow::where('document_id', $document->id)
             ->where('recipient_id', $currentUserId)
-            ->whereIn('status', ['pending', 'received', 'waiting']) // Include 'waiting' for sequential workflows
+            ->whereIn('status', ['pending', 'received'])
             ->first();
 
         if ($userWorkflow) {
-            // For sequential workflows, ensure they can only receive when it's their turn
-            if ($userWorkflow->isSequential() && $userWorkflow->status === 'waiting') {
-                return redirect()->route('documents.receive.index')
-                    ->with('info', 'This document is in sequential workflow. Please wait for your turn to process it.');
-            }
-            
             // Update the specific workflow status to received
             $userWorkflow->receive(); // This will now also sync document status
 
