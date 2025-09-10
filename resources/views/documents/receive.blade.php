@@ -99,12 +99,11 @@
                                                $document->created_at->format('M d, Y h:i A') }}
                                         </td>
                                         <td class="px-6 py-4 text-center">
-                                            @php
-                                                $workflow = $document->documentWorkflow->first();
-                                                $isReceived = $workflow && $workflow->status === 'received';
-                                            @endphp
-
-                                            @if($isReceived)
+                            @php
+                                // Find the current user's specific workflow for this document
+                                $userWorkflow = $document->documentWorkflow->where('recipient_id', auth()->id())->first();
+                                $isReceived = $userWorkflow && $userWorkflow->status === 'received';
+                            @endphp                                            @if($isReceived)
                                                 <span class="inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-medium bg-emerald-50 text-emerald-700">
                                                     <svg class="w-4 h-4 mr-1.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />

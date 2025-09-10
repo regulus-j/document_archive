@@ -66,7 +66,7 @@ class DocumentWorkflowController extends Controller
             }
             
             // Normal access check for received workflows (parallel or sequential that has been received)
-            return in_array($workflow->status, ['received', 'approved', 'rejected', 'returned', 'referred', 'forwarded']);
+            return in_array($workflow->status, ['received', 'approved', 'rejected', 'returned', 'referred', 'forwarded', 'commented', 'acknowledged']);
         }
         
         return false;
