@@ -10,11 +10,18 @@ use App\Models\User;
 use App\Models\CompanyUser;
 use App\Models\DocumentAttachment;
 use App\Models\DocumentAudit;
+use App\Services\DocumentAccessService;
 use Illuminate\Support\Facades\Storage;
 
 
 class DocumentWorkflowController extends Controller
 {
+    protected $documentAccessService;
+
+    public function __construct(DocumentAccessService $documentAccessService)
+    {
+        $this->documentAccessService = $documentAccessService;
+    }
     /**
      * Check if user can access workflow for a document
      * User must have "received" the document first in the receive view
@@ -248,24 +255,64 @@ class DocumentWorkflowController extends Controller
                     ]);
                 }
             } else if ($type === 'office') {
-                // It's an office recipient
+                // It's an office recipient - get all users in this office
                 $officeId = $id;
+                $office = \App\Models\Office::find($officeId);
                 
-                DocumentWorkflow::create([
-                    'tracking_number' => $trackingNumber,
-                    'document_id' => $document->id,
-                    'sender_id' => auth()->id(),
-                    'recipient_id' => null, // No specific recipient for office
-                    'recipient_office' => $officeId,
-                    'step_order' => $stepOrder,
-                    'workflow_type' => $workflowMode,
-                    'remarks' => $request->remarks[$batchIndex] ?? null,
-                    'status' => $status,
-                    'received_at' => null,
-                    'purpose' => $request->purpose_batch[$batchIndex] ?? null,
-                    'urgency' => $request->urgency_batch[$batchIndex] ?? null,
-                    'due_date' => $request->due_date_batch[$batchIndex] ?? null,
-                ]);
+                if ($office) {
+                    $officeUsers = $office->users; // Get all users in this office
+                    
+                    foreach ($officeUsers as $user) {
+                        $recipientId = $user->id;
+                        $allRecipientIds[] = $recipientId; // Add to tracking array
+                        
+                        // Create workflow entry for each user in the office
+                        DocumentWorkflow::create([
+                            'tracking_number' => $trackingNumber,
+                            'document_id' => $document->id,
+                            'sender_id' => auth()->id(),
+                            'recipient_id' => $recipientId,
+                            'recipient_office' => $officeId,
+                            'step_order' => $stepOrder,
+                            'workflow_type' => $workflowMode,
+                            'remarks' => $request->remarks[$batchIndex] ?? null,
+                            'status' => $status,
+                            'received_at' => null,
+                            'purpose' => $request->purpose_batch[$batchIndex] ?? null,
+                            'urgency' => $request->urgency_batch[$batchIndex] ?? null,
+                            'due_date' => $request->due_date_batch[$batchIndex] ?? null,
+                        ]);
+
+                        // Notify each user in the office (only if status is pending)
+                        if ($status === 'pending') {
+                            \App\Models\Notifications::create([
+                                'user_id' => $recipientId,
+                                'type' => 'document_forwarded',
+                                'data' => json_encode([
+                                    'document_id' => $document->id,
+                                    'message' => $isSequential ? 
+                                        'A document has been forwarded to your office (' . $office->name . ') in sequential workflow.' : 
+                                        'A document has been forwarded to your office (' . $office->name . ').',
+                                    'title' => $document->title,
+                                    'sender' => auth()->user()->first_name . ' ' . auth()->user()->last_name,
+                                    'workflow_type' => $workflowMode,
+                                    'step_order' => $stepOrder,
+                                    'office_name' => $office->name,
+                                ]),
+                            ]);
+                        }
+                    }
+                    
+                    \Log::info('Office forwarding completed', [
+                        'office_id' => $officeId,
+                        'office_name' => $office->name,
+                        'users_count' => $officeUsers->count(),
+                        'step_order' => $stepOrder,
+                        'status' => $status
+                    ]);
+                } else {
+                    \Log::error('Office not found for forwarding', ['office_id' => $officeId]);
+                }
             }
         }
         
@@ -495,6 +542,11 @@ class DocumentWorkflowController extends Controller
         
         $workflow = DocumentWorkflow::findOrFail($id);
         $document = $workflow->document;
+        
+        // Check if user can view this document based on classification
+        if (!$this->documentAccessService->canViewDocument($document)) {
+            abort(403, 'Access Denied: You are not authorized to view this document based on its access level. Please contact your administrator if you believe this is an error.');
+        }
         
         // Get company ID from document or authenticated user's first company
         $companyId = $document->company_id ?? null;

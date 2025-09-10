@@ -91,43 +91,40 @@
                         <!-- Classification -->
                         <div class="space-y-2">
                             <label for="classification"
-                                class="block text-sm font-medium text-gray-700">Classification</label>
+                                class="block text-sm font-medium text-gray-700">Document Access Level</label>
                             <select name="classification" id="classification"
                                 class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 transition-all">
-                                <option value="Public">Public</option>
-                                <option value="Private">Private</option>
+                                <option value="Public">Public - All company users can view</option>
+                                <option value="Office Only">Office Only - Users in my office only</option>
+                                <option value="Custom Offices">Custom Offices - Select specific offices</option>
                             </select>
+                            <p class="text-xs text-gray-500 mt-1">Choose who can view this document's details in workflows</p>
                         </div>
 
-                        <!-- Allowed Viewers (only for Private) -->
-                        <div id="allowed-viewers-section" class="space-y-2 mt-4 hidden">
-                            <label for="viewer_office" class="block text-sm font-medium text-gray-700">Select Office to
-                                Filter Users</label>
-                            <select id="viewer_office" class="w-full rounded-lg border-gray-300 shadow-sm">
-                                <option value="">-- Select Office --</option>
-                                @foreach ($offices as $office)
-                                    <option value="{{ $office->id }}">{{ $office->name }}</option>
-                                @endforeach
-                            </select>
-                            <label class="block text-sm font-medium text-gray-700 mt-2">Select Allowed Viewers</label>
-                            <div id="allowed-viewers-list" class="max-h-48 overflow-y-auto border rounded p-2 bg-gray-50">
-                                @foreach ($users as $user)
-                                    <div class="viewer-row" data-office="{{ $user->offices->pluck('id')->implode(',') }}">
-                                        <label class="inline-flex items-center">
-                                            <input type="checkbox" name="allowed_viewers[]" value="{{ $user->id }}"
-                                                class="viewer-checkbox rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                                            <span class="ml-2 text-sm text-gray-700">{{ $user->first_name }}
-                                                {{ $user->last_name }} <span class="text-xs text-gray-500">
-                                                    @foreach ($user->offices as $o)
-                                                        {{ $o->name }}@if (!$loop->last)
-                                                            ,
-                                                        @endif
-                                                    @endforeach
-                                                </span></span>
+                        <!-- Custom Offices Selection -->
+                        <div id="customOfficesSection" class="space-y-2" style="display: none;">
+                            <label class="block text-sm font-medium text-gray-700">Select Offices</label>
+                            <!-- Debug: Show offices count -->
+                            <p class="text-xs text-red-600 mb-2">Debug: Found {{ count($offices ?? []) }} offices</p>
+                            <div class="max-h-48 overflow-y-auto border border-gray-300 rounded-lg p-3 bg-gray-50">
+                                @if(isset($offices) && count($offices) > 0)
+                                    @foreach($offices as $office)
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <input type="checkbox" 
+                                               id="office_{{ $office->id }}" 
+                                               name="allowed_offices[]" 
+                                               value="{{ $office->id }}"
+                                               class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                        <label for="office_{{ $office->id }}" class="text-sm text-gray-700">
+                                            {{ $office->name }}
                                         </label>
                                     </div>
-                                @endforeach
+                                    @endforeach
+                                @else
+                                    <p class="text-sm text-gray-500">No offices available</p>
+                                @endif
                             </div>
+                            <p class="text-xs text-gray-500 mt-1">Select which offices can view this document</p>
                         </div>
                     </div>
 
@@ -522,36 +519,6 @@
                 }
             }
 
-            // Classification change handling
-            const classification = document.getElementById('classification');
-            const allowedViewersSection = document.getElementById('allowed-viewers-section');
-            const viewerOffice = document.getElementById('viewer_office');
-            const viewerRows = document.querySelectorAll('.viewer-row');
-
-            function toggleAllowedViewers() {
-                if (classification.value === 'Private') {
-                    allowedViewersSection.classList.remove('hidden');
-                } else {
-                    allowedViewersSection.classList.add('hidden');
-                }
-            }
-            classification.addEventListener('change', toggleAllowedViewers);
-            toggleAllowedViewers();
-
-            if (viewerOffice) {
-                viewerOffice.addEventListener('change', function() {
-                    const selectedOffice = this.value;
-                    viewerRows.forEach(function(row) {
-                        const offices = row.getAttribute('data-office').split(',');
-                        if (!selectedOffice || offices.includes(selectedOffice)) {
-                            row.style.display = '';
-                        } else {
-                            row.style.display = 'none';
-                        }
-                    });
-                });
-            }
-
             // Form submission handling
             const form = document.querySelector('form');
             if (form) {
@@ -591,5 +558,30 @@
         // Trigger change event to update the preview
         attachmentsInput.dispatchEvent(new Event('change'));
     }
+    </script>
+
+    <script>
+    // Handle classification selection to show/hide custom offices section
+    document.addEventListener('DOMContentLoaded', function() {
+        const classificationSelect = document.getElementById('classification');
+        const customOfficesSection = document.getElementById('customOfficesSection');
+        
+        function toggleCustomOfficesSection() {
+            if (classificationSelect.value === 'Custom Offices') {
+                customOfficesSection.style.display = 'block';
+            } else {
+                customOfficesSection.style.display = 'none';
+                // Uncheck all office checkboxes when hidden
+                const checkboxes = customOfficesSection.querySelectorAll('input[type="checkbox"]');
+                checkboxes.forEach(checkbox => checkbox.checked = false);
+            }
+        }
+        
+        // Initial check
+        toggleCustomOfficesSection();
+        
+        // Listen for changes
+        classificationSelect.addEventListener('change', toggleCustomOfficesSection);
+    });
     </script>
 @endsection

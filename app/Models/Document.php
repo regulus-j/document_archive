@@ -174,6 +174,11 @@ class Document extends Model
         return $this->hasMany(DocumentAllowedViewer::class, 'doc_id');
     }
 
+    public function allowedOffices()
+    {
+        return $this->hasMany(DocumentOfficePermission::class, 'document_id');
+    }
+
     /**
      * Get the effective status for the current user's workflow
      */

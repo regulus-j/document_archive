@@ -783,7 +783,7 @@ class ReportController extends Controller
         // Get the logged in user's company
         $user = auth()->user();
         if (!$user->hasRole('company-admin')) {
-            return redirect()->route('dashboard')->with('error', 'You do not have permission to access this page.');
+            return redirect()->route('dashboard')->with('error', 'Access Denied: You are not authorized to access the company dashboard. This page is restricted to company administrators only.');
         }
 
         $company = $user->companies()->first();

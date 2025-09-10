@@ -476,7 +476,7 @@ class UserController extends Controller
         } else {
             // Regular users cannot delete anyone
             return redirect()->route('users.index')
-                ->with('error', 'You do not have permission to delete users.');
+                ->with('error', 'Access Denied: You are not authorized to delete user accounts. This action requires administrative privileges.');
         }
 
         // Proceed with deletion

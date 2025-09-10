@@ -224,6 +224,19 @@
                                         </svg>
                                         Select Offices
                                     </h3>
+                                    
+                                    <!-- Office Selection Info -->
+                                    <div class="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                        <div class="flex items-start">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-600 mt-0.5 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            <p class="text-xs text-blue-700">
+                                                <strong>Office Forwarding:</strong> When you select an office, all users belonging to that office will receive the document and be notified automatically.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    
                                     <div class="space-y-1.5 max-h-60 overflow-y-auto pr-2">
                                         @foreach ($offices as $office)
                                             <div class="p-2">
@@ -234,6 +247,9 @@
                                                            id="step0_office{{ $office->id }}"
                                                            value="office_{{ $office->id }}">
                                                     <span>{{ $office->name }}</span>
+                                                    <span class="text-xs text-gray-500 ml-auto">
+                                                        ({{ $office->users->count() }} {{ $office->users->count() === 1 ? 'user' : 'users' }})
+                                                    </span>
                                                 </label>
                                             </div>
                                         @endforeach

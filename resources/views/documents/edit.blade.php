@@ -155,43 +155,44 @@
 
                     <!-- Classification -->
                     <div class="space-y-2">
-                        <label for="classification" class="block text-sm font-medium text-gray-700">Classification</label>
+                        <label for="classification" class="block text-sm font-medium text-gray-700">Document Access Level</label>
                         <select name="classification" id="classification"
-                            class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 transition-all"
-                            onchange="toggleAllowedViewers(this.value)">
-                            <option value="Public" {{ (old('classification', $document->classification) == 'Public') ? 'selected' : '' }}>Public</option>
-                            <option value="Private" {{ (old('classification', $document->classification) == 'Private') ? 'selected' : '' }}>Private</option>
+                            class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 transition-all">
+                            <option value="Public" {{ (old('classification', $document->classification) == 'Public') ? 'selected' : '' }}>Public - All company users can view</option>
+                            <option value="Office Only" {{ (old('classification', $document->classification) == 'Office Only') ? 'selected' : '' }}>Office Only - Users in my office only</option>
+                            <option value="Custom Offices" {{ (old('classification', $document->classification) == 'Custom Offices') ? 'selected' : '' }}>Custom Offices - Select specific offices</option>
                         </select>
+                        <p class="text-xs text-gray-500 mt-1">Choose who can view this document's details in workflows</p>
                     </div>
 
-                    <!-- Allowed Viewers (only for Private) -->
-                    <div id="allowed-viewers-section" class="space-y-2 md:col-span-2{{ (old('classification', $document->classification) != 'Private') ? ' hidden' : '' }}">
-                        <label for="viewer_office" class="block text-sm font-medium text-gray-700">Select Office to Filter Users</label>
-                        <select id="viewer_office" class="w-full rounded-lg border-gray-300 shadow-sm">
-                            <option value="">-- Select Office --</option>
-                            @foreach ($offices as $office)
-                                <option value="{{ $office->id }}">{{ $office->name }}</option>
-                            @endforeach
-                        </select>
-                        <label class="block text-sm font-medium text-gray-700 mt-2">Select Allowed Viewers</label>
-                        <div id="allowed-viewers-list" class="max-h-48 overflow-y-auto border rounded-lg p-3 bg-gray-50 space-y-2">
-                            @foreach (\App\Models\User::where('id', '!=', auth()->id())->get() as $user)
-                                <div class="viewer-row" data-office="{{ $user->offices->pluck('id')->implode(',') }}">
-                                    <label class="inline-flex items-center hover:bg-white px-2 py-1 rounded-md transition-colors">
-                                        <input type="checkbox" name="allowed_viewers[]" value="{{ $user->id }}"
-                                            id="viewer-{{ $user->id }}"
-                                            {{ $document->allowedViewers->contains('user_id', $user->id) ? 'checked' : '' }}
-                                            class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 transition-colors">
-                                        <span class="ml-2 text-sm text-gray-700">{{ $user->first_name }}
-                                            {{ $user->last_name }} <span class="text-xs text-gray-500">
-                                                @foreach ($user->offices as $o)
-                                                    {{ $o->name }}@if (!$loop->last),@endif
-                                                @endforeach
-                                            </span></span>
+                    <!-- Custom Offices Selection -->
+                    <div id="customOfficesSection" class="space-y-2" style="display: {{ $document->classification == 'Custom Offices' ? 'block' : 'none' }};">
+                        <label class="block text-sm font-medium text-gray-700">Select Offices</label>
+                        <!-- Debug: Show offices count -->
+                        <p class="text-xs text-red-600 mb-2">Debug: Found {{ count($offices ?? []) }} offices</p>
+                        <div class="max-h-48 overflow-y-auto border border-gray-300 rounded-lg p-3 bg-gray-50">
+                            @if(isset($offices) && count($offices) > 0)
+                                @php
+                                    $selectedOfficeIds = old('allowed_offices', $document->allowedOffices->pluck('office_id')->toArray());
+                                @endphp
+                                @foreach($offices as $office)
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <input type="checkbox" 
+                                           id="office_{{ $office->id }}" 
+                                           name="allowed_offices[]" 
+                                           value="{{ $office->id }}"
+                                           {{ in_array($office->id, $selectedOfficeIds) ? 'checked' : '' }}
+                                           class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                    <label for="office_{{ $office->id }}" class="text-sm text-gray-700">
+                                        {{ $office->name }}
                                     </label>
                                 </div>
-                            @endforeach
+                                @endforeach
+                            @else
+                                <p class="text-sm text-gray-500">No offices available</p>
+                            @endif
                         </div>
+                        <p class="text-xs text-gray-500 mt-1">Select which offices can view this document</p>
                     </div>
                 </div>
 
@@ -611,16 +612,6 @@ function getFileIcon(filename) {
             return `<svg class="${iconClass}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
             </svg>`;
-    }
-}
-
-// Function to toggle allowed viewers
-function toggleAllowedViewers(classification) {
-    const allowedViewersSection = document.getElementById('allowed-viewers-section');
-    if (classification === 'Private') {
-        allowedViewersSection.classList.remove('hidden');
-    } else {
-        allowedViewersSection.classList.add('hidden');
     }
 }
 
@@ -1102,6 +1093,31 @@ function removeNewAttachmentFile(index) {
     // Trigger change event to update the preview
     attachmentsInput.dispatchEvent(new Event('change'));
 }
+</script>
+
+<script>
+// Handle classification selection to show/hide custom offices section
+document.addEventListener('DOMContentLoaded', function() {
+    const classificationSelect = document.getElementById('classification');
+    const customOfficesSection = document.getElementById('customOfficesSection');
+    
+    function toggleCustomOfficesSection() {
+        if (classificationSelect.value === 'Custom Offices') {
+            customOfficesSection.style.display = 'block';
+        } else {
+            customOfficesSection.style.display = 'none';
+            // Uncheck all office checkboxes when hidden
+            const checkboxes = customOfficesSection.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(checkbox => checkbox.checked = false);
+        }
+    }
+    
+    // Initial check
+    toggleCustomOfficesSection();
+    
+    // Listen for changes
+    classificationSelect.addEventListener('change', toggleCustomOfficesSection);
+});
 </script>
 
 <!-- Delete Confirmation Modal -->

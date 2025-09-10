@@ -6,6 +6,7 @@ use App\Models\Document;
 use App\Models\DocumentAttachment;
 use App\Models\DocumentAudit;
 use App\Models\DocumentCategory;
+use App\Models\DocumentOfficePermission;
 use App\Models\DocumentTrackingNumber;
 use App\Models\DocumentTransaction;
 use App\Models\DocumentWorkflow;
@@ -13,6 +14,7 @@ use App\Models\CompanyAccount;
 use App\Models\DocumentCategories;
 use App\Models\Office;
 use App\Models\User;
+use App\Services\DocumentAccessService;
 use chillerlan\QRCode\QRCode;
 use Exception;
 use Illuminate\Http\RedirectResponse;
@@ -27,6 +29,12 @@ use Spatie\PdfToText\Pdf;
 
 class DocumentController extends Controller
 {
+    protected $documentAccessService;
+
+    public function __construct(DocumentAccessService $documentAccessService)
+    {
+        $this->documentAccessService = $documentAccessService;
+    }
     // public function __construct()
     // {
     //     $this->middleware('permission:document-list|document-create|document-edit|document-delete', ['only' => ['index', 'show']]);
@@ -40,16 +48,9 @@ class DocumentController extends Controller
      */
     public function index(Request $request): View
     {
-        // Base query for document access control
-        $query = Document::with(['user.offices', 'status', 'transaction.fromOffice', 'transaction.toOffice']);
-
-        // Filter by office/company if not admin
-        if (!\Auth::user()->hasRole('company-admin')) {
-            $userOfficeIds = \Auth::user()->offices->pluck('id')->toArray();
-            $query->whereHas('user.offices', function ($q) use ($userOfficeIds) {
-                $q->whereIn('offices.id', $userOfficeIds);
-            });
-        }
+        // Use the access service to get documents the user can view
+        $query = $this->documentAccessService->getAccessibleDocuments()
+            ->with(['user.offices', 'status', 'transaction.fromOffice', 'transaction.toOffice']);
 
         // Apply status filtering to the main query if requested
         if ($request->has('status')) {
@@ -205,16 +206,25 @@ class DocumentController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required',
-            'classification' => 'required|string',
+            'classification' => 'required|string|in:Public,Office Only,Custom Offices',
             'category' => 'nullable|integer',
             'from_office' => 'required|exists:offices,id',
             'main_document' => 'required|file|max:10240|mimes:pdf,doc,docx,jpg,jpeg,png',
             'attachments.*' => 'file|mimes:jpeg,png,jpg,gif,pdf,docx|max:10240',
             'archive' => 'nullable|string',
             'forward' => 'nullable|string',
-            'allowed_viewers' => 'array',
-            'allowed_viewers.*' => 'integer',
+            'allowed_offices' => 'nullable|array',
+            'allowed_offices.*' => 'exists:offices,id',
         ]);
+
+        // Custom validation for Custom Offices classification
+        if ($request->classification === 'Custom Offices') {
+            if (!$request->has('allowed_offices') || empty($request->allowed_offices)) {
+                return redirect()->back()
+                    ->with('error', 'Please select at least one office for Custom Offices classification.')
+                    ->withInput();
+            }
+        }
 
         try {
             Log::info('Starting document upload process');
@@ -242,11 +252,17 @@ class DocumentController extends Controller
                 \Log::info('Document category assigned', ['document_id' => $document->id, 'category_id' => $request->category]);
             }
 
-            // Save allowed viewers if classification is Private and provided
-            if ($request->classification == 'Private' && $request->has('allowed_viewers')) {
-                foreach ($request->allowed_viewers as $userId) {
-                    $document->allowedViewers()->create(['user_id' => $userId]);
+            // Handle Custom Offices permissions
+            if ($request->classification === 'Custom Offices' && $request->has('allowed_offices')) {
+                foreach ($request->allowed_offices as $officeId) {
+                    $document->allowedOffices()->create([
+                        'office_id' => $officeId
+                    ]);
                 }
+                \Log::info('Custom office permissions created', [
+                    'document_id' => $document->id, 
+                    'offices' => $request->allowed_offices
+                ]);
             }
 
             // Always set the initial status based on whether document is being forwarded
@@ -477,20 +493,13 @@ class DocumentController extends Controller
     {
         $currentUserCompany = auth()->user()->companies()->first();
         $originatingOfficeId = auth()->user()->offices->first()->id ?? null;
-        $offices = $currentUserCompany
-            ? Office::where('company_id', $currentUserCompany->id)->where('id', '!=', $originatingOfficeId)->get()
-            : collect();
-
-        // Fetch users from the same company, excluding the current user
-        $users = $currentUserCompany
-            ? User::whereHas('companies', function ($query) use ($currentUserCompany) {
-                $query->where('company_id', $currentUserCompany->id);
-            })->where('id', '!=', auth()->id())->with('offices')->get()
-            : collect();
-
+        
         $categories = DocumentCategories::all();
+        
+        // Get all offices from the user's company for Custom Offices selection
+        $offices = Office::where('company_id', $currentUserCompany->id ?? null)->orderBy('name')->get();
 
-        return view('documents.create', compact('offices', 'categories', 'users', 'originatingOfficeId', 'currentUserCompany'));
+        return view('documents.create', compact('categories', 'originatingOfficeId', 'currentUserCompany', 'offices'));
     }
 
     /**
@@ -676,16 +685,9 @@ class DocumentController extends Controller
      */
     public function show(Document $document): View
     {
-        // Check if the user can access this document
-        if (
-            !auth()->user()->hasRole('super-admin') &&
-            !auth()->user()->hasRole('company-admin') &&
-            auth()->user()->id != $document->uploader &&
-            !DocumentWorkflow::where('document_id', $document->id)
-                ->where('recipient_id', auth()->user()->id)
-                ->exists()
-        ) {
-            abort(403, 'You do not have permission to view this document');
+        // Check if the user can access this document using the new access service
+        if (!$this->documentAccessService->canViewDocument($document)) {
+            abort(403, 'Access Denied: You are not authorized to view this document. Please contact your administrator if you believe this is an error.');
         }
 
         // Get workflows and organize by step order for display
@@ -759,16 +761,24 @@ class DocumentController extends Controller
      */
     public function edit(Document $document): View
     {
+        // Check if the user can edit this document
+        if (!$this->documentAccessService->canEditDocument($document)) {
+            abort(403, 'Access Denied: You are not authorized to edit this document. Only the document owner or authorized personnel may make modifications.');
+        }
+
         // Load attachments relationship
         $document->load('attachments');
 
         // Retrieve necessary data for the view
         $userOffice = auth()->user()->offices->pluck('name', 'id');
-        $offices = Office::all();
         $categories = DocumentCategory::all()->pluck('category', 'id');
+        
+        // Get all offices from the user's company for Custom Offices selection
+        $currentUserCompany = auth()->user()->companies()->first();
+        $offices = Office::where('company_id', $currentUserCompany->id ?? null)->orderBy('name')->get();
 
         // Pass only the necessary variables to the view
-        return view('documents.edit', compact('document', 'categories', 'offices', 'userOffice'));
+        return view('documents.edit', compact('document', 'categories', 'userOffice', 'offices'));
     }
 
     /**
@@ -779,14 +789,23 @@ class DocumentController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required',
-            'classification' => 'required|string',
+            'classification' => 'required|string|in:Public,Office Only,Custom Offices',
             'category' => 'nullable|integer',
             'from_office' => 'required|exists:offices,id',
             'main_document' => 'nullable|file|mimes:jpeg,png,jpg,gif,pdf,docx|max:10240',
             'attachments.*' => 'file|mimes:jpeg,png,jpg,gif,pdf,docx|max:10240',
-            'allowed_viewers' => 'array',
-            'allowed_viewers.*' => 'integer',
+            'allowed_offices' => 'nullable|array',
+            'allowed_offices.*' => 'exists:offices,id',
         ]);
+
+        // Custom validation for Custom Offices classification
+        if ($request->classification === 'Custom Offices') {
+            if (!$request->has('allowed_offices') || empty($request->allowed_offices)) {
+                return redirect()->back()
+                    ->with('error', 'Please select at least one office for Custom Offices classification.')
+                    ->withInput();
+            }
+        }
 
         try {
             \Log::info('Starting document update process', ['document_id' => $document->id]);
@@ -799,6 +818,21 @@ class DocumentController extends Controller
                 'category' => $request->category ?? null,
             ]);
             \Log::info('Document basic info updated', ['document_id' => $document->id]);
+
+            // Handle Custom Offices permissions - first clear existing permissions
+            $document->allowedOffices()->delete();
+            
+            if ($request->classification === 'Custom Offices' && $request->has('allowed_offices')) {
+                foreach ($request->allowed_offices as $officeId) {
+                    $document->allowedOffices()->create([
+                        'office_id' => $officeId
+                    ]);
+                }
+                \Log::info('Custom office permissions updated', [
+                    'document_id' => $document->id, 
+                    'offices' => $request->allowed_offices
+                ]);
+            }
 
             // Update status only if document is being forwarded
             if ($request->forward == '1') {
@@ -859,20 +893,6 @@ class DocumentController extends Controller
                 $document->categories()->detach();
                 $document->categories()->attach([$request->category]);
                 \Log::info('Document category updated', ['document_id' => $document->id, 'category_id' => $request->category]);
-            }
-
-            // Update allowed viewers if classification is Private
-            if ($request->classification == 'Private') {
-                // Remove old viewers
-                $document->allowedViewers()->delete();
-
-                // Add new viewers if provided
-                if ($request->has('allowed_viewers')) {
-                    foreach ($request->allowed_viewers as $userId) {
-                        $document->allowedViewers()->create(['user_id' => $userId]);
-                    }
-                    \Log::info('Document allowed viewers updated', ['document_id' => $document->id]);
-                }
             }
 
             // Update document transaction if forwarding is enabled
@@ -973,7 +993,7 @@ class DocumentController extends Controller
     {
         if (!auth()->user()->can('delete', $document)) {
             return redirect()->route('documents.index')
-                ->with('error', 'You do not have permission to delete this document.');
+                ->with('error', 'Access Denied: You are not authorized to delete this document. Please contact your administrator for assistance.');
         }
 
         $this->logDocumentAction($document, 'deleted');
@@ -991,7 +1011,7 @@ class DocumentController extends Controller
     {
         if (!auth()->user()->can('restore', $document)) {
             return redirect()->route('documents.index')
-                ->with('error', 'You do not have permission to restore this document.');
+                ->with('error', 'Access Denied: You are not authorized to restore this document. Please contact your administrator for assistance.');
         }
 
         $document->unarchive();
@@ -1314,7 +1334,7 @@ public function receiveConfirm(Document $document)
     {
         // Only the document owner can recall
         if ($document->uploader !== auth()->id()) {
-            return redirect()->back()->with('error', 'You are not authorized to recall this document.');
+            return redirect()->back()->with('error', 'Access Denied: You are not authorized to recall this document. Only the document owner may perform this action.');
         }
 
         // Pause workflow: set a status or flag (e.g., 'recalled')
@@ -1361,7 +1381,7 @@ public function receiveConfirm(Document $document)
     {
         // Only the document owner can resume
         if ($document->uploader !== auth()->id()) {
-            return redirect()->back()->with('error', 'You are not authorized to resume this document.');
+            return redirect()->back()->with('error', 'Access Denied: You are not authorized to resume this document. Only the document owner may perform this action.');
         }
 
         // Check if the document was recalled
@@ -1417,7 +1437,7 @@ public function receiveConfirm(Document $document)
         // Check if the user has permission to archive the document
         if (auth()->user()->id !== $document->user_id && !auth()->user()->hasRole('company-admin')) {
             return redirect()->route('documents.index')
-                ->with('error', 'You do not have permission to archive this document.');
+                ->with('error', 'Access Denied: You are not authorized to archive this document. Only the document owner or company administrators may perform this action.');
         }
 
         // Update the document status to archived
