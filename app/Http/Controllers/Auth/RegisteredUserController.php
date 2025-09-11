@@ -81,7 +81,7 @@ class RegisteredUserController extends Controller
             'company_name' => $request->company_name,
             'registered_name' => $registeredName,
             'company_email' => $companyEmail,
-            'company_phone' => $request->company_phone ?: '00000000000',
+            'company_phone' => '00000000000', // Set default phone number directly
         ]);
 
         $companyAddress = CompanyAddress::create([
@@ -99,7 +99,8 @@ class RegisteredUserController extends Controller
         ]);
 
         return redirect()->intended(route('verification.notice'))
-            ->with('status', 'verification-link-sent');
+            ->with('status', 'verification-link-sent')
+            ->with('success', 'Account created successfully! Please verify your email.');
 
         // return redirect(route('dashboard', absolute: false));
     }

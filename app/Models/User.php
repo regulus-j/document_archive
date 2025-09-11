@@ -118,13 +118,13 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function offices()
     {
-        return $this->belongsToMany(Office::class);
+        return $this->belongsToMany(Office::class)->select('offices.*');
     }
 
     // Teams (alias for offices)
     public function teams()
     {
-        return $this->belongsToMany(Office::class);
+        return $this->belongsToMany(Office::class)->select('offices.*');
     }
 
 
@@ -135,9 +135,9 @@ class User extends Authenticatable implements MustVerifyEmail
         return "{$this->first_name} {$this->middle_name} {$this->last_name}";
     }
 
-    public function company(): HasOne
+    public function company()
     {
-        return $this->hasOne(CompanyAccount::class);
+        return $this->hasOne(CompanyAccount::class, 'user_id');
     }
 
     public function companySubscriptions()

@@ -105,14 +105,14 @@
                         <div id="customOfficesSection" class="space-y-2" style="display: none;">
                             <label class="block text-sm font-medium text-gray-700">Select Offices</label>
                             <!-- Debug: Show offices count -->
-                            <p class="text-xs text-red-600 mb-2">Debug: Found {{ count($offices ?? []) }} offices</p>
+                            <p class="text-xs text-red-600 mb-2">{{ count($offices ?? []) }} offices</p>
                             <div class="max-h-48 overflow-y-auto border border-gray-300 rounded-lg p-3 bg-gray-50">
                                 @if(isset($offices) && count($offices) > 0)
                                     @foreach($offices as $office)
                                     <div class="flex items-center space-x-2 mb-2">
-                                        <input type="checkbox" 
-                                               id="office_{{ $office->id }}" 
-                                               name="allowed_offices[]" 
+                                        <input type="checkbox"
+                                               id="office_{{ $office->id }}"
+                                               name="allowed_offices[]"
                                                value="{{ $office->id }}"
                                                class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
                                         <label for="office_{{ $office->id }}" class="text-sm text-gray-700">
@@ -565,7 +565,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         const classificationSelect = document.getElementById('classification');
         const customOfficesSection = document.getElementById('customOfficesSection');
-        
+
         function toggleCustomOfficesSection() {
             if (classificationSelect.value === 'Custom Offices') {
                 customOfficesSection.style.display = 'block';
@@ -576,10 +576,10 @@
                 checkboxes.forEach(checkbox => checkbox.checked = false);
             }
         }
-        
+
         // Initial check
         toggleCustomOfficesSection();
-        
+
         // Listen for changes
         classificationSelect.addEventListener('change', toggleCustomOfficesSection);
     });

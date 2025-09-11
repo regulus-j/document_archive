@@ -17,6 +17,7 @@ class CompanyAccount extends Model
         'company_name',
         'registered_name',
         'company_email',
+        'company_phone',
     ];
 
     // Custom validation rules
