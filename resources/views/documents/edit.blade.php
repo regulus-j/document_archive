@@ -153,47 +153,7 @@
                         </select>
                     </div>
 
-                    <!-- Classification -->
-                    <div class="space-y-2">
-                        <label for="classification" class="block text-sm font-medium text-gray-700">Document Access Level</label>
-                        <select name="classification" id="classification"
-                            class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 transition-all">
-                            <option value="Public" {{ (old('classification', $document->classification) == 'Public') ? 'selected' : '' }}>Public - All company users can view</option>
-                            <option value="Office Only" {{ (old('classification', $document->classification) == 'Office Only') ? 'selected' : '' }}>Office Only - Users in my office only</option>
-                            <option value="Custom Offices" {{ (old('classification', $document->classification) == 'Custom Offices') ? 'selected' : '' }}>Custom Offices - Select specific offices</option>
-                        </select>
-                        <p class="text-xs text-gray-500 mt-1">Choose who can view this document's details in workflows</p>
-                    </div>
 
-                    <!-- Custom Offices Selection -->
-                    <div id="customOfficesSection" class="space-y-2" style="display: {{ $document->classification == 'Custom Offices' ? 'block' : 'none' }};">
-                        <label class="block text-sm font-medium text-gray-700">Select Offices</label>
-                        <!-- Debug: Show offices count -->
-                        <p class="text-xs text-red-600 mb-2">Debug: Found {{ count($offices ?? []) }} offices</p>
-                        <div class="max-h-48 overflow-y-auto border border-gray-300 rounded-lg p-3 bg-gray-50">
-                            @if(isset($offices) && count($offices) > 0)
-                                @php
-                                    $selectedOfficeIds = old('allowed_offices', $document->allowedOffices->pluck('office_id')->toArray());
-                                @endphp
-                                @foreach($offices as $office)
-                                <div class="flex items-center space-x-2 mb-2">
-                                    <input type="checkbox" 
-                                           id="office_{{ $office->id }}" 
-                                           name="allowed_offices[]" 
-                                           value="{{ $office->id }}"
-                                           {{ in_array($office->id, $selectedOfficeIds) ? 'checked' : '' }}
-                                           class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
-                                    <label for="office_{{ $office->id }}" class="text-sm text-gray-700">
-                                        {{ $office->name }}
-                                    </label>
-                                </div>
-                                @endforeach
-                            @else
-                                <p class="text-sm text-gray-500">No offices available</p>
-                            @endif
-                        </div>
-                        <p class="text-xs text-gray-500 mt-1">Select which offices can view this document</p>
-                    </div>
                 </div>
 
                 <!-- Routing Section -->
@@ -1095,29 +1055,7 @@ function removeNewAttachmentFile(index) {
 }
 </script>
 
-<script>
-// Handle classification selection to show/hide custom offices section
-document.addEventListener('DOMContentLoaded', function() {
-    const classificationSelect = document.getElementById('classification');
-    const customOfficesSection = document.getElementById('customOfficesSection');
-    
-    function toggleCustomOfficesSection() {
-        if (classificationSelect.value === 'Custom Offices') {
-            customOfficesSection.style.display = 'block';
-        } else {
-            customOfficesSection.style.display = 'none';
-            // Uncheck all office checkboxes when hidden
-            const checkboxes = customOfficesSection.querySelectorAll('input[type="checkbox"]');
-            checkboxes.forEach(checkbox => checkbox.checked = false);
-        }
-    }
-    
-    // Initial check
-    toggleCustomOfficesSection();
-    
-    // Listen for changes
-    classificationSelect.addEventListener('change', toggleCustomOfficesSection);
-});
+
 </script>
 
 <!-- Delete Confirmation Modal -->

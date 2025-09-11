@@ -36,12 +36,15 @@
         if (isset($document->status) && $document->status && $document->status->status) {
             $status = strtolower(trim($document->status->status));
         }
-        $isDocumentOwner = $document->user && $document->user->id == auth()->user()->id;
-        // Always enable buttons for admin users
-        $canManageDocument = $isDocumentOwner || auth()->user()->can('document-manage') || auth()->user()->can('document-edit');
+
+        // Use Laravel's built-in authorization through policies
+        $canView = auth()->user()->can('view', $document);
+        $canEdit = auth()->user()->can('update', $document);
+        $canDelete = auth()->user()->can('delete', $document);
+        $isUploader = $document->uploader === auth()->id();
     @endphp
 
-    @if ($canManageDocument)
+    @if ($isUploader)
         @if ($status == 'uploaded' || $status == 'pending')
             <a href="{{ route('documents.forward', $document->id) }}"
                 class="group inline-flex items-center p-1.5 text-sm text-gray-700 hover:bg-amber-50 hover:text-amber-600 rounded-lg transition-colors duration-150"
@@ -86,7 +89,7 @@
             @endif
     @endif
 
-    @can('document-edit')
+    @if ($canEdit)
         <a href="{{ route('documents.edit', $document->id) }}"
             class="group inline-flex items-center p-1.5 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition-colors duration-150"
             title="Edit Document">
@@ -97,36 +100,18 @@
             </svg>
             <span class="ml-1.5">Edit</span>
         </a>
-    @endcan
+    @endif
 
-                    <!-- Download Action -->
+                <!-- Download Action -->
                 <a href="{{ route('documents.download', $document->id) }}"
                     class="group inline-flex items-center p-1.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-[#0066FF] rounded-lg transition-colors duration-150"
                     title="Download Document">
                     <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg"
                         fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                     <span class="ml-1.5">Download</span>
                 </a>
-
-                @if (auth()->user()->can('update', $document))
-                    <!-- Edit Action -->
-                    <a href="{{ route('documents.edit', $document->id) }}"
-                        class="group inline-flex items-center p-1.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-[#0066FF] rounded-lg transition-colors duration-150"
-                        title="Edit Document">
-                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg"
-                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                        <span class="ml-1.5">Edit</span>
-                    </a>
-                @endif
-
-
                 @php
                     $documentComplete = false;
                     $documentStatus = $document->status ? strtolower($document->status->status) : '';
@@ -156,7 +141,7 @@
                     </form>
                 @endif
 
-                @can('document-delete')
+                @if ($canDelete)
                     <form action="{{ route('documents.destroy', $document->id) }}" method="POST"
                         onsubmit="return handleDeleteDocument(this);" class="inline-block">
                         @csrf
@@ -172,7 +157,7 @@
                             <span class="ml-1.5">Delete</span>
                         </button>
                     </form>
-                @endcan
+                @endif
             </div>
         </div>
 </div>

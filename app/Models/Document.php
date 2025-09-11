@@ -19,7 +19,6 @@ class Document extends Model
         'content',
         'path',
         'storage_size',
-        'classification',
         'category',
     ];
 
@@ -169,15 +168,7 @@ class Document extends Model
         return $query;
     }
 
-    public function allowedViewers()
-    {
-        return $this->hasMany(DocumentAllowedViewer::class, 'doc_id');
-    }
 
-    public function allowedOffices()
-    {
-        return $this->hasMany(DocumentOfficePermission::class, 'document_id');
-    }
 
     /**
      * Get the effective status for the current user's workflow

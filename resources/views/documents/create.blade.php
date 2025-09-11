@@ -88,44 +88,7 @@
                         </div>
 
 
-                        <!-- Classification -->
-                        <div class="space-y-2">
-                            <label for="classification"
-                                class="block text-sm font-medium text-gray-700">Document Access Level</label>
-                            <select name="classification" id="classification"
-                                class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 transition-all">
-                                <option value="Public">Public - All company users can view</option>
-                                <option value="Office Only">Office Only - Users in my office only</option>
-                                <option value="Custom Offices">Custom Offices - Select specific offices</option>
-                            </select>
-                            <p class="text-xs text-gray-500 mt-1">Choose who can view this document's details in workflows</p>
-                        </div>
 
-                        <!-- Custom Offices Selection -->
-                        <div id="customOfficesSection" class="space-y-2" style="display: none;">
-                            <label class="block text-sm font-medium text-gray-700">Select Offices</label>
-                            <!-- Debug: Show offices count -->
-                            <p class="text-xs text-red-600 mb-2">{{ count($offices ?? []) }} offices</p>
-                            <div class="max-h-48 overflow-y-auto border border-gray-300 rounded-lg p-3 bg-gray-50">
-                                @if(isset($offices) && count($offices) > 0)
-                                    @foreach($offices as $office)
-                                    <div class="flex items-center space-x-2 mb-2">
-                                        <input type="checkbox"
-                                               id="office_{{ $office->id }}"
-                                               name="allowed_offices[]"
-                                               value="{{ $office->id }}"
-                                               class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
-                                        <label for="office_{{ $office->id }}" class="text-sm text-gray-700">
-                                            {{ $office->name }}
-                                        </label>
-                                    </div>
-                                    @endforeach
-                                @else
-                                    <p class="text-sm text-gray-500">No offices available</p>
-                                @endif
-                            </div>
-                            <p class="text-xs text-gray-500 mt-1">Select which offices can view this document</p>
-                        </div>
                     </div>
 
                     <!-- Routing Section -->
@@ -154,6 +117,20 @@
                             @else
                                 <p class="text-red-500 text-sm mt-1">Please contact your administrator to be assigned to an office.</p>
                             @endif
+                        </div>
+
+                        <!-- Forward to Users Option -->
+                        <div class="mt-6">
+                            <label class="inline-flex items-center bg-white px-4 py-3 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors">
+                                <input type="checkbox" name="forward" value="1"
+                                    class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                <span class="ml-2">
+                                    <span class="text-sm font-medium text-gray-700">Forward to user/s</span>
+                                    <p class="text-xs text-gray-500 mt-1">
+                                        Checking this option will redirect you to the forwarding page after document creation to select recipients
+                                    </p>
+                                </span>
+                            </label>
                         </div>
                     </div>
 
@@ -232,30 +209,18 @@
 
                     <!-- Form Actions -->
                     <div class="border-t border-blue-200/60 pt-6">
-                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
-                            <!-- Forward Checkbox -->
-                            <div class="flex items-center space-x-6 mb-4 md:mb-0">
-                                <label class="inline-flex items-center bg-white px-3 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors">
-                                    <input type="checkbox" name="forward" value="1"
-                                        class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                                    <span class="ml-2 text-sm text-gray-700">Forward to user/s</span>
-                                </label>
-                            </div>
-
-                            <!-- Buttons -->
-                            <div class="flex items-center space-x-4">
-                                <a href="{{ route('documents.index') }}"
-                                    class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">Cancel</a>
-                                <button type="submit"
-                                    class="inline-flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none"
-                                        viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-                                    </svg>
-                                    Submit Document
-                                </button>
-                            </div>
+                        <div class="flex justify-end items-center space-x-4">
+                            <a href="{{ route('documents.index') }}"
+                                class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">Cancel</a>
+                            <button type="submit"
+                                class="inline-flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                                </svg>
+                                Submit Document
+                            </button>
                         </div>
                     </div>
 
@@ -560,28 +525,4 @@
     }
     </script>
 
-    <script>
-    // Handle classification selection to show/hide custom offices section
-    document.addEventListener('DOMContentLoaded', function() {
-        const classificationSelect = document.getElementById('classification');
-        const customOfficesSection = document.getElementById('customOfficesSection');
-
-        function toggleCustomOfficesSection() {
-            if (classificationSelect.value === 'Custom Offices') {
-                customOfficesSection.style.display = 'block';
-            } else {
-                customOfficesSection.style.display = 'none';
-                // Uncheck all office checkboxes when hidden
-                const checkboxes = customOfficesSection.querySelectorAll('input[type="checkbox"]');
-                checkboxes.forEach(checkbox => checkbox.checked = false);
-            }
-        }
-
-        // Initial check
-        toggleCustomOfficesSection();
-
-        // Listen for changes
-        classificationSelect.addEventListener('change', toggleCustomOfficesSection);
-    });
-    </script>
 @endsection

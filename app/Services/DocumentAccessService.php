@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Document;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Spatie\Permission\Models\Role;
 
 class DocumentAccessService
 {
@@ -27,6 +28,11 @@ class DocumentAccessService
 
         // Document uploader can always view their own documents
         if ($document->uploader === $user->id) {
+            return true;
+        }
+
+        // Check if user is a workflow recipient
+        if ($document->documentWorkflow()->where('recipient_id', $user->id)->exists()) {
             return true;
         }
 
@@ -132,49 +138,33 @@ class DocumentAccessService
             return $query;
         }
 
-        // Company admins can see all documents in their companies
+        // Company admins can see all documents in their own company only
         if ($user->hasRole('company-admin')) {
-            $userCompanies = $user->companies()->pluck('id');
-            return $query->whereHas('user.companies', function ($q) use ($userCompanies) {
-                $q->whereIn('company_accounts.id', $userCompanies);
+            // Get the admin's company ID
+            $adminCompanyId = $user->companies()->first()->id ?? null;
+
+            if (!$adminCompanyId) {
+                return Document::whereRaw('1 = 0'); // No company, no access
+            }
+
+            // Return only documents from users in the same company
+            return $query->whereHas('user.companies', function($q) use ($adminCompanyId) {
+                $q->where('company_accounts.id', $adminCompanyId);
             });
         }
 
-        // Regular users: get documents they can access
-        $userOffices = $user->offices()->pluck('id');
-        $userCompanies = $user->companies()->pluck('id');
-
-        return $query->where(function ($q) use ($user, $userOffices, $userCompanies) {
-            // Documents uploaded by the user
-            $q->where('uploader', $user->id)
-            // OR Public documents in same company
-            ->orWhere(function ($subQ) use ($userCompanies) {
-                $subQ->where('classification', 'Public')
-                     ->whereHas('user.companies', function ($companyQ) use ($userCompanies) {
-                         $companyQ->whereIn('company_accounts.id', $userCompanies);
-                     });
-            })
-            // OR Office Only documents in same office
-            ->orWhere(function ($subQ) use ($userOffices) {
-                $subQ->where('classification', 'Office Only')
-                     ->whereHas('user.offices', function ($officeQ) use ($userOffices) {
-                         $officeQ->whereIn('offices.id', $userOffices);
-                     });
-            })
-            // OR Custom Offices documents where user's office is in allowed offices
-            ->orWhere(function ($subQ) use ($userOffices) {
-                $subQ->where('classification', 'Custom Offices')
-                     ->whereHas('allowedOffices', function ($allowedOfficeQ) use ($userOffices) {
-                         $allowedOfficeQ->whereIn('office_id', $userOffices);
-                     });
-            })
-            // OR Private documents with specific permissions (backward compatibility)
-            ->orWhere(function ($subQ) use ($user) {
-                $subQ->where('classification', 'Private')
-                     ->whereHas('allowedViewers', function ($viewerQ) use ($user) {
-                         $viewerQ->where('user_id', $user->id);
-                     });
-            });
+        // Regular users can only see their own uploaded documents
+        if (!$user->hasRole('company-admin')) {
+            return $query->where('uploader', $user->id);
+        }
+        
+        // For company admins, show all documents in their company
+        $adminCompanyId = $user->companies()->first()->id ?? null;
+        if (!$adminCompanyId) {
+            return Document::whereRaw('1 = 0'); // No company, no access
+        }
+        return $query->whereHas('user.companies', function($q) use ($adminCompanyId) {
+            $q->where('company_accounts.id', $adminCompanyId);
         });
     }
 
@@ -220,12 +210,47 @@ class DocumentAccessService
             return true;
         }
 
-        // Company admins can edit documents in their company
+        // Company admins can only edit their own documents
+        if ($user->hasRole('company-admin')) {
+            return $document->uploader === $user->id;
+        }
+
+        // Super admins can edit everything
+        if ($user->hasRole('super-admin')) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if current user can delete a document
+     *
+     * @param Document $document
+     * @param User|null $user
+     * @return bool
+     */
+    public function canDeleteDocument(Document $document, User $user = null): bool
+    {
+        if (!$user) {
+            $user = Auth::user();
+        }
+
+        if (!$user) {
+            return false;
+        }
+
+        // Document uploader can delete their own documents
+        if ($document->uploader === $user->id) {
+            return true;
+        }
+
+        // Company admins can delete documents in their company but not edit them
         if ($user->hasRole('company-admin')) {
             return $this->isInSameCompany($document, $user);
         }
 
-        // Super admins can edit everything
+        // Super admins can delete everything
         if ($user->hasRole('super-admin')) {
             return true;
         }

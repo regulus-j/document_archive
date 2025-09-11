@@ -295,13 +295,9 @@
                             <div class="flex flex-wrap items-center gap-2 mb-3">
                                 <!-- Total Documents -->
                                 @php
-                                    // Get total count regardless of filter
-                                    $totalCount = \App\Models\Document::when(!\Auth::user()->hasRole('company-admin'), function($query) {
-                                        $userOfficeIds = \Auth::user()->offices->pluck('id')->toArray();
-                                        return $query->whereHas('user.offices', function ($q) use ($userOfficeIds) {
-                                            $q->whereIn('offices.id', $userOfficeIds);
-                                        });
-                                    })->count();
+                                    // Get total count using DocumentAccessService
+                                    $documentAccessService = app(\App\Services\DocumentAccessService::class);
+                                    $totalCount = $documentAccessService->getAccessibleDocuments()->count();
                                 @endphp
                                 <div class="flex items-center space-x-2 bg-blue-50 px-3 py-1.5 rounded-lg cursor-pointer hover:bg-blue-100 transition-colors"
                                      onclick="filterDocumentsByStatus('all')"
@@ -337,31 +333,86 @@
                         'rejected' => ['bg' => 'bg-red-50', 'text' => 'text-red-600'],
                         'recalled' => ['bg' => 'bg-purple-50', 'text' => 'text-purple-600'],
                         'archived' => ['bg' => 'bg-gray-50', 'text' => 'text-gray-600']
-                    ];                                    // Get document counts for each status
+                    ];                                    // Get document counts for each status using DocumentAccessService
+                                    $documentAccessService = app(\App\Services\DocumentAccessService::class);
+                                    $baseQuery = $documentAccessService->getAccessibleDocuments();
+
                                     $documentCounts = [
-                                        'pending' => \App\Models\Document::whereHas('status', fn($q) => $q->where('status', 'pending'))->count(),
-                                        'forwarded' => \App\Models\Document::whereHas('status', fn($q) => $q->where('status', 'forwarded'))->count(),
-                                        'received' => \App\Models\Document::whereHas('status', fn($q) => $q->where('status', 'received'))->count(),
-                                        'approved' => \App\Models\Document::whereHas('status', fn($q) => $q->where('status', 'complete'))->count(),
-                                        'acknowledged' => \App\Models\Document::whereHas('status', fn($q) => $q->whereIn('status', ['acknowledged', 'acknowledge']))->count(),
-                                        'commented' => \App\Models\Document::whereHas('status', fn($q) => $q->where('status', 'commented'))->count(),
-                                        'returned' => \App\Models\Document::whereHas('status', fn($q) => $q->where('status', 'returned'))->count(),
-                                        'rejected' => \App\Models\Document::whereHas('status', fn($q) => $q->where('status', 'rejected'))->count(),
-                                        'recalled' => \App\Models\Document::whereHas('status', fn($q) => $q->where('status', 'recalled'))->count(),
-                                        'archived' => \App\Models\Document::whereHas('status', fn($q) => $q->where('status', 'archived'))->count()
+                                        'pending' => (clone $baseQuery)->whereHas('status', fn($q) => $q->where('status', 'pending'))->count(),
+                                        'forwarded' => (clone $baseQuery)->whereHas('status', fn($q) => $q->where('status', 'forwarded'))->count(),
+                                        'received' => (clone $baseQuery)->whereHas('status', fn($q) => $q->where('status', 'received'))->count(),
+                                        'approved' => (clone $baseQuery)->whereHas('status', fn($q) => $q->where('status', 'complete'))->count(),
+                                        'acknowledged' => (clone $baseQuery)->whereHas('status', fn($q) => $q->whereIn('status', ['acknowledged', 'acknowledge']))->count(),
+                                        'commented' => (clone $baseQuery)->whereHas('status', fn($q) => $q->where('status', 'commented'))->count(),
+                                        'returned' => (clone $baseQuery)->whereHas('status', fn($q) => $q->where('status', 'returned'))->count(),
+                                        'rejected' => (clone $baseQuery)->whereHas('status', fn($q) => $q->where('status', 'rejected'))->count(),
+                                        'recalled' => (clone $baseQuery)->whereHas('status', fn($q) => $q->where('status', 'recalled'))->count(),
+                                        'archived' => (clone $baseQuery)->whereHas('status', fn($q) => $q->where('status', 'archived'))->count()
                                     ];
                                 @endphp
 
-                                <!-- Status Badges Dropdown -->
-                                <div x-data="{ open: false }" class="relative inline-block text-left">
-                                    <div>
-                                        <button @click="open = !open" type="button" class="inline-flex justify-between items-center w-30 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                                            <span>Status</span>
-                                            <svg class="w- h-5 ml-2 -mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                            </svg>
-                                        </button>
+                                <!-- Filter Container -->
+                                <div class="flex flex-wrap items-center gap-6 ml-auto">
+                                    <!-- Status Filter Dropdown -->
+                                    <div x-data="{ open: false }" class="relative inline-flex items-center filter-group">
+                                        <div>
+                                            <button @click="open = !open" type="button" class="inline-flex justify-between items-center min-w-[140px] px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:border-gray-300 hover:text-gray-700 focus:outline-none focus:ring-1 focus:ring-offset-1 focus:ring-gray-200">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                                                </svg>
+                                                <span>Status</span>
+                                                <svg class="w-4 h-4 ml-2 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                                </svg>
+                                            </button>
+                                        </div>
+
+                                    @role('company-admin')
+                                    <!-- Office/Team Filter Dropdown -->
+                                    <div x-data="{ open: false }" class="relative inline-flex items-center filter-group">
+                                        <div>
+                                            <button @click="open = !open" type="button" class="inline-flex justify-between items-center min-w-[180px] px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:border-gray-300 hover:text-gray-700 focus:outline-none focus:ring-1 focus:ring-offset-1 focus:ring-gray-200">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                                </svg>
+                                                <span class="truncate">{{ $selectedOfficeId === 'all' ? 'All Offices' : ($offices->where('id', $selectedOfficeId)->first()?->name ?? 'All Offices') }}</span>
+                                                <svg class="w-4 h-4 ml-2 text-gray-400 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                                </svg>
+                                            </button>
+                                        </div>
+
+                                        <div x-show="open"
+                                            @click.away="open = false"
+                                            x-transition:enter="transition ease-out duration-100"
+                                            x-transition:enter-start="transform opacity-0 scale-95"
+                                            x-transition:enter-end="transform opacity-100 scale-100"
+                                            x-transition:leave="transition ease-in duration-75"
+                                            x-transition:leave-start="transform opacity-100 scale-100"
+                                            x-transition:leave-end="transform opacity-0 scale-95"
+                                            class="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 focus:outline-none z-50"
+                                        >
+                                            <div class="py-1">
+                                                <a href="{{ route('documents.index', array_merge(request()->except('office_id', 'page'), ['office_id' => 'all'])) }}"
+                                                   class="group flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900">
+                                                    <svg class="h-4 w-4 text-gray-500 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                                    </svg>
+                                                    All Offices
+                                                </a>
+                                                @foreach($offices as $office)
+                                                    <a href="{{ route('documents.index', array_merge(request()->except('office_id', 'page'), ['office_id' => $office->id])) }}"
+                                                       class="group flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900">
+                                                        <svg class="h-4 w-4 text-gray-500 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                                        </svg>
+                                                        {{ $office->name }}
+                                                    </a>
+                                                @endforeach
+                                            </div>
+                                        </div>
                                     </div>
+                                    @endrole
 
                                     <div x-show="open"
                                         @click.away="open = false"
@@ -1101,6 +1152,33 @@
 
         .status-badge:hover::before {
             left: 100%;
+        }
+
+        /* Filter Group Styles */
+        .filter-group {
+            position: relative;
+        }
+
+        .filter-group button {
+            position: relative;
+            white-space: nowrap;
+        }
+
+        .filter-group button:hover {
+            background-color: #FFFFFF;
+        }
+
+        .filter-group button span {
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .filter-group .dropdown-menu {
+            margin-top: 0.25rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(209, 213, 219, 0.7);
+            background-color: white;
         }
 
         /* Animation for row transitions */

@@ -6,7 +6,7 @@ use App\Models\Document;
 use App\Models\DocumentAttachment;
 use App\Models\DocumentAudit;
 use App\Models\DocumentCategory;
-use App\Models\DocumentOfficePermission;
+
 use App\Models\DocumentTrackingNumber;
 use App\Models\DocumentTransaction;
 use App\Models\DocumentWorkflow;
@@ -51,6 +51,27 @@ class DocumentController extends Controller
         // Use the access service to get documents the user can view
         $query = $this->documentAccessService->getAccessibleDocuments()
             ->with(['user.offices', 'status', 'transaction.fromOffice', 'transaction.toOffice']);
+
+        // Get the user's company ID
+        $userCompany = auth()->user()->companies()->first();
+        $offices = collect();
+
+        // If user is company admin, get all offices in their company for the filter dropdown
+        if (auth()->user()->hasRole('company-admin') && $userCompany) {
+            $offices = Office::where('company_id', $userCompany->id)->orderBy('name')->get();
+
+            // Apply office filter if selected
+            if ($request->has('office_id') && $request->office_id !== 'all') {
+                $query->where(function($q) use ($request) {
+                    $q->whereHas('user.offices', function($officeQuery) use ($request) {
+                        $officeQuery->where('offices.id', $request->office_id);
+                    })->orWhereHas('transaction', function($transQuery) use ($request) {
+                        $transQuery->where('from_office', $request->office_id)
+                            ->orWhere('to_office', $request->office_id);
+                    });
+                });
+            }
+        }
 
         // Apply status filtering to the main query if requested
         if ($request->has('status')) {
@@ -101,7 +122,10 @@ class DocumentController extends Controller
             $documentRecipients[$doc->id] = $recipients;
         }
 
-        return view('documents.index', compact('documents', 'auditLogs', 'documentRecipients'));
+        // Add the selected office ID to pass to the view
+        $selectedOfficeId = $request->input('office_id', 'all');
+
+        return view('documents.index', compact('documents', 'auditLogs', 'documentRecipients', 'offices', 'selectedOfficeId'));
     }
 
     /**
@@ -206,15 +230,12 @@ class DocumentController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required',
-            'classification' => 'required|string|in:Public,Office Only,Custom Offices',
             'category' => 'nullable|integer',
             'from_office' => 'required|exists:offices,id',
             'main_document' => 'required|file|max:10240|mimes:pdf,doc,docx,jpg,jpeg,png',
             'attachments.*' => 'file|mimes:jpeg,png,jpg,gif,pdf,docx|max:10240',
             'archive' => 'nullable|string',
             'forward' => 'nullable|string',
-            'allowed_offices' => 'nullable|array',
-            'allowed_offices.*' => 'exists:offices,id',
         ]);
 
         // Custom validation for Custom Offices classification
@@ -260,7 +281,7 @@ class DocumentController extends Controller
                     ]);
                 }
                 \Log::info('Custom office permissions created', [
-                    'document_id' => $document->id, 
+                    'document_id' => $document->id,
                     'offices' => $request->allowed_offices
                 ]);
             }
@@ -272,7 +293,7 @@ class DocumentController extends Controller
             ]);
             \Log::info('Initial document status set to uploaded', ['document_id' => $document->id]);
 
-            $tracking_number = $this->generateTrackingNumber($request->from_office, $request->classification);
+            $tracking_number = $this->generateTrackingNumber($request->from_office);
             \Log::info('Generated tracking number', ['tracking_number' => $tracking_number]);
 
             // Create tracking number record
@@ -493,9 +514,9 @@ class DocumentController extends Controller
     {
         $currentUserCompany = auth()->user()->companies()->first();
         $originatingOfficeId = auth()->user()->offices->first()->id ?? null;
-        
+
         $categories = DocumentCategories::all();
-        
+
         // Get all offices from the user's company for Custom Offices selection
         $offices = Office::where('company_id', $currentUserCompany->id ?? null)->orderBy('name')->get();
 
@@ -560,7 +581,7 @@ class DocumentController extends Controller
             $document->status()->create([
                 'status' => 'pending',
             ]);
-            $tracking_number = $this->generateTrackingNumber($request->from_office, $request->classification);
+            $tracking_number = $this->generateTrackingNumber($request->from_office);
 
             // Create tracking number record
             DocumentTrackingNumber::create([
@@ -772,7 +793,7 @@ class DocumentController extends Controller
         // Retrieve necessary data for the view
         $userOffice = auth()->user()->offices->pluck('name', 'id');
         $categories = DocumentCategory::all()->pluck('category', 'id');
-        
+
         // Get all offices from the user's company for Custom Offices selection
         $currentUserCompany = auth()->user()->companies()->first();
         $offices = Office::where('company_id', $currentUserCompany->id ?? null)->orderBy('name')->get();
@@ -789,13 +810,10 @@ class DocumentController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required',
-            'classification' => 'required|string|in:Public,Office Only,Custom Offices',
             'category' => 'nullable|integer',
             'from_office' => 'required|exists:offices,id',
             'main_document' => 'nullable|file|mimes:jpeg,png,jpg,gif,pdf,docx|max:10240',
             'attachments.*' => 'file|mimes:jpeg,png,jpg,gif,pdf,docx|max:10240',
-            'allowed_offices' => 'nullable|array',
-            'allowed_offices.*' => 'exists:offices,id',
         ]);
 
         // Custom validation for Custom Offices classification
@@ -814,25 +832,9 @@ class DocumentController extends Controller
             $document->update([
                 'title' => $request->title,
                 'description' => $request->description,
-                'classification' => $request->classification,
                 'category' => $request->category ?? null,
             ]);
             \Log::info('Document basic info updated', ['document_id' => $document->id]);
-
-            // Handle Custom Offices permissions - first clear existing permissions
-            $document->allowedOffices()->delete();
-            
-            if ($request->classification === 'Custom Offices' && $request->has('allowed_offices')) {
-                foreach ($request->allowed_offices as $officeId) {
-                    $document->allowedOffices()->create([
-                        'office_id' => $officeId
-                    ]);
-                }
-                \Log::info('Custom office permissions updated', [
-                    'document_id' => $document->id, 
-                    'offices' => $request->allowed_offices
-                ]);
-            }
 
             // Update status only if document is being forwarded
             if ($request->forward == '1') {
@@ -845,28 +847,28 @@ class DocumentController extends Controller
                 \Log::info('Document status unchanged (not forwarding)', ['document_id' => $document->id]);
             }
 
-            // If document had rejected workflows, reset them to pending so receivers can receive again
-            $rejectedWorkflows = \App\Models\DocumentWorkflow::where('document_id', $document->id)
-                ->where('status', 'rejected')
+            // If document had rejected or returned workflows, reset them to pending so receivers can receive again
+            $workflowsToReset = \App\Models\DocumentWorkflow::where('document_id', $document->id)
+                ->whereIn('status', ['rejected', 'returned'])
                 ->get();
 
-            foreach ($rejectedWorkflows as $rejectedWorkflow) {
-                $rejectedWorkflow->status = 'pending';
-                $rejectedWorkflow->received_at = null; // Reset received timestamp
-                $rejectedWorkflow->save();
-                \Log::info('Reset rejected workflow to pending for re-receipt', [
+            foreach ($workflowsToReset as $workflow) {
+                $workflow->status = 'pending';
+                $workflow->received_at = null; // Reset received timestamp
+                $workflow->save();
+                \Log::info('Reset workflow to pending for re-receipt', [
                     'document_id' => $document->id,
-                    'workflow_id' => $rejectedWorkflow->id,
-                    'recipient_id' => $rejectedWorkflow->recipient_id
+                    'workflow_id' => $workflow->id,
+                    'recipient_id' => $workflow->recipient_id
                 ]);
 
                 // Notify the receiver that the document has been updated and is ready for re-receipt
                 \App\Models\Notifications::create([
-                    'user_id' => $rejectedWorkflow->recipient_id,
-                    'type' => 'document_updated_after_rejection',
+                    'user_id' => $workflow->recipient_id,
+                    'type' => 'document_updated_for_rereceipt',
                     'data' => json_encode([
                         'document_id' => $document->id,
-                        'message' => 'A rejected document has been updated and is ready for re-receipt.',
+                        'message' => 'A document has been updated and is ready for re-receipt.',
                         'title' => $document->title,
                         'updater' => auth()->user()->first_name . ' ' . auth()->user()->last_name,
                     ]),
@@ -1100,18 +1102,11 @@ class DocumentController extends Controller
         }
     }
 
-    public function generateTrackingNumber($officeId, $documentTypeId, $length = 5)
+    public function generateTrackingNumber($officeId, $length = 5)
     {
-        // Retrieve the office abbreviation and document type
+        // Retrieve the office abbreviation
         $office = Office::findOrFail($officeId);
-        $documentType = DocumentCategory::find($documentTypeId);
-
-        if ($documentType) {
-            $prefix = strtoupper(substr($office->name, 0, 3)) . '-' . strtoupper(substr($documentType->category, 0, 3));
-        } else {
-            // Use 'GEN' as fallback for document type abbreviation
-            $prefix = strtoupper(substr($office->name, 0, 3)) . '-GEN';
-        }
+        $prefix = strtoupper(substr($office->name, 0, 3)) . '-DOC';
 
         do {
             // Define the characters to use for the random part

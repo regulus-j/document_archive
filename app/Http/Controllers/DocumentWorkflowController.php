@@ -29,22 +29,22 @@ class DocumentWorkflowController extends Controller
     private function canAccessWorkflow($workflowId, $userId = null)
     {
         $userId = $userId ?: auth()->id();
-
+        
         $workflow = DocumentWorkflow::find($workflowId);
         if (!$workflow) {
             return false;
         }
-
+        
         // Check if document has been recalled
         if ($workflow->document && $workflow->document->status && $workflow->document->status->status === 'recalled') {
             return false;
         }
-
+        
         // If user is the sender, they can always access (to monitor)
         if ($workflow->sender_id === $userId) {
             return true;
         }
-
+        
         // If user is recipient, check access based on workflow type
         if ($workflow->recipient_id === $userId) {
             // For sequential workflows, check if it's their turn and auto-receive if needed
@@ -61,7 +61,7 @@ class DocumentWorkflowController extends Controller
                 }
                 return true;
             }
-
+            
             // For sequential workflows that are waiting, deny access
             if ($workflow->isSequential() && $workflow->status === 'waiting') {
                 \Log::info('User tried to access sequential workflow that is waiting', [
@@ -71,27 +71,27 @@ class DocumentWorkflowController extends Controller
                 ]);
                 return false;
             }
-
+            
             // Normal access check for received workflows (parallel or sequential that has been received)
             return in_array($workflow->status, ['received', 'approved', 'rejected', 'returned', 'referred', 'forwarded', 'commented', 'acknowledged']);
         }
-
+        
         return false;
     }
-
+    
     /**
      * Middleware-like check for workflow access
      */
     private function ensureWorkflowAccess($workflowId)
     {
         $workflow = DocumentWorkflow::find($workflowId);
-
+        
         // Check if document has been recalled
         if ($workflow && $workflow->document && $workflow->document->status && $workflow->document->status->status === 'recalled') {
             return redirect()->route('documents.workflows')
                 ->with('error', 'This document has been recalled by the sender. Workflow actions are no longer available.');
         }
-
+        
         if (!$this->canAccessWorkflow($workflowId)) {
             // Check if it's a sequential workflow that needs special handling
             if ($workflow && $workflow->isSequential() && $workflow->recipient_id === auth()->id()) {
@@ -103,23 +103,23 @@ class DocumentWorkflowController extends Controller
                         'user_id' => auth()->id(),
                         'status' => $workflow->status
                     ]);
-
+                    
                     // Check access again
                     if ($this->canAccessWorkflow($workflowId)) {
                         return null; // Access granted
                     }
                 }
-
+                
                 if ($workflow->status === 'waiting') {
                     return redirect()->route('documents.workflows')
                         ->with('info', 'This document is in sequential workflow. Please wait for your turn to process it.');
                 }
             }
-
+            
             return redirect()->route('documents.receive.index')
                 ->with('error', 'You must receive this document first before accessing the workflow. Please check the "Receive Documents" section.');
         }
-
+        
         return null;
     }
     // workflow logic
@@ -182,25 +182,25 @@ class DocumentWorkflowController extends Controller
         $recipientBatches = $request->recipient_batch ?? [];
         $workflowMode = $request->workflow_mode ?? 'parallel';
         $isSequential = $workflowMode === 'sequential';
-
+        
         // Keep track of all recipient IDs to sync with document_recipients table
         $allRecipientIds = [];
-
+        
         foreach ($recipientBatches as $batchIndex => $recipientValue) {
             if (empty($recipientValue)) {
                 continue;
             }
-
+            
             // Parse the recipient value to determine if it's an office or user
             // Format: "office_ID" or "user_ID"
             $parts = explode('_', $recipientValue);
             $type = $parts[0];
             $id = intval($parts[1]);
-
+            
             // Determine status based on workflow mode and step order
             $stepOrder = intval($request->step_order[$batchIndex]);
             $status = 'pending'; // Default for parallel mode
-
+            
             if ($isSequential) {
                 // In sequential mode, only the first step is pending, others wait
                 $status = ($stepOrder == 1) ? 'pending' : 'waiting';
@@ -211,16 +211,16 @@ class DocumentWorkflowController extends Controller
                     'recipient_id' => $id
                 ]);
             }
-
+            
             if ($type === 'user') {
                 // It's a user recipient
                 $recipientId = $id;
                 $allRecipientIds[] = $recipientId;
-
+                
                 // Get the user's office ID as a fallback
                 $user = \App\Models\User::find($recipientId);
                 $recipientOfficeId = $user->office_id ?? 1; // Default to office ID 1 if no office is found
-
+                
                 DocumentWorkflow::create([
                     'tracking_number' => $trackingNumber,
                     'document_id' => $document->id,
@@ -244,8 +244,8 @@ class DocumentWorkflowController extends Controller
                         'type' => 'document_forwarded',
                         'data' => json_encode([
                             'document_id' => $document->id,
-                            'message' => $isSequential ?
-                                'A document has been forwarded to you in sequential workflow.' :
+                            'message' => $isSequential ? 
+                                'A document has been forwarded to you in sequential workflow.' : 
                                 'A document has been forwarded to you.',
                             'title' => $document->title,
                             'sender' => auth()->user()->first_name . ' ' . auth()->user()->last_name,
@@ -258,14 +258,14 @@ class DocumentWorkflowController extends Controller
                 // It's an office recipient - get all users in this office
                 $officeId = $id;
                 $office = \App\Models\Office::find($officeId);
-
+                
                 if ($office) {
                     $officeUsers = $office->users; // Get all users in this office
-
+                    
                     foreach ($officeUsers as $user) {
                         $recipientId = $user->id;
                         $allRecipientIds[] = $recipientId; // Add to tracking array
-
+                        
                         // Create workflow entry for each user in the office
                         DocumentWorkflow::create([
                             'tracking_number' => $trackingNumber,
@@ -290,8 +290,8 @@ class DocumentWorkflowController extends Controller
                                 'type' => 'document_forwarded',
                                 'data' => json_encode([
                                     'document_id' => $document->id,
-                                    'message' => $isSequential ?
-                                        'A document has been forwarded to your office (' . $office->name . ') in sequential workflow.' :
+                                    'message' => $isSequential ? 
+                                        'A document has been forwarded to your office (' . $office->name . ') in sequential workflow.' : 
                                         'A document has been forwarded to your office (' . $office->name . ').',
                                     'title' => $document->title,
                                     'sender' => auth()->user()->first_name . ' ' . auth()->user()->last_name,
@@ -302,7 +302,7 @@ class DocumentWorkflowController extends Controller
                             ]);
                         }
                     }
-
+                    
                     \Log::info('Office forwarding completed', [
                         'office_id' => $officeId,
                         'office_name' => $office->name,
@@ -315,7 +315,7 @@ class DocumentWorkflowController extends Controller
                 }
             }
         }
-
+        
         // Sync all recipient IDs with the document_recipients table to ensure proper recipient data
         if (!empty($allRecipientIds)) {
             foreach ($allRecipientIds as $recipientId) {
@@ -328,11 +328,11 @@ class DocumentWorkflowController extends Controller
 
         $docQR = $document->trackingNumber();
         $qrCodeData = app(DocumentController::class)->generateTrackingSlip($document->id, auth()->id(), $trackingNumber);
-
-        $successMessage = $isSequential ?
+        
+        $successMessage = $isSequential ? 
             'Document forwarded successfully with sequential workflow. Recipients will process in order.' :
             'Document forwarded successfully with parallel workflow.';
-
+        
         return redirect()->route('documents.index')
         ->with('data', $qrCodeData)
         ->with('success', $successMessage);
@@ -343,10 +343,10 @@ class DocumentWorkflowController extends Controller
         // Check if user can access this workflow
         $accessCheck = $this->ensureWorkflowAccess($id);
         if ($accessCheck) return $accessCheck;
-
+        
         $workflow = DocumentWorkflow::findOrFail($id);
         $workflow->approve();
-
+        
         // Save remarks if provided
         if ($request->has('remarks') && !empty($request->remarks)) {
             $workflow->remarks = $request->remarks;
@@ -358,7 +358,7 @@ class DocumentWorkflowController extends Controller
         if ($request->has('remarks') && !empty($request->remarks)) {
             $logMessage .= ': ' . $request->remarks;
         }
-
+        
         DocumentAudit::logDocumentAction(
             $workflow->document_id,
             auth()->id(),
@@ -369,7 +369,7 @@ class DocumentWorkflowController extends Controller
 
         // Handle sequential workflow progression
         $nextStepActivated = $this->activateNextSequentialStep($workflow);
-
+        
         // For parallel workflows or when no next step was activated, use old notification logic
         if (!$nextStepActivated) {
             // Notify next recipient (if any) - for parallel workflows
@@ -413,7 +413,7 @@ class DocumentWorkflowController extends Controller
         // Check if user can access this workflow
         $accessCheck = $this->ensureWorkflowAccess($id);
         if ($accessCheck) return $accessCheck;
-
+        
         $request->validate([
             'remarks' => 'required|string|max:1000',
         ]);
@@ -451,7 +451,7 @@ class DocumentWorkflowController extends Controller
     public function workflowManagement()
     {
         $currentUserId = auth()->id();
-
+        
         // Show workflows where the user can take action
         // This includes:
         // 1. Workflows they've received (status != 'pending' for parallel)
@@ -510,9 +510,9 @@ class DocumentWorkflowController extends Controller
         // Check if user can access this workflow
         $accessCheck = $this->ensureWorkflowAccess($id);
         if ($accessCheck) return $accessCheck;
-
+        
         $workflow = DocumentWorkflow::findOrFail($id);
-
+        
         // For sequential workflows that are already activated (pending), go directly to review
         if ($workflow->isSequential() && $workflow->status === 'pending' && $workflow->recipient_id === auth()->id()) {
             // Auto-receive if not already received
@@ -523,12 +523,12 @@ class DocumentWorkflowController extends Controller
                     'user_id' => auth()->id()
                 ]);
             }
-
+            
             // Redirect to review page for processing
             return redirect()->route('documents.review', $workflow->id)
                 ->with('success', 'Document is ready for your action.');
         }
-
+        
         // For parallel workflows or other cases, use receive documents feature
         return redirect()->route('documents.receive.index')
             ->with('info', 'Please use the "Receive Documents" feature to receive documents first, then access them in the workflow.');
@@ -539,33 +539,33 @@ class DocumentWorkflowController extends Controller
         // Check if user can access this workflow
         $accessCheck = $this->ensureWorkflowAccess($id);
         if ($accessCheck) return $accessCheck;
-
+        
         $workflow = DocumentWorkflow::findOrFail($id);
         $document = $workflow->document;
-
+        
         // Check if user can view this document based on classification
         if (!$this->documentAccessService->canViewDocument($document)) {
             abort(403, 'Access Denied: You are not authorized to view this document based on its access level. Please contact your administrator if you believe this is an error.');
         }
-
+        
         // Get company ID from document or authenticated user's first company
         $companyId = $document->company_id ?? null;
-
+        
         // If document doesn't have company_id, try to get it from the authenticated user
         if (!$companyId) {
             $userCompany = CompanyUser::where('user_id', auth()->id())->first();
             $companyId = $userCompany ? $userCompany->company_id : null;
         }
-
+        
         // Default to empty collection if no company found
         $companyUsers = collect();
-
+        
         if ($companyId) {
             // Get users from the same company via the pivot table
             $companyUserIds = CompanyUser::where('company_id', $companyId)
                 ->where('user_id', '!=', auth()->id())
                 ->pluck('user_id');
-
+                
             // Get the actual user objects
             $companyUsers = User::whereIn('id', $companyUserIds)->get();
         }
@@ -632,7 +632,7 @@ class DocumentWorkflowController extends Controller
         // Check if user can access this workflow
         $accessCheck = $this->ensureWorkflowAccess($id);
         if ($accessCheck) return $accessCheck;
-
+        
         $request->validate([
             'remarks' => 'required|string|max:1000',
         ]);
@@ -664,7 +664,7 @@ class DocumentWorkflowController extends Controller
         // Check if user can access this workflow
         $accessCheck = $this->ensureWorkflowAccess($id);
         if ($accessCheck) return $accessCheck;
-
+        
         $request->validate([
             'recipients' => 'required|array',
             'recipients.*' => 'exists:users,id',
@@ -673,32 +673,32 @@ class DocumentWorkflowController extends Controller
 
         $workflow = DocumentWorkflow::findOrFail($id);
         $document = Document::findOrFail($workflow->document_id);
-
+        
         // Mark the current workflow as referred
         $workflow->refer();
         $workflow->remarks = $request->remarks ?? '';
         $workflow->save();
-
+        
         // Generate tracking number for new workflow stages
         $trackingNumber = $this->createTrackingNumber($document, auth()->user());
-
+        
         // Find the last step order used in existing workflow
         $lastStepOrder = DocumentWorkflow::where('document_id', $document->id)
             ->max('step_order');
-
+            
         $newStepOrder = $lastStepOrder + 1;
-
+        
         // Create new workflow entries for each additional recipient
         foreach ($request->recipients as $recipientId) {
             // Skip if trying to refer to self
             if ($recipientId == auth()->id()) {
                 continue;
             }
-
+            
             // Get the user's office ID
             $user = \App\Models\User::find($recipientId);
             $recipientOfficeId = $user->office_id ?? null;
-
+            
             DocumentWorkflow::create([
                 'tracking_number' => $trackingNumber,
                 'document_id' => $document->id,
@@ -723,7 +723,7 @@ class DocumentWorkflowController extends Controller
                 ]),
             ]);
         }
-
+        
         // Log action
         DocumentAudit::logDocumentAction(
             $workflow->document_id,
@@ -742,7 +742,7 @@ class DocumentWorkflowController extends Controller
         // Check if user can access this workflow
         $accessCheck = $this->ensureWorkflowAccess($id);
         if ($accessCheck) return $accessCheck;
-
+        
         $request->validate([
             'recipients' => 'required|array',
             'recipients.*' => 'exists:users,id',
@@ -751,32 +751,32 @@ class DocumentWorkflowController extends Controller
 
         $workflow = DocumentWorkflow::findOrFail($id);
         $document = Document::findOrFail($workflow->document_id);
-
+        
         // Keep the current workflow unchanged but mark as forwarded
         $workflow->forward();
         $workflow->remarks = $request->remarks ?? '';
         $workflow->save();
-
+        
         // Generate tracking number for new workflow stages
         $trackingNumber = $this->createTrackingNumber($document, auth()->user());
-
+        
         // Get the last step order for the document workflow
         $lastStepOrder = DocumentWorkflow::where('document_id', $document->id)
             ->max('step_order');
-
+            
         $newStepOrder = $lastStepOrder + 1;
-
+        
         // Create new workflow entries for each recipient
         foreach ($request->recipients as $recipientId) {
             // Skip if trying to forward to self
             if ($recipientId == auth()->id()) {
                 continue;
             }
-
+            
             // Get the user's office ID
             $user = \App\Models\User::find($recipientId);
             $recipientOfficeId = $user->office_id ?? null;
-
+            
             DocumentWorkflow::create([
                 'tracking_number' => $trackingNumber,
                 'document_id' => $document->id,
@@ -801,7 +801,7 @@ class DocumentWorkflowController extends Controller
                 ]),
             ]);
         }
-
+        
         // Log action
         DocumentAudit::logDocumentAction(
             $workflow->document_id,
@@ -854,27 +854,27 @@ class DocumentWorkflowController extends Controller
         // Check if user can access this workflow
         $accessCheck = $this->ensureWorkflowAccess($id);
         if ($accessCheck) return $accessCheck;
-
+        
         $request->validate([
             'remarks' => 'required|string|max:1000',
         ]);
-
+        
         $workflow = DocumentWorkflow::findOrFail($id);
-
+        
         // Ensure this is a comment purpose workflow
         if ($workflow->purpose !== 'for_comment') {
             return redirect()->back()->with('error', 'This action is only available for documents requesting comments.');
         }
-
+        
         // Update workflow with comment
         $workflow->status = 'commented';
         $workflow->remarks = $request->remarks;
         $workflow->received_at = now();
         $workflow->save();
-
+        
         // Handle sequential workflow progression for comments
         $nextStepActivated = $this->activateNextSequentialStep($workflow);
-
+        
         // Update document status - but don't mark as "commented" if sequential workflow continues
         if ($workflow->document && $workflow->document->status) {
             if (!$nextStepActivated) {
@@ -883,7 +883,7 @@ class DocumentWorkflowController extends Controller
             }
             // If next step was activated, let syncDocumentStatus handle the status
         }
-
+        
         // Log the action
         DocumentAudit::logDocumentAction(
             $workflow->document_id,
@@ -920,18 +920,18 @@ class DocumentWorkflowController extends Controller
         // Check if user can access this workflow
         $accessCheck = $this->ensureWorkflowAccess($id);
         if ($accessCheck) return $accessCheck;
-
+        
         $request->validate([
             'remarks' => 'nullable|string|max:1000',
         ]);
-
+        
         $workflow = DocumentWorkflow::findOrFail($id);
-
+        
         // Ensure this is a dissemination purpose workflow
         if ($workflow->purpose !== 'dissemination') {
             return redirect()->back()->with('error', 'This action is only available for information dissemination documents.');
         }
-
+        
         // Update workflow with acknowledgment
         $workflow->status = 'acknowledged';
         if ($request->remarks) {
@@ -939,10 +939,10 @@ class DocumentWorkflowController extends Controller
         }
         $workflow->received_at = now();
         $workflow->save();
-
+        
         // Handle sequential workflow progression for acknowledgments
         $nextStepActivated = $this->activateNextSequentialStep($workflow);
-
+        
         // Update document status - but don't mark as "acknowledged" if sequential workflow continues
         if ($workflow->document && $workflow->document->status) {
             if (!$nextStepActivated) {
@@ -951,13 +951,13 @@ class DocumentWorkflowController extends Controller
             }
             // If next step was activated, let syncDocumentStatus handle the status
         }
-
+        
         // Log the action
         $logMessage = 'Document information acknowledged';
         if ($request->remarks) {
             $logMessage .= ': ' . $request->remarks;
         }
-
+        
         DocumentAudit::logDocumentAction(
             $workflow->document_id,
             auth()->id(),
@@ -1055,8 +1055,8 @@ class DocumentWorkflowController extends Controller
                         'next_step' => $nextStep->step_order,
                         'completed_by' => auth()->user()->first_name . ' ' . auth()->user()->last_name,
                         'action_taken' => $currentWorkflow->status,
-                        'next_recipient' => $nextStep->recipient ?
-                            $nextStep->recipient->first_name . ' ' . $nextStep->recipient->last_name :
+                        'next_recipient' => $nextStep->recipient ? 
+                            $nextStep->recipient->first_name . ' ' . $nextStep->recipient->last_name : 
                             ($nextStep->recipientOffice ? 'Office: ' . $nextStep->recipientOffice->name : 'Unknown Office'),
                     ]),
                 ]);
