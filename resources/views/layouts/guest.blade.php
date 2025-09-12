@@ -16,6 +16,9 @@
 
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    <!-- Alpine.js -->
+    <script src="//unpkg.com/alpinejs" defer></script>
 </head>
 
 <body class="font-sans text-gray-900 antialiased">
@@ -55,6 +58,7 @@
         <!-- Right side - Login form -->
         <div class="w-full md:w-1/2 flex items-center justify-center p-8">
             <div class="w-full max-w-md">
+                <x-success-message/>
                 {{ $slot }}
             </div>
         </div>

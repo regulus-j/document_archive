@@ -73,6 +73,7 @@
                         <x-text-input id="first_name"
                             class="mt-2 block w-full p-3 rounded-md border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-150"
                             type="text" name="first_name" :value="old('first_name')" required autofocus
+                            placeholder="First name"
                             autocomplete="first_name" />
                         <x-input-error :messages="$errors->get('first_name')" class="mt-2" />
                     </div>
@@ -81,7 +82,9 @@
                         <x-input-label for="middle_name" :value="__('Middle Name (Optional)')" class="text-gray-700" />
                         <x-text-input id="middle_name"
                             class="mt-2 block w-full p-3 rounded-md border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-150"
-                            type="text" name="middle_name" :value="old('middle_name')" autocomplete="middle_name" />
+                            type="text" name="middle_name" :value="old('middle_name')"
+                            placeholder="Middle name"
+                            autocomplete="middle_name" />
                         <x-input-error :messages="$errors->get('middle_name')" class="mt-2" />
                     </div>
 
@@ -89,7 +92,9 @@
                         <x-input-label for="last_name" :value="__('Last Name')" class="text-gray-700" />
                         <x-text-input id="last_name"
                             class="mt-2 block w-full p-3 rounded-md border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-150"
-                            type="text" name="last_name" :value="old('last_name')" required autocomplete="last_name" />
+                            type="text" name="last_name" :value="old('last_name')" required
+                            placeholder="Last name"
+                            autocomplete="last_name" />
                         <x-input-error :messages="$errors->get('last_name')" class="mt-2" />
                     </div>
 
@@ -97,7 +102,9 @@
                         <x-input-label for="email" :value="__('Email')" class="text-gray-700" />
                         <x-text-input id="email"
                             class="mt-2 block w-full p-3 rounded-md border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-150"
-                            type="email" name="email" :value="old('email')" required autocomplete="username" />
+                            type="email" name="email" :value="old('email')" required
+                            placeholder="e.g., john.smith@example.com"
+                            autocomplete="username" />
                         <x-input-error :messages="$errors->get('email')" class="mt-2" />
                     </div>
                 </div>
@@ -119,6 +126,7 @@
                         <x-text-input id="company_name"
                             class="mt-2 block w-full p-3 rounded-md border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-150"
                             type="text" name="company_name" :value="old('company_name')" required
+                            placeholder="organization's name"
                             autocomplete="company_name" />
                         <x-input-error :messages="$errors->get('company_name')" class="mt-2" />
                     </div>
@@ -127,56 +135,65 @@
                         <x-input-label for="registered_name" :value="__('Registered Name')" class="text-gray-700" />
                         <x-text-input id="registered_name"
                             class="mt-2 block w-full p-3 rounded-md border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-150"
-                            type="text" name="registered_name" :value="old('registered_name') ?? 'Default'" />
+                            type="text" name="registered_name" :value="old('registered_name')" required placeholder="legal registered business name" />
+                        <x-input-error :messages="$errors->get('registered_name')" class="mt-2" />
                     </div>
 
                     <div>
                         <x-input-label for="company_email" :value="__('Company Email')" class="text-gray-700" />
                         <x-text-input id="company_email"
                             class="mt-2 block w-full p-3 rounded-md border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-150"
-                            type="email" name="company_email" :value="old('company_email')" />
+                            type="email" name="company_email" :value="old('company_email')" required
+                            placeholder="company email address" />
+                        <x-input-error :messages="$errors->get('company_email')" class="mt-2" />
                     </div>
 
                     <div>
                         <x-input-label for="company_phone" :value="__('Company Phone')" class="text-gray-700" />
                         <x-text-input id="company_phone"
                             class="mt-2 block w-full p-3 rounded-md border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-150"
-                            type="tel" name="company_phone" :value="old('company_phone') ?? '00000000000'" />
+                            type="tel" name="company_phone" :value="old('company_phone')" required placeholder="company contact number" />
+                        <x-input-error :messages="$errors->get('company_phone')" class="mt-2" />
                     </div>
 
                     <div class="md:col-span-2">
                         <x-input-label for="address" :value="__('Address')" class="text-gray-700" />
                         <x-text-input id="address"
                             class="mt-2 block w-full p-3 rounded-md border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-150"
-                            type="text" name="address" :value="old('address') ?? 'Default Address'" />
+                            type="text" name="address" :value="old('address')" required placeholder="complete street address" />
+                        <x-input-error :messages="$errors->get('address')" class="mt-2" />
                     </div>
 
                     <div>
                         <x-input-label for="city" :value="__('City')" class="text-gray-700" />
                         <x-text-input id="city"
                             class="mt-2 block w-full p-3 rounded-md border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-150"
-                            type="text" name="city" :value="old('city') ?? 'Default City'" />
+                            type="text" name="city" :value="old('city')" required placeholder="Enter city name" />
+                        <x-input-error :messages="$errors->get('city')" class="mt-2" />
                     </div>
 
                     <div>
                         <x-input-label for="state" :value="__('State/Province')" class="text-gray-700" />
                         <x-text-input id="state"
                             class="mt-2 block w-full p-3 rounded-md border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-150"
-                            type="text" name="state" :value="old('state') ?? 'Default State'" />
+                            type="text" name="state" :value="old('state')" required placeholder="state or province" />
+                        <x-input-error :messages="$errors->get('state')" class="mt-2" />
                     </div>
 
                     <div>
                         <x-input-label for="zip_code" :value="__('ZIP/Postal Code')" class="text-gray-700" />
                         <x-text-input id="zip_code"
                             class="mt-2 block w-full p-3 rounded-md border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-150"
-                            type="text" name="zip_code" :value="old('zip_code') ?? '00000'" />
+                            type="text" name="zip_code" :value="old('zip_code')" required placeholder="postal code" />
+                        <x-input-error :messages="$errors->get('zip_code')" class="mt-2" />
                     </div>
 
                     <div>
                         <x-input-label for="country" :value="__('Country')" class="text-gray-700" />
                         <x-text-input id="country"
                             class="mt-2 block w-full p-3 rounded-md border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-150"
-                            type="text" name="country" :value="old('country') ?? 'Default Country'" />
+                            type="text" name="country" :value="old('country')" required placeholder="country name" />
+                        <x-input-error :messages="$errors->get('country')" class="mt-2" />
                     </div>
                 </div>
             </div>
@@ -196,7 +213,9 @@
                         <x-input-label for="password" :value="__('Password')" class="text-gray-700" />
                         <x-text-input id="password"
                             class="mt-2 block w-full p-3 rounded-md border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-150"
-                            type="password" name="password" required autocomplete="new-password" />
+                            type="password" name="password" required
+                            placeholder="Create a strong password (min. 8 characters)"
+                            autocomplete="new-password" />
                         <x-input-error :messages="$errors->get('password')" class="mt-2" />
                     </div>
 
@@ -204,7 +223,9 @@
                         <x-input-label for="password_confirmation" :value="__('Confirm Password')" class="text-gray-700" />
                         <x-text-input id="password_confirmation"
                             class="mt-2 block w-full p-3 rounded-md border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-150"
-                            type="password" name="password_confirmation" required autocomplete="new-password" />
+                            type="password" name="password_confirmation" required
+                            placeholder="Repeat your password to confirm"
+                            autocomplete="new-password" />
                         <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
                     </div>
 
@@ -348,7 +369,7 @@
 
                 const requiredFields = {
                     1: ['first_name', 'last_name', 'email'],
-                    2: ['company_name'],
+                    2: ['company_name', 'registered_name', 'company_email', 'company_phone', 'address', 'city', 'state', 'zip_code', 'country'],
                     3: ['password', 'password_confirmation']
                 };
 
@@ -417,7 +438,12 @@
                 allFields.forEach(field => clearFieldError(field));
 
                 // Validate required fields
-                const requiredFields = ['first_name', 'last_name', 'email', 'password', 'password_confirmation', 'company_name'];
+                const requiredFields = [
+                    'first_name', 'last_name', 'email',
+                    'company_name', 'registered_name', 'company_email', 'company_phone',
+                    'address', 'city', 'state', 'zip_code', 'country',
+                    'password', 'password_confirmation'
+                ];
                 requiredFields.forEach(field => {
                     const input = document.getElementById(field);
                     if (!input.value.trim()) {

@@ -1,10 +1,10 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="min-h-screen bg-gradient-to-b from-blue-50 to-white p-4 md:p-8">
-        <div class="max-w-6xl mx-auto">
+    <div class="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <!-- Header Box -->
-            <div class="bg-white rounded-xl shadow-xl mb-6 border border-blue-100 overflow-hidden">
+            <div class="bg-white rounded-lg p-6 border border-gray-200 mb-8 mt-8">
                 <div class="bg-white p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div class="flex items-center space-x-3">
                         <div class="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg shadow-md">
@@ -76,7 +76,7 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Current Users Section -->
-                <div class="bg-white rounded-xl shadow-xl border border-blue-100 overflow-hidden">
+                <div class="bg-white rounded-lg p-6 border border-gray-200 mb-8 mt-8">
                     <div class="p-6 border-b border-gray-200">
                         <h2 class="text-xl font-semibold text-gray-800 flex items-center">
                             <svg class="w-5 h-5 mr-2 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none"
@@ -140,7 +140,7 @@
                 </div>
 
                 <!-- Available Users Section -->
-                <div class="bg-white rounded-xl shadow-xl border border-blue-100 overflow-hidden">
+                <div class="bg-white rounded-lg p-6 border border-gray-200 mb-8 mt-8">
                     <div class="p-6 border-b border-gray-200">
                         <h2 class="text-xl font-semibold text-gray-800 flex items-center">
                             <svg class="w-5 h-5 mr-2 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none"
@@ -155,8 +155,8 @@
                     <div class="p-6">
                         <div class="mb-4">
                             <label for="userSearch" class="sr-only">Search Users</label>
-                            <input type="text" id="userSearch" 
-                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50" 
+                            <input type="text" id="userSearch"
+                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50"
                                 placeholder="Search users by name or email...">
                         </div>
 
@@ -171,7 +171,7 @@
                             <form method="POST" action="{{ route('office.users.update', $office->id) }}" id="assignUsersForm">
                                 @csrf
                                 <div class="max-h-96 overflow-y-auto">
-                                    <ul class="divide-y divide-gray-200" id="availableUsersList">
+                                    <ul class="mx-3 divide-y divide-gray-200" id="availableUsersList">
                                         @foreach($availableUsers as $user)
                                             <li class="py-3 flex items-center user-item">
                                                 <input type="checkbox" id="user-{{ $user->id }}" name="users[]" value="{{ $user->id }}"
@@ -191,7 +191,7 @@
                                                     @csrf
                                                     <input type="hidden" name="user_id" value="{{ $user->id }}">
                                                     <button type="submit"
-                                                        class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                                        class="inline-flex items-center ml-6 px-3 py-1 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                                                         <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                                                         </svg>
@@ -204,7 +204,7 @@
                                 </div>
 
                                 <div class="mt-6 flex justify-end">
-                                    <button type="submit" 
+                                    <button type="submit"
                                         class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                                         <svg class="mr-2 -ml-1 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -225,15 +225,15 @@
         document.addEventListener('DOMContentLoaded', function() {
             const searchInput = document.getElementById('userSearch');
             const userItems = document.querySelectorAll('.user-item');
-            
+
             if (searchInput) {
                 searchInput.addEventListener('input', function() {
                     const searchTerm = this.value.toLowerCase();
-                    
+
                     userItems.forEach(item => {
                         const userName = item.querySelector('.user-name').textContent.toLowerCase();
                         const userEmail = item.querySelector('.user-email').textContent.toLowerCase();
-                        
+
                         if (userName.includes(searchTerm) || userEmail.includes(searchTerm)) {
                             item.style.display = '';
                         } else {
@@ -246,7 +246,7 @@
             // Select all checkbox
             const selectAllCheckbox = document.getElementById('selectAll');
             const userCheckboxes = document.querySelectorAll('input[name="users[]"]');
-            
+
             if (selectAllCheckbox) {
                 selectAllCheckbox.addEventListener('change', function() {
                     const isChecked = this.checked;

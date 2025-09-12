@@ -92,8 +92,7 @@ class OfficeController extends Controller
      */
     public function show(Office $office)
     {
-        //
-        $office = Office::with('parentOffice')->find($office->id);
+        $office = Office::with(['parentOffice', 'company'])->find($office->id);
         return view('offices.show', compact('office'));
     }
 

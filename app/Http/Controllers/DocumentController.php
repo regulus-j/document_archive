@@ -182,10 +182,22 @@ class DocumentController extends Controller
     public function showArchive(Request $request): View
     {
         $search = $request->input('search');
+        $user = auth()->user();
+        $userCompany = $user->companies()->first();
+
+        if (!$userCompany) {
+            return view('documents.archive', [
+                'documents' => collect(),
+                'search' => $search,
+            ])->with('error', 'No company associated with your account.');
+        }
 
         $query = Document::with(['user', 'status', 'transaction.fromOffice', 'transaction.toOffice'])
             ->whereHas('status', function ($q) {
                 $q->where('status', 'archived');
+            })
+            ->whereHas('user.companies', function($q) use ($userCompany) {
+                $q->where('company_accounts.id', $userCompany->id);
             });
 
         // Apply search if provided
@@ -196,9 +208,9 @@ class DocumentController extends Controller
             });
         }
 
-        // Filter by user's office if not company admin
-        if (!auth()->user()->hasRole('company-admin')) {
-            $userOfficeIds = auth()->user()->offices->pluck('id')->toArray();
+        // For non-company admins, further restrict to only their office's documents
+        if (!$user->hasRole('company-admin')) {
+            $userOfficeIds = $user->offices->pluck('id')->toArray();
             $query->whereHas('user.offices', function ($q) use ($userOfficeIds) {
                 $q->whereIn('offices.id', $userOfficeIds);
             });
