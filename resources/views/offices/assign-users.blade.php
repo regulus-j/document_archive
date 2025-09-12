@@ -3,8 +3,8 @@
 @section('content')
     <div class="min-h-screen bg-gradient-to-b from-blue-50 to-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <!-- Header Box -->
-            <div class="bg-white rounded-lg p-6 border border-gray-200 mb-8 mt-8">
+            <!-- Header Box -                                <!-- Bulk update button removed to prevent sync issues -->
+                                <!-- Individual user additions preferred through the "Add" button for each user -->      <div class="bg-white rounded-lg p-6 border border-gray-200 mb-8 mt-8">
                 <div class="bg-white p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div class="flex items-center space-x-3">
                         <div class="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg shadow-md">
@@ -168,51 +168,36 @@
                                 <p class="mt-2">All users in the company are already assigned to this office.</p>
                             </div>
                         @else
-                            <form method="POST" action="{{ route('office.users.update', $office->id) }}" id="assignUsersForm">
-                                @csrf
-                                <div class="max-h-96 overflow-y-auto">
-                                    <ul class="mx-3 divide-y divide-gray-200" id="availableUsersList">
-                                        @foreach($availableUsers as $user)
-                                            <li class="py-3 flex items-center user-item">
-                                                <input type="checkbox" id="user-{{ $user->id }}" name="users[]" value="{{ $user->id }}"
-                                                    class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
-                                                <label for="user-{{ $user->id }}" class="ml-3 flex items-center cursor-pointer">
-                                                    <div class="flex-shrink-0 h-8 w-8 mr-3">
-                                                        <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-gray-100 text-gray-600">
-                                                            {{ strtoupper(substr($user->first_name, 0, 1) . substr($user->last_name, 0, 1)) }}
-                                                        </span>
-                                                    </div>
-                                                    <div class="flex-1 min-w-0">
-                                                        <p class="text-sm font-medium text-gray-900 user-name">{{ $user->first_name }} {{ $user->last_name }}</p>
-                                                        <p class="text-sm text-gray-500 user-email">{{ $user->email }}</p>
-                                                    </div>
-                                                </label>
-                                                <form method="POST" action="{{ route('office.users.add', $office->id) }}" class="ml-auto">
-                                                    @csrf
-                                                    <input type="hidden" name="user_id" value="{{ $user->id }}">
-                                                    <button type="submit"
-                                                        class="inline-flex items-center ml-6 px-3 py-1 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                                                        <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                                        </svg>
-                                                        Add
-                                                    </button>
-                                                </form>
-                                            </li>
-                                        @endforeach
-                                    </ul>
-                                </div>
-
-                                <div class="mt-6 flex justify-end">
-                                    <button type="submit"
-                                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                                        <svg class="mr-2 -ml-1 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                        </svg>
-                                        Assign Selected Users
-                                    </button>
-                                </div>
-                            </form>
+                            <div class="max-h-96 overflow-y-auto">
+                                <ul class="mx-3 divide-y divide-gray-200" id="availableUsersList">
+                                    @foreach($availableUsers as $user)
+                                        <li class="py-3 flex items-center user-item">
+                                            <div class="flex items-center flex-1">
+                                                <div class="flex-shrink-0 h-8 w-8 mr-3">
+                                                    <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-gray-100 text-gray-600">
+                                                        {{ strtoupper(substr($user->first_name, 0, 1) . substr($user->last_name, 0, 1)) }}
+                                                    </span>
+                                                </div>
+                                                <div class="flex-1 min-w-0">
+                                                    <p class="text-sm font-medium text-gray-900 user-name">{{ $user->first_name }} {{ $user->last_name }}</p>
+                                                    <p class="text-sm text-gray-500 user-email">{{ $user->email }}</p>
+                                                </div>
+                                            </div>
+                                            <form method="POST" action="{{ route('office.users.add', $office->id) }}" class="ml-auto">
+                                                @csrf
+                                                <input type="hidden" name="user_id" value="{{ $user->id }}">
+                                                <button type="submit"
+                                                    class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                                    <svg class="h-4 w-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                                    </svg>
+                                                    Add to Team
+                                                </button>
+                                            </form>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
                         @endif
                     </div>
                 </div>
@@ -238,21 +223,6 @@
                             item.style.display = '';
                         } else {
                             item.style.display = 'none';
-                        }
-                    });
-                });
-            }
-
-            // Select all checkbox
-            const selectAllCheckbox = document.getElementById('selectAll');
-            const userCheckboxes = document.querySelectorAll('input[name="users[]"]');
-
-            if (selectAllCheckbox) {
-                selectAllCheckbox.addEventListener('change', function() {
-                    const isChecked = this.checked;
-                    userCheckboxes.forEach(checkbox => {
-                        if (checkbox.parentElement.style.display !== 'none') {
-                            checkbox.checked = isChecked;
                         }
                     });
                 });
