@@ -177,11 +177,15 @@ class UserController extends Controller
         }
 
         $company = auth()->user()->companies()->first();
-        $offices = Office::where('company_id', $company->id)->get();
+        // Get offices and format them as id => name pairs
+        $offices = Office::where('company_id', $company->id)
+            ->get()
+            ->pluck('name', 'id')
+            ->all();
 
         // Fetch users that belong to the same company & offices
         $users = User::whereHas('offices', function ($query) use ($offices) {
-            $query->whereIn('offices.id', $offices->pluck('id'));
+            $query->whereIn('offices.id', array_keys($offices));
         })->get();
 
         return view('users.create', compact('roles', 'offices', 'userCompany', 'users'));

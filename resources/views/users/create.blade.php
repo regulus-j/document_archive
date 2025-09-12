@@ -173,26 +173,91 @@
                         <!-- Offices -->
                         <div class="space-y-2">
                             <label for="offices"
-                                class="block text-sm font-medium text-gray-700">{{ __('Offices*') }}</label>
+                                class="block text-sm font-medium text-gray-700">{{ __('Teams*') }}</label>
                             <div class="relative">
-                                <div class="relative">
-                                    <input type="text" id="search-office"
-                                        class="mt-2 block w-full p-3 rounded-md border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-150"
-                                        placeholder="Search for offices...">
-                                    <select name="offices[]" id="offices"
-                                        class="mt-2 block w-full p-3 rounded-md border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-150"
-                                        multiple size="4">
-                                        @foreach ($offices as $office)
-                                        <option value="{{ $office->id }}">{{ $office->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
+                                @if(count($offices) > 0)
+                                    <div class="relative">
+                                        <div class="mt-2 bg-white rounded-lg border border-gray-200">
+                                            <div class="p-3 border-b border-gray-200">
+                                                <input type="text"
+                                                    id="search-office"
+                                                    class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                    placeholder="Search teams...">
+                                            </div>
+                                            <div class="p-2 max-h-48 overflow-y-auto">
+                                                @foreach($offices as $id => $name)
+                                                    <label class="flex items-center p-2 hover:bg-gray-50 rounded-md cursor-pointer">
+                                                        <input type="checkbox"
+                                                            name="offices[]"
+                                                            value="{{ $id }}"
+                                                            class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                                        <span class="ml-3 text-sm text-gray-700">{{ $name }}</span>
+                                                    </label>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    </div>
+                                @else
+                                    <div class="mt-2 p-4 bg-yellow-50 rounded-md border border-yellow-200">
+                                        <div class="flex">
+                                            <div class="flex-shrink-0">
+                                                <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                                </svg>
+                                            </div>
+                                            <div class="ml-3">
+                                                <h3 class="text-sm font-medium text-yellow-800">No Teams Available</h3>
+                                                <div class="mt-2 text-sm text-yellow-700">
+                                                    <p>Your company has no teams set up yet. Teams are required for proper document routing and access control.</p>
+                                                    <a href="{{ route('office.create') }}" class="mt-2 inline-flex items-center text-sm font-medium text-yellow-800 hover:text-yellow-900">
+                                                        <svg class="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                                        </svg>
+                                                        Create New Team
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
                             </div>
                             @error('offices')
                             <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
                             @enderror
-                            <p class="text-xs text-gray-500 mt-1">Select one or more offices this user will have access to</p>
+                            <p class="text-xs text-gray-500 mt-1">Select one or more teams this user will have access to</p>
                         </div>
+
+                        <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const searchInput = document.getElementById('search-office');
+                            const checkboxes = document.querySelectorAll('input[name="offices[]"]');
+
+                            searchInput.addEventListener('input', function(e) {
+                                const searchTerm = e.target.value.toLowerCase();
+
+                                checkboxes.forEach(checkbox => {
+                                    const label = checkbox.closest('label');
+                                    const text = label.textContent.toLowerCase();
+
+                                    if (text.includes(searchTerm)) {
+                                        label.style.display = 'flex';
+                                    } else {
+                                        label.style.display = 'none';
+                                    }
+                                });
+                            });
+
+                            // Ensure at least one checkbox is selected
+                            const form = document.querySelector('form');
+                            form.addEventListener('submit', function(e) {
+                                const selectedOffices = document.querySelectorAll('input[name="offices[]"]:checked');
+                                if (selectedOffices.length === 0) {
+                                    e.preventDefault();
+                                    alert('Please select at least one team.');
+                                }
+                            });
+                        });
+                        </script>
                     </div>
 
 
