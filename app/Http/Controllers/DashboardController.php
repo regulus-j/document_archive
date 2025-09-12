@@ -147,12 +147,21 @@ class DashboardController extends Controller
         $document = new Document;
         $recentTransactions = $document->transactions()->latest()->paginate(5);
 
-        // Get total documents for current user
-        $totalDocuments = Document::where('uploader', $user->id)
-            ->orWhereHas('workflow', function($query) use ($user) {
-                $query->where('recipient_id', $user->id);
-            })
-            ->count();
+        // Get total documents for company if admin, otherwise just user's documents
+        if ($user->hasRole('company-admin') && $userCompany) {
+            $companyUserIds = $userCompany->employees()->pluck('id');
+            $totalDocuments = Document::whereIn('uploader', $companyUserIds)
+                ->orWhereHas('workflow', function($query) use ($companyUserIds) {
+                    $query->whereIn('recipient_id', $companyUserIds);
+                })
+                ->count();
+        } else {
+            $totalDocuments = Document::where('uploader', $user->id)
+                ->orWhereHas('workflow', function($query) use ($user) {
+                    $query->where('recipient_id', $user->id);
+                })
+                ->count();
+        }
 
         $recentDocuments = Document::where('uploader', $user->id)
             ->orWhereHas('workflow', function($query) use ($user) {

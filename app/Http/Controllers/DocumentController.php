@@ -27,6 +27,7 @@ use Illuminate\View\View;
 use PhpOffice\PhpWord\IOFactory;
 use Spatie\PdfToText\Pdf;
 
+
 class DocumentController extends Controller
 {
     protected $documentAccessService;
@@ -212,6 +213,56 @@ class DocumentController extends Controller
             'i' => (request()->input('page', 1) - 1) * 5,
             'search' => $search,
         ], compact('auditLogs')));
+    }
+
+    /**
+     * Display completed documents
+     */
+    public function showComplete(Request $request): View
+    {
+        $user = Auth::user();
+
+        // Base query with essential relations
+        $query = Document::with(['status', 'documentWorkflow'])
+            ->whereHas('status', function($q) {
+                $q->whereIn('status', ['complete', 'completed', 'acknowledged', 'commented']);
+            });
+
+        // Filter by tab (sent/received)
+        $tab = $request->input('tab', 'received');
+
+        // Count documents for sent tab (documents user has uploaded and are complete)
+        $sentCount = Document::whereHas('status', function($q) {
+            $q->whereIn('status', ['complete', 'completed', 'acknowledged', 'commented']);
+        })->where('uploader', $user->id)->count();
+
+        // Count documents for received tab (documents where user is in workflow and are complete)
+        $receivedCount = Document::whereHas('status', function($q) {
+            $q->whereIn('status', ['complete', 'completed', 'acknowledged', 'commented']);
+        })->whereHas('documentWorkflow', function($q) use ($user) {
+            $q->where('recipient_id', $user->id);
+        })->count();
+
+        // Apply filter based on selected tab
+        if ($tab === 'sent') {
+            // Show documents uploaded by the user that are complete
+            $query->where('uploader', $user->id);
+        } else {
+            // Show documents where user is a recipient in the workflow and are complete
+            $query->whereHas('documentWorkflow', function($q) use ($user) {
+                $q->where('recipient_id', $user->id);
+            });
+        }
+
+        // Sort by latest first and paginate
+        $documents = $query->latest()->paginate(10);
+
+        return view('documents.complete', [
+            'documents' => $documents,
+            'tab' => $tab,
+            'receivedCount' => $receivedCount,
+            'sentCount' => $sentCount
+        ]);
     }
 
     //Storing the document
