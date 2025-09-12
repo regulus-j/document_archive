@@ -110,7 +110,60 @@
                 </div>
             </div>
 
-            <!-- Main Content -->
+            <!-- Search Section -->
+            <div class="max-w-7xl mx-auto mb-6">
+                <div class="flex items-center bg-white rounded-xl shadow-sm border border-gray-200">
+                    <div class="flex-1 relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </div>
+                        <input type="text" name="search" id="tracking_number"
+                            class="block w-full pl-10 pr-3 py-3 border-0 rounded-l-xl focus:ring-2 focus:ring-blue-500 text-sm"
+                            placeholder="Search workflows by keywords..."
+                            oninput="filterWorkflows(this.value)">
+                    </div>
+                    <div class="flex items-center pr-2">
+                        {{-- <button type="button"
+                            onclick="startScanner()"
+                            class="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                            title="Scan QR Code">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v-4m6 6v4m2-4h-2m-4 0H4m12 6h-2m2-4H4m6-6h2M4 12h2m10-6h2m-6 0h-2" />
+                            </svg>
+                        </button> --}}
+                        <button type="button"
+                            onclick="clearFilter()"
+                            class="p-2 hover:bg-gray-100 rounded-lg transition-colors ml-1"
+                            title="Clear Search">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <!-- QR Scanner Modal -->
+                {{-- <div id="qr-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+                    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-lg bg-white">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-gray-900">Scan QR Code</h3>
+                            <button type="button" onclick="stopScanner()" class="text-gray-400 hover:text-gray-500">
+                                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div id="reader" class="border rounded-lg overflow-hidden"></div>
+                        <div class="mt-4 text-center">
+                            <button type="button" onclick="stopScanner()"
+                                class="inline-flex justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div> --}}
+            </div>            <!-- Main Content -->
             <div class="bg-white rounded-xl overflow-hidden border border-blue-200/80 transition-all duration-300 hover:border-blue-300/80">
                 <div class="bg-gradient-to-r from-blue-50 to-white p-6 border-b border-blue-200/60">
                     <div class="flex justify-between items-center">
@@ -293,4 +346,150 @@
             </div>
         </div>
     </div>
+
+    @push('scripts')
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script>
+        let qrScanner = null;
+
+        function startScanner() {
+            const modal = document.getElementById('qr-modal');
+            const reader = document.getElementById('reader');
+
+            // Show the modal
+            modal.classList.remove('hidden');
+
+            // Initialize QR Scanner
+            qrScanner = new Html5QrcodeScanner(
+                "reader",
+                {
+                    fps: 10,
+                    qrbox: 250,
+                    rememberLastUsedCamera: true,
+                    showTorchButtonIfSupported: true
+                }
+            );
+
+            // Render the scanner with success callback
+            qrScanner.render((decodedText) => {
+                document.getElementById('tracking_number').value = decodedText;
+                filterWorkflows(decodedText);
+                stopScanner();
+            });
+
+            // Add keyboard listener for Escape key
+            document.addEventListener('keydown', handleEscapeKey);
+        }
+
+        function stopScanner() {
+            if (qrScanner) {
+                qrScanner.clear();
+                qrScanner = null;
+            }
+
+            const modal = document.getElementById('qr-modal');
+            modal.classList.add('hidden');
+
+            // Remove keyboard listener
+            document.removeEventListener('keydown', handleEscapeKey);
+        }
+
+        function handleEscapeKey(event) {
+            if (event.key === 'Escape') {
+                stopScanner();
+            }
+        }
+
+        function filterWorkflows(trackingNumber) {
+            if (!trackingNumber) {
+                showAllRows();
+                return;
+            }
+
+            const searchTerm = trackingNumber.trim().toLowerCase();
+            const rows = document.querySelectorAll('table tbody tr');
+            const noResultsRow = document.getElementById('no-results-row');
+            let hasVisibleRows = false;
+
+            rows.forEach(row => {
+                if (row.id === 'no-results-row') return;
+
+                // Get all text content from cells except the actions column
+                const cells = row.querySelectorAll('td:not(:last-child)');
+                let rowText = '';
+                cells.forEach(cell => {
+                    rowText += ' ' + cell.textContent.trim().toLowerCase();
+                });
+
+                // Check for exact match of tracking number
+                const hasExactMatch = rowText.includes(searchTerm);
+
+                // Also check for partial matches if no exact match is found
+                const hasPartialMatch = !hasExactMatch && searchTerm.length >= 3 &&
+                    rowText.split(' ').some(word => word.includes(searchTerm));
+
+                const shouldShow = hasExactMatch || hasPartialMatch;
+                row.classList.toggle('hidden', !shouldShow);
+                if (shouldShow) hasVisibleRows = true;
+            });
+
+            // Show/hide the no results message
+            if (trackingNumber && !hasVisibleRows) {
+                if (!noResultsRow) {
+                    const tbody = document.querySelector('table tbody');
+                    const newRow = document.createElement('tr');
+                    newRow.id = 'no-results-row';
+                    newRow.innerHTML = `
+                        <td colspan="6" class="px-6 py-4">
+                            <div class="flex flex-col items-center justify-center py-6 text-center">
+                                <svg class="h-12 w-12 text-gray-400 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                                <p class="text-gray-900 font-medium text-lg mb-2">No matching workflows found</p>
+                                <p class="text-gray-500 text-base">Try adjusting your search term</p>
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(newRow);
+                } else {
+                    noResultsRow.classList.remove('hidden');
+                }
+            } else if (noResultsRow) {
+                noResultsRow.classList.add('hidden');
+            }
+
+            // Update the workflow count
+            const countSpan = document.querySelector('.text-blue-600.bg-blue-50');
+            if (countSpan) {
+                const visibleCount = [...rows].filter(row => !row.classList.contains('hidden') && row.id !== 'no-results-row').length;
+                countSpan.textContent = `${visibleCount} workflows`;
+            }
+        }
+
+        function showAllRows() {
+            const rows = document.querySelectorAll('table tbody tr');
+            const noResultsRow = document.getElementById('no-results-row');
+
+            rows.forEach(row => {
+                if (row.id === 'no-results-row') {
+                    row.classList.add('hidden');
+                } else {
+                    row.classList.remove('hidden');
+                }
+            });
+
+            // Update the workflow count
+            const countSpan = document.querySelector('.text-blue-600.bg-blue-50');
+            if (countSpan) {
+                const visibleCount = [...rows].filter(row => !row.classList.contains('hidden') && row.id !== 'no-results-row').length;
+                countSpan.textContent = `${visibleCount} workflows`;
+            }
+        }
+
+        function clearFilter() {
+            document.getElementById('tracking_number').value = '';
+            showAllRows();
+        }
+    </script>
+    @endpush
 @endsection
