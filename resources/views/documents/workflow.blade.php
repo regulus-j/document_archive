@@ -164,8 +164,55 @@
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                                                 {{ $workflow->step_order }}
                                             </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                                {{ $workflow->recipient->name ?? 'N/A' }}
+                                            <td class="px-6 py-4 text-sm">
+                                                @php
+                                                    $recipientInfo = '';
+                                                    if ($workflow->recipients && $workflow->recipients->count() > 0) {
+                                                        // Multiple individual recipients
+                                                        foreach ($workflow->recipients as $recipient) {
+                                                            $recipientInfo .= "<div class='mb-2 last:mb-0'>";
+                                                            $recipientInfo .= "<div class='font-medium text-gray-900'>" .
+                                                                e($recipient->first_name . ' ' . $recipient->last_name) .
+                                                                "</div>";
+
+                                                            // Add their office if available
+                                                            if ($recipient->office) {
+                                                                $recipientInfo .= "<div class='text-xs text-gray-500'>" . e($recipient->office->name) . "</div>";
+                                                            }
+                                                            $recipientInfo .= "</div>";
+                                                        }
+                                                    } elseif ($workflow->recipientOffices && $workflow->recipientOffices->count() > 0) {
+                                                        // Multiple office recipients
+                                                        foreach ($workflow->recipientOffices as $office) {
+                                                            $recipientInfo .= "<div class='mb-2 last:mb-0'>";
+                                                            $recipientInfo .= "<div class='font-medium text-gray-900'>" .
+                                                                e($office->name) .
+                                                                "</div>";
+                                                            $recipientInfo .= "<div class='text-xs text-gray-500'>Entire Team</div>";
+                                                            $recipientInfo .= "</div>";
+                                                        }
+                                                    } elseif ($workflow->recipient) {
+                                                        // Single individual recipient (legacy support)
+                                                        $recipientInfo .= "<div class='font-medium text-gray-900'>" .
+                                                            e($workflow->recipient->first_name . ' ' . $workflow->recipient->last_name) .
+                                                            "</div>";
+
+                                                        // Add their office if available
+                                                        $recipientOffice = $workflow->recipientOffice ? $workflow->recipientOffice->name : null;
+                                                        if ($recipientOffice) {
+                                                            $recipientInfo .= "<div class='text-xs text-gray-500'>" . e($recipientOffice) . "</div>";
+                                                        }
+                                                    } elseif ($workflow->recipientOffice) {
+                                                        // Single office recipient (legacy support)
+                                                        $recipientInfo .= "<div class='font-medium text-gray-900'>" .
+                                                            e($workflow->recipientOffice->name) .
+                                                            "</div>" .
+                                                            "<div class='text-xs text-gray-500'>Entire Team</div>";
+                                                    } else {
+                                                        $recipientInfo = "<div class='text-gray-500'>No recipient assigned</div>";
+                                                    }
+                                                @endphp
+                                                {!! $recipientInfo !!}
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                                                 @if($workflow->status === 'pending')
