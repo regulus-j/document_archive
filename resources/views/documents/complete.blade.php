@@ -20,7 +20,7 @@
                 <button @click="showConfirmation = false" class="confirmation-cancel">
                     Cancel
                 </button>
-                <form :action="'/documents/' + documentToArchive + '/archive'" method="POST" class="inline-block">
+                <form :action="'{{ route('documents.archive.store', '') }}/' + documentToArchive" method="POST" class="inline-block">
                     @csrf
                     <button type="submit" class="confirmation-confirm archive">
                         Archive Document

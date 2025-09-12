@@ -1481,7 +1481,7 @@ public function receiveConfirm(Document $document)
     public function archiveDocument(Document $document)
     {
         // Check if the user has permission to archive the document
-        if (auth()->user()->id !== $document->user_id && !auth()->user()->hasRole('company-admin')) {
+        if (auth()->user()->id !== $document->uploader && !auth()->user()->hasRole('company-admin')) {
             return redirect()->route('documents.index')
                 ->with('error', 'Access Denied: You are not authorized to archive this document. Only the document owner or company administrators may perform this action.');
         }

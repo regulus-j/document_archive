@@ -6,6 +6,7 @@ use App\Models\Document;
 use App\Models\User;
 use App\Services\DocumentAccessService;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Support\Facades\DB;
 
 class DocumentPolicy
 {
@@ -47,7 +48,31 @@ class DocumentPolicy
      */
     public function restore(User $user, Document $document): bool
     {
-        // Only document owners can restore their documents
-        return $document->uploader === $user->id;
+        // Document owner can always restore their documents
+        if ($document->uploader === $user->id) {
+            return true;
+        }
+
+        // Get the user's roles directly from the database
+        $isCompanyAdmin = DB::table('model_has_roles')
+            ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
+            ->where('model_has_roles.model_id', $user->id)
+            ->where('roles.name', 'company-admin')
+            ->exists();
+
+        if ($isCompanyAdmin) {
+            // Check if the user and document are in the same company through the pivot table
+            $userCompanyIds = DB::table('company_users')
+                ->where('user_id', $user->id)
+                ->pluck('company_id');
+
+            $documentUploaderCompanyIds = DB::table('company_users')
+                ->where('user_id', $document->uploader)
+                ->pluck('company_id');
+
+            return $userCompanyIds->intersect($documentUploaderCompanyIds)->isNotEmpty();
+        }
+
+        return false;
     }
 }

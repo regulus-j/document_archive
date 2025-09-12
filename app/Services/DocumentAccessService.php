@@ -4,7 +4,9 @@ namespace App\Services;
 
 use App\Models\Document;
 use App\Models\User;
+use App\Models\CompanyUser;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 
 class DocumentAccessService
@@ -79,10 +81,23 @@ class DocumentAccessService
      */
     private function isInSameCompany(Document $document, User $user): bool
     {
-        $documentUploaderCompanies = $document->user->companies()->pluck('id');
-        $userCompanies = $user->companies()->pluck('id');
+        // First check if we have both a document and a user
+        if (!$document || !$user) {
+            return false;
+        }
 
-        return $documentUploaderCompanies->intersect($userCompanies)->isNotEmpty();
+        // Get the document uploader's company IDs
+        $uploaderCompanyIds = CompanyUser::where('user_id', $document->uploader)
+            ->pluck('company_id')
+            ->toArray();
+
+        // Get the user's company IDs
+        $userCompanyIds = CompanyUser::where('user_id', $user->id)
+            ->pluck('company_id')
+            ->toArray();
+
+        // Check if there are any companies in common
+        return !empty(array_intersect($uploaderCompanyIds, $userCompanyIds));
     }
 
     /**
@@ -157,7 +172,7 @@ class DocumentAccessService
         if (!$user->hasRole('company-admin')) {
             return $query->where('uploader', $user->id);
         }
-        
+
         // For company admins, show all documents in their company
         $adminCompanyId = $user->companies()->first()->id ?? null;
         if (!$adminCompanyId) {

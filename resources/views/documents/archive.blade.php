@@ -1,46 +1,53 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="min-h-screen bg-gradient-to-b from-blue-50 to-white py-6">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="bg-white rounded-xl mb-6 border border-blue-200/80 overflow-hidden">
-            <div class="p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div class="flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                    </svg>
-                    <h2 class="text-2xl font-bold text-gray-800">Document Archive</h2>
+<div class="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <!-- Header Box -->
+        <div class="bg-white rounded-xl shadow-xl mb-6 border border-blue-100 overflow-hidden">
+            <div class="bg-white p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div class="flex items-center space-x-3">
+                    <div class="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg shadow-md">
+                        <svg class="w-6 h-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-800">Document Archive</h1>
+                        <p class="text-sm text-gray-500">Search and manage archived documents</p>
+                    </div>
                 </div>
-                <a href="{{ route('documents.index') }}" class="inline-flex items-center px-4 py-2 bg-white border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors duration-200">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
-                    </svg>
-                    Back to Documents
-                </a>
+                <div class="flex items-center gap-2">
+                    <a href="{{ route('documents.index') }}" class="inline-flex items-center px-4 py-2 border border-blue-600 text-sm font-medium rounded-lg text-blue-600 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                        <svg class="mr-2 -ml-1 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 9 9 0 01-18 0z" />
+                        </svg>
+                        Back to Documents
+                    </a>
+                </div>
             </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
             <!-- Search Panel -->
             <div class="lg:col-span-1">
-                <div class="bg-white rounded-xl overflow-hidden h-full border border-blue-200/80 transition-all duration-300 hover:border-blue-300/80 hover:shadow-md">
-                    <div class="bg-gradient-to-r from-blue-50 to-white p-6 border-b border-blue-200/60">
-                        <div class="flex items-center mb-1">
+                <div class="bg-white rounded-xl shadow-xl overflow-hidden h-full border border-blue-100 transition-all duration-300">
+                    <div class="bg-white p-6 border-b border-blue-200">
+                        <div class="flex items-center">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                             </svg>
-                            <h2 class="text-lg font-semibold text-gray-800">Search Archives</h2>
+                            <h2 class="text-lg font-semibold text-gray-800">Filter Documents</h2>
                         </div>
-                        <p class="mt-1 text-sm text-gray-600">Search archived documents</p>
                     </div>
 
                     <div class="p-6">
                         <!-- Archive Search Form -->
-                        <form action="{{ route('documents.archive') }}" method="GET" class="space-y-5 mb-6">
+                        <form action="{{ route('documents.archive') }}" method="GET" class="space-y-4">
                             <div>
-                                <label for="text-search" class="block text-sm font-medium text-gray-700 mb-1">Search archives</label>
+                                <label for="text-search" class="block text-sm font-medium text-gray-700 mb-1">Keywords</label>
                                 <div class="relative">
-                                    <input type="text" id="text-search" name="search" value="{{ $search ?? '' }}" class="w-full pl-10 pr-4 py-2.5 rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50" placeholder="Search archived documents...">
+                                    <input type="text" id="text-search" name="search" value="{{ $search ?? '' }}" class="mt-1 block w-full px-3 py-2 border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md" placeholder="Search in title, description...">
                                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                         <svg class="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                             <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
@@ -48,9 +55,47 @@
                                     </div>
                                 </div>
                             </div>
-                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg shadow-sm">
-                                Search Archives
-                            </button>
+
+                            <div>
+                                <label for="date_from" class="block text-sm font-medium text-gray-700 mb-1">Date From</label>
+                                <input type="date" name="date_from" id="date_from" value="{{ request('date_from') }}" class="mt-1 block w-full px-3 py-2 border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                            </div>
+
+                            <div>
+                                <label for="date_to" class="block text-sm font-medium text-gray-700 mb-1">Date To</label>
+                                <input type="date" name="date_to" id="date_to" value="{{ request('date_to') }}" class="mt-1 block w-full px-3 py-2 border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                            </div>
+
+                            <div>
+                                <label for="uploader" class="block text-sm font-medium text-gray-700 mb-1">Uploader</label>
+                                <select name="uploader" id="uploader" class="mt-1 block w-full px-3 py-2 border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                                    <option value="">All Uploaders</option>
+                                    @foreach($uploaders ?? [] as $uploader)
+                                        <option value="{{ $uploader->id }}" {{ request('uploader') == $uploader->id ? 'selected' : '' }}>
+                                            {{ $uploader->first_name }} {{ $uploader->last_name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="sort" class="block text-sm font-medium text-gray-700 mb-1">Sort By</label>
+                                <select name="sort" id="sort" class="mt-1 block w-full px-3 py-2 border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                                    <option value="latest" {{ request('sort') == 'latest' ? 'selected' : '' }}>Latest First</option>
+                                    <option value="oldest" {{ request('sort') == 'oldest' ? 'selected' : '' }}>Oldest First</option>
+                                    <option value="title" {{ request('sort') == 'title' ? 'selected' : '' }}>Title (A-Z)</option>
+                                    <option value="title_desc" {{ request('sort') == 'title_desc' ? 'selected' : '' }}>Title (Z-A)</option>
+                                </select>
+                            </div>
+
+                            <div class="flex items-center justify-end pt-4">
+                                <button type="reset" class="mr-3 px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                    Reset
+                                </button>
+                                <button type="submit" class="px-4 py-2 text-sm text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                    Apply Filters
+                                </button>
+                            </div>
                         </form>
 
                         <!-- Tracking Number Search -->
@@ -103,22 +148,22 @@
 
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gradient-to-r from-gray-50 to-white">
+                            <thead class="bg-blue-50">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">ID</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Title</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Uploader</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Date Archived</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Actions</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">ID</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">Title & Description</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">Uploader</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">Date Archived</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider border-b border-blue-200">Actions</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
                                 @forelse($documents as $document)
-                                <tr class="hover:bg-blue-50/50 transition-colors duration-150">
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $document->id ?? 'N/A' }}</td>
+                                <tr class="hover:bg-blue-50/50 transition-all duration-200 group">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-600">{{ $document->id ?? 'N/A' }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="flex items-center">
-                                            <div class="flex-shrink-0 h-10 w-10 flex items-center justify-center rounded-lg bg-gradient-to-br from-blue-100 to-blue-50 text-blue-600 border border-blue-200/60">
+                                            <div class="flex-shrink-0 h-10 w-10 flex items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-sm group-hover:shadow-md transition-all duration-200">
                                                 @php
                                                     $extension = pathinfo($document->file_path ?? '', PATHINFO_EXTENSION);
                                                     $icon = match($extension) {
@@ -182,6 +227,7 @@
                                                         </svg>
                                                         Download
                                                     </a>
+                                                    {{-- Restore button temporarily hidden
                                                     @can('restore', $document)
                                                     <div x-data="{ showRestoreConfirm: false }">
                                                         <button @click="showRestoreConfirm = true" type="button" class="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
@@ -241,6 +287,7 @@
                                                         </div>
                                                     </div>
                                                     @endcan
+                                                    --}}
                                                     @can('delete', $document)
                                                     <div x-data="{ showDeleteConfirm: false }">
                                                         <button @click="showDeleteConfirm = true" type="button" class="flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
@@ -312,12 +359,20 @@
                                 @empty
                                 <tr>
                                     <td colspan="5" class="px-6 py-10 text-center">
-                                        <div class="flex flex-col items-center justify-center p-6 bg-blue-50/50 rounded-lg border border-blue-100 mx-6">
-                                            <svg class="w-16 h-16 text-blue-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
-                                            </svg>
-                                            <p class="text-blue-900 text-lg font-medium mb-1">No Archived Documents</p>
-                                            <p class="text-blue-600 text-sm">No documents have been archived yet</p>
+                                        <div class="flex flex-col items-center justify-center p-8 bg-gradient-to-br from-blue-50 to-indigo-50/50 rounded-xl border border-blue-100 mx-6">
+                                            <div class="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg shadow-md mb-4">
+                                                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
+                                                </svg>
+                                            </div>
+                                            <p class="text-gray-900 text-lg font-semibold mb-1">No Archived Documents</p>
+                                            <p class="text-gray-600 text-sm">No documents have been archived yet</p>
+                                            <a href="{{ route('documents.index') }}" class="mt-4 inline-flex items-center px-4 py-2 border border-blue-600 text-sm font-medium rounded-lg text-blue-600 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                                                <svg class="mr-2 -ml-1 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                                                </svg>
+                                                View Active Documents
+                                            </a>
                                         </div>
                                     </td>
                                 </tr>
@@ -326,8 +381,8 @@
                         </table>
                     </div>
 
-                    <div class="p-6 border-t border-gray-200">
-                        {{ $documents->links() }}
+                    <div class="bg-white px-4 py-3 border-t border-blue-200 sm:px-6">
+                        {{ $documents->withQueryString()->links() }}
                     </div>
                 </div>
             </div>
