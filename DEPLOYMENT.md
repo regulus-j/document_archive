@@ -30,7 +30,7 @@ The deployment follows these phases:
 
 Make sure to set the following environment variables in your deployment platform:
 
-- `APP_KEY`: Laravel application key (generate with `php artisan key:generate`)
+- `APP_KEY`: Laravel application key (generate with `php artisan key:generate` in a secure environment. **CRITICAL**: This key is used for encryption and must be kept secret. Never log or expose it.)
 - `APP_ENV`: Set to `production`
 - `APP_DEBUG`: Set to `false` for production
 - `DB_CONNECTION`: Database connection type
