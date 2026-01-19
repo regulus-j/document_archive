@@ -6,8 +6,7 @@ services:
     ports:
       - "8080:80"
     environment:
-      - APP_ENV=production
-      - APP_DEBUG=false
+      - APP_KEY=${APP_KEY}
     env_file:
       - .env.docker
     depends_on:
