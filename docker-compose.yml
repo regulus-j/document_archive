@@ -8,7 +8,7 @@ services:
     environment:
       - APP_KEY=${APP_KEY}
     env_file:
-      - .env.docker
+      - .env
     depends_on:
       mysql:
         condition: service_healthy
