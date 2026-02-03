@@ -84,6 +84,18 @@
                             </div>
                         </div>
 
+                        <!-- Teams -->
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <p class="text-sm font-medium text-gray-500 mb-1">{{ __('Assigned Teams') }}</p>
+                            <p class="text-base text-gray-900">
+                                @if($user->teams && $user->teams->count())
+                                    {{ $user->teams->pluck('name')->join(', ') }}
+                                @else
+                                    <span class="text-gray-400 italic">No Team</span>
+                                @endif
+                            </p>
+                        </div>
+
                         <!-- Created At -->
                         <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
                             <p class="text-sm font-medium text-gray-500 mb-1">{{ __('Created At') }}</p>

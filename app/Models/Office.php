@@ -14,6 +14,7 @@ class Office extends Model
         'company_id',
         'name',
         'parent_office_id',
+        'office_lead',
     ];
 
     public function childOffices()
@@ -44,5 +45,10 @@ class Office extends Model
     public function company()
     {
         return $this->belongsTo(CompanyAccount::class);
+    }
+
+    public function lead()
+    {
+        return $this->belongsTo(User::class, 'office_lead');
     }
 }

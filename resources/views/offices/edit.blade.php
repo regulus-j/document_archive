@@ -11,7 +11,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                         </svg>
-                        {{ __('Edit Office') }}
+                        {{ __('Edit Team') }}
                     </h2>
                     <div class="mt-4 sm:mt-0">
                         <a href="{{ route('office.index') }}"
@@ -20,7 +20,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                             </svg>
-                            {{ __('Back to Offices') }}
+                            {{ __('Back to Teams') }}
                         </a>
                     </div>
                 </div>
@@ -63,7 +63,7 @@
                         <!-- Office Name -->
                         <div class="mb-6">
                             <label for="name" class="block text-sm font-medium text-gray-700 mb-1">
-                                {{ __('Office Name') }}
+                                {{ __('Team Name') }}
                             </label>
                             <div class="relative rounded-md shadow-sm">
                                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -75,7 +75,7 @@
                                 </div>
                                 <input type="text" id="name" name="name" value="{{ old('name', $office->name) }}" required
                                     class="pl-10 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm @error('name') border-red-300 text-red-900 placeholder-red-300 focus:outline-none focus:ring-red-500 focus:border-red-500 @enderror"
-                                    placeholder="{{ __('Enter office name') }}">
+                                    placeholder="{{ __('Enter Team name') }}">
                             </div>
                             @error('name')
                                 <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -85,7 +85,7 @@
                         <!-- Parent Office -->
                         <div class="mb-6">
                             <label for="parent_office_id" class="block text-sm font-medium text-gray-700 mb-1">
-                                {{ __('Parent Office') }}
+                                {{ __('Main Team') }}
                             </label>
                             <div class="relative rounded-md shadow-sm">
                                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -111,6 +111,34 @@
                                 <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
+                        
+                        <!-- Office Leader -->
+                        <div class="mb-6">
+                            <label for="office_lead" class="block text-sm font-medium text-gray-700 mb-1">
+                                {{ __('Team Leader') }}
+                            </label>
+                            <div class="relative rounded-md shadow-sm">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                    </svg>
+                                </div>
+                                <select id="office_lead" name="office_lead"
+                                    class="pl-10 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm @error('office_lead') border-red-300 text-red-900 focus:outline-none focus:ring-red-500 focus:border-red-500 @enderror">
+                                    <option value="">{{ __('No Team Leader') }}</option>
+                                    @foreach($users as $user)
+                                        <option value="{{ $user->id }}" {{ old('office_lead', $office->office_lead) == $user->id ? 'selected' : '' }}>
+                                            {{ $user->first_name }} {{ $user->last_name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <p class="mt-1 text-xs text-gray-500">The selected user will be added to this team automatically</p>
+                            @error('office_lead')
+                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
 
                         <!-- Action Buttons -->
                         <div class="border-t pt-6 flex justify-end space-x-3">
@@ -124,7 +152,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M5 13l4 4L19 7" />
                                 </svg>
-                                {{ __('Update Office') }}
+                                {{ __('Update Team') }}
                             </button>
                         </div>
                     </form>

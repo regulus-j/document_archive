@@ -10,6 +10,7 @@ use App\Models\DocumentTrackingNumber;
 use App\Models\DocumentTransaction;
 use App\Models\DocumentWorkflow;
 use App\Models\CompanyAccount;
+use App\Models\DocumentCategories;
 use App\Models\Office;
 use App\Models\User;
 use chillerlan\QRCode\QRCode;
@@ -54,75 +55,75 @@ class DocumentController extends Controller
 
         $auditLogs = DocumentAudit::latest()->paginate(15);
 
-        // Determine the recipients with the highest step_order for each document
-        $highestRecipients = [];
+        // Determine the recipients for each document
+        $documentRecipients = [];
         foreach ($documents as $doc) {
-            $maxStepOrder = DocumentWorkflow::where('document_id', $doc->id)->max('step_order');
-            if ($maxStepOrder) {
-                $topWorkflows = DocumentWorkflow::where('document_id', $doc->id)
-                    ->where('step_order', $maxStepOrder)
-                    ->get();
-                
-                // Get unique recipient IDs and office IDs
-                $recipientIds = $topWorkflows->pluck('recipient_id')->unique();
-                $recipientOfficeIds = $topWorkflows->pluck('recipient_office')->filter()->unique();
-                
-                // Get recipient users
-                $users = User::whereIn('id', $recipientIds)->get();
-                
-                // Get recipient offices
-                $offices = Office::whereIn('id', $recipientOfficeIds)->get();
-                
-                // Build collection of recipient info including names and offices
-                $recipientInfo = collect();
-                foreach ($topWorkflows as $workflow) {
-                    $user = $users->firstWhere('id', $workflow->recipient_id);
-                    $office = $offices->firstWhere('id', $workflow->recipient_office);
-                    
-                    if ($user) {
-                        $fname = $user->first_name ?? '';
-                        $lname = $user->last_name ?? '';
-                        $officeName = $office ? $office->name : 'No Office';
-                        
-                        $recipientInfo->push([
-                            'name' => trim("$fname $lname"),
-                            'office' => $officeName,
-                            'recipient_id' => $user->id,
-                            'office_id' => $workflow->recipient_office
-                        ]);
-                    }
+            $workflows = DocumentWorkflow::with(['recipient', 'recipientOffice'])
+                ->where('document_id', $doc->id)
+                ->get();
+
+            $recipients = collect();
+
+            foreach ($workflows as $workflow) {
+                // Add user recipients
+                if ($workflow->recipient) {
+                    $name = trim($workflow->recipient->first_name . ' ' . $workflow->recipient->last_name);
+                    $recipients->push([
+                        'name' => $name,
+                        'type' => 'user',
+                        'step_order' => $workflow->step_order
+                    ]);
                 }
-                
-                $highestRecipients[$doc->id] = $recipientInfo;
-            } else {
-                // If the document has no workflow records
-                $highestRecipients[$doc->id] = collect([]);
+
+                // Add office recipients
+                if ($workflow->recipient_office && $workflow->recipientOffice) {
+                    $recipients->push([
+                        'name' => $workflow->recipientOffice->name,
+                        'type' => 'office',
+                        'step_order' => $workflow->step_order
+                    ]);
+                }
             }
+
+            $documentRecipients[$doc->id] = $recipients;
         }
 
-        return view('documents.index', compact('documents', 'auditLogs', 'highestRecipients'));
+        return view('documents.index', compact('documents', 'auditLogs', 'documentRecipients'));
     }
 
-    public function showArchive(): View
+    public function showArchive(Request $request): View
     {
-        if (auth()->user()->hasRole('company-admin')) {
-            $documents = Document::with(['user', 'status', 'transaction.fromOffice', 'transaction.toOffice'])->latest()->paginate(5);
-        } else {
-            $userOfficeIds = auth()->user()->offices->pluck('id')->toArray();
+        $search = $request->input('search');
 
-            $documents = Document::with(['user', 'status', 'transaction.fromOffice', 'transaction.toOffice'])
-                ->whereHas('user.offices', function ($query) use ($userOfficeIds) {
-                    $query->whereIn('offices.id', $userOfficeIds);
-                })
-                ->latest()
-                ->paginate(5);
+        $query = Document::with(['user', 'status', 'transaction.fromOffice', 'transaction.toOffice'])
+            ->whereHas('status', function ($q) {
+                $q->where('status', 'archived');
+            });
+
+        // Apply search if provided
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%");
+            });
         }
 
+        // Filter by user's office if not company admin
+        if (!auth()->user()->hasRole('company-admin')) {
+            $userOfficeIds = auth()->user()->offices->pluck('id')->toArray();
+            $query->whereHas('user.offices', function ($q) use ($userOfficeIds) {
+                $q->whereIn('offices.id', $userOfficeIds);
+            });
+        }
+
+        $documents = $query->latest()->paginate(5);
         $auditLogs = DocumentAudit::paginate(15);
 
         return view('documents.archive', array_merge([
             'documents' => $documents,
+            'archivedDocuments' => $documents,
             'i' => (request()->input('page', 1) - 1) * 5,
+            'search' => $search,
         ], compact('auditLogs')));
     }
 
@@ -130,29 +131,30 @@ class DocumentController extends Controller
     public function uploadController(Request $request)
     {
         \Log::info('uploadController called');
+        \Log::info("SEARCH ME");
+        \Log::info($request);
 
-        $request->from_office = 1;
-        $request->to_office = 2;
-
-        //upload to database
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required',
             'classification' => 'required|string',
+            'purpose' => 'nullable|string',
+            'category' => 'nullable|integer',
             'from_office' => 'required|exists:offices,id',
-            'remarks' => 'nullable|string|max:250',
-            'upload' => 'required|file', // 10MB max
-            'attachements.*' => 'file|mimes:jpeg,png,jpg,gif,pdf,docx|max:10240',
-            'archive' => 'string',
-            'forward' => 'string',
+            'main_document' => 'required|file',
+            'attachments.*' => 'file|mimes:jpeg,png,jpg,gif,pdf,docx|max:10240',
+            'archive' => 'nullable|string',
+            'forward' => 'nullable|string',
+            'allowed_viewers' => 'array',
+            'allowed_viewers.*' => 'integer',
         ]);
 
         try {
             \Log::info('Starting document upload process');
             $companyId = auth()->user()->companies()->first()->id ?? 'default';
             $companyPath = $companyId;
-            
-            $file = $request->file('upload');
+
+            $file = $request->file('main_document');  // Changed from 'upload'
             $fileName = time() . '_' . $file->getClientOriginalName();
             \Log::info('Uploading file', ['fileName' => $fileName]);
             $filePath = $file->storeAs($companyPath . '/documents', $fileName, 'public');
@@ -161,17 +163,32 @@ class DocumentController extends Controller
                 'title' => $request->title,
                 'uploader' => auth()->id(),
                 'description' => $request->description,
+                'classification' => $request->classification,
+                'purpose' => $request->purpose ?? null,
+                'category' => $request->category ?? null,
                 'path' => $filePath,
-                'remarks' => $request->remarks ?? null,
             ]);
             \Log::info('Document created', ['document_id' => $document->id]);
 
-            // $document->categories()->attach([$request->classification]);
+            // Attach the document category - This fixes the categories not being assigned
+            if ($request->has('category')) {
+                $document->categories()->attach([$request->category]);
+                \Log::info('Document category assigned', ['document_id' => $document->id, 'category_id' => $request->category]);
+            }
 
+            // Save allowed viewers if classification is Private and provided
+            if ($request->classification == 'Private' && $request->has('allowed_viewers')) {
+                foreach ($request->allowed_viewers as $userId) {
+                    $document->allowedViewers()->create(['user_id' => $userId]);
+                }
+            }
+
+            // Set initial status based on whether document is being forwarded
+            $initialStatus = ($request->forward == '1') ? 'pending' : 'uploaded';
             $document->status()->create([
-                'status' => 'pending',
+                'status' => $initialStatus,
             ]);
-            \Log::info('Initial document status set to pending', ['document_id' => $document->id]);
+            \Log::info('Initial document status set to ' . $initialStatus, ['document_id' => $document->id]);
 
             $tracking_number = $this->generateTrackingNumber($request->from_office, $request->classification);
             \Log::info('Generated tracking number', ['tracking_number' => $tracking_number]);
@@ -183,19 +200,22 @@ class DocumentController extends Controller
             ]);
             \Log::info('Tracking number record created', ['document_id' => $document->id]);
 
-            DocumentTransaction::create([
-                'doc_id' => $document->id,
-                'from_office' => $request->from_office,
-                'to_office' => $request->to_office,
-            ]);
-            \Log::info('Document transaction created', ['document_id' => $document->id]);
+            // Only create transaction if to_office is provided AND forwarding is enabled
+            if ($request->has('to_office') && $request->forward == '1') {
+                DocumentTransaction::create([
+                    'doc_id' => $document->id,
+                    'from_office' => $request->from_office,
+                    'to_office' => $request->to_office,
+                ]);
+                \Log::info('Document transaction created', ['document_id' => $document->id]);
+            }
 
             // Handle additional attachments if any
             if ($request->hasFile('attachments')) {
                 \Log::info('Processing attachments');
                 foreach ($request->file('attachments') as $attachment) {
                     $attachmentName = time() . '_' . $attachment->getClientOriginalName();
-                    $companyPath = auth()->user()->company->id ?? 'default';
+                    $companyPath = auth()->user()->companies()->first()->id ?? 'default';
                     \Log::info('Uploading attachment', ['attachmentName' => $attachmentName]);
                     $attachmentPath = $attachment->storeAs($companyPath . '/attachments', $attachmentName, 'public');
 
@@ -219,6 +239,7 @@ class DocumentController extends Controller
                 $document->status()->update(['status' => 'archived']);
                 \Log::info('Document status updated to archived', ['document_id' => $document->id]);
             }
+
             if ($request->forward == '1') {
                 \Log::info('Redirecting to forward route', ['document_id' => $document->id]);
                 return redirect()->route('documents.forward', $document->id)
@@ -230,7 +251,6 @@ class DocumentController extends Controller
                     ->with('data', $data)
                     ->with('success', 'Document uploaded successfully');
             }
-
         } catch (Exception $e) {
             \Log::error('Document processing error in uploadController: ' . $e->getMessage());
             return redirect()->back()
@@ -242,18 +262,18 @@ class DocumentController extends Controller
     public function forwardDocument(Request $request, $id)
     {
         $document = Document::findOrFail($id);
-        
+
         // Get the companies this user belongs to
         $userCompanyIds = auth()->user()->companies()->pluck('company_id');
-        
+
         // Get users from these companies
-        $users = User::whereHas('companies', function($query) use ($userCompanyIds) {
+        $users = User::whereHas('companies', function ($query) use ($userCompanyIds) {
             $query->whereIn('company_id', $userCompanyIds);
         })->where('id', '!=', auth()->id())->get(); // Exclude the current user
-        
+
         // Get offices from these companies
         $offices = Office::whereIn('company_id', $userCompanyIds)->get();
-        
+
         return view('documents.forward', compact('document', 'offices', 'users'));
     }
 
@@ -312,23 +332,21 @@ class DocumentController extends Controller
                 $fullPath = storage_path("app/public/temp/{$filePath}");
 
                 if ($this->isImage($file)) {
-                    // $outputBase = storage_path('app/temp/ocr_{time()}');
-                    // $command = '"C:\\Program Files\\Tesseract-OCR\\tesseract.exe" "'.str_replace('/', '\\', $fullPath).'" "'.str_replace('/', '\\', $outputBase).'" -l eng';
-                    // $output = shell_exec($command);
-
-                    // if (file_exists("{$outputBase}.txt")) {
-                    //     $content = file_get_contents("{$outputBase}.txt");
-                    //     unlink("{$outputBase}.txt");
-                    //     $searchText .= " {$content}";
-                    // }
-
                     $qrResult = $this->scanQr($fullPath);
 
-                    $document = Document::where('tracking_number', $qrResult)->first();
+                    if (!empty($qrResult)) {
+                        // If QR code contains a tracking number
+                        $documentTracking = DocumentTrackingNumber::where('tracking_number', $qrResult)->first();
 
-                    return view('documents.show', compact('document'));
+                        if ($documentTracking) {
+                            $document = Document::find($documentTracking->doc_id);
+                            if ($document) {
+                                return redirect()->route('documents.show', $document->id)
+                                    ->with('success', 'Document found by QR code.');
+                            }
+                        }
+                    }
                 }
-
             }
 
             if (!empty($searchText)) {
@@ -338,11 +356,47 @@ class DocumentController extends Controller
             $documents = $query->latest()->paginate(5);
             $auditLogs = DocumentAudit::paginate(15);
 
-            return view('documents.index', array_merge([
-                'documents' => $documents,
-                'i' => (request()->input('page', 1) - 1) * 5,
-            ], compact('auditLogs')));
+            // Determine the recipients for each document (same code as in index method)
+            $documentRecipients = [];
+            foreach ($documents as $doc) {
+                $workflows = DocumentWorkflow::with(['recipient', 'recipientOffice'])
+                    ->where('document_id', $doc->id)
+                    ->get();
 
+                $recipients = collect();
+
+                foreach ($workflows as $workflow) {
+                    // Add user recipients
+                    if ($workflow->recipient) {
+                        $name = trim($workflow->recipient->first_name . ' ' . $workflow->recipient->last_name);
+                        $recipients->push([
+                            'name' => $name,
+                            'type' => 'user',
+                            'step_order' => $workflow->step_order
+                        ]);
+                    }
+
+                    // Add office recipients
+                    if ($workflow->recipient_office && $workflow->recipientOffice) {
+                        $recipients->push([
+                            'name' => $workflow->recipientOffice->name,
+                            'type' => 'office',
+                            'step_order' => $workflow->step_order
+                        ]);
+                    }
+                }
+
+                $documentRecipients[$doc->id] = $recipients;
+            }
+
+            // Return to the current page with search results
+            return redirect()->back()->with([
+                'documents' => $documents,
+                'auditLogs' => $auditLogs,
+                'documentRecipients' => $documentRecipients,
+                'searchPerformed' => true,
+                'searchText' => $searchText,
+            ]);
         } catch (Exception $e) {
             \Log::error('Search processing error: ' . $e->getMessage());
 
@@ -357,25 +411,26 @@ class DocumentController extends Controller
      */
     public function create(): View
     {
-        $company = CompanyAccount::where('user_id', auth()->id())->first();
+        $currentUserCompany = auth()->user()->companies()->first();
+        $originatingOfficeId = auth()->user()->offices->first()->id ?? null;
+        $offices = $currentUserCompany
+            ? Office::where('company_id', $currentUserCompany->id)->where('id', '!=', $originatingOfficeId)->get()
+            : collect();
 
-        $users = $company ? $company->employees()->paginate(10) : collect();
-        $offices = Office::all();
+        // Fetch users from the same company, excluding the current user
+        $users = $currentUserCompany
+            ? User::whereHas('companies', function ($query) use ($currentUserCompany) {
+                $query->where('company_id', $currentUserCompany->id);
+            })->where('id', '!=', auth()->id())->with('offices')->get()
+            : collect();
 
-        $categories = [
-            1 => 'Letter',
-            2 => 'Memo',
-            3 => 'Reports',
-            4 => 'Proposal',
-            5 => 'Presentation',
-            6 => 'Others',
-            
-        ];
+        $categories = DocumentCategories::all();
 
-        return view('documents.create', compact('offices', 'categories', 'users'));
+        return view('documents.create', compact('offices', 'categories', 'users', 'originatingOfficeId', 'currentUserCompany'));
     }
 
     /**
+     * DEFUNCT, 
      * Store a newly created document in storage.
      */
     public function store(Request $request): RedirectResponse
@@ -476,7 +531,6 @@ class DocumentController extends Controller
             return redirect()->route('documents.index')
                 ->with('data', $data)
                 ->with('success', 'Document uploaded successfully');
-
         } catch (Exception $e) {
             \Log::error('Document processing error: ' . $e->getMessage());
 
@@ -525,7 +579,6 @@ class DocumentController extends Controller
             }
 
             return $pdfContent;
-
         } catch (Exception $e) {
             \Log::error('PDF processing error: ' . $e->getMessage());
             \Log::error('PDF path: ' . $path);
@@ -555,26 +608,73 @@ class DocumentController extends Controller
      */
     public function show(Document $document): View
     {
-        $this->logDocumentAction($document, 'viewed');
-        $document->load(['trackingNumber', 'categories', 'transaction.fromOffice', 'transaction.toOffice', 'status']);
-        $documentRoute = DocumentWorkflow::with('recipient')
-            ->where('document_id', $document->id)
-            ->where('recipient_id', auth()->id())
-            ->get()
-            ->map(function ($workflow) {
-                $user = $workflow->recipient;
-                return trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? ''));
-            });
+        // Check if the user can access this document
+        if (
+            !auth()->user()->hasRole('super-admin') &&
+            !auth()->user()->hasRole('company-admin') &&
+            auth()->user()->id != $document->uploader &&
+            !DocumentWorkflow::where('document_id', $document->id)
+                ->where('recipient_id', auth()->user()->id)
+                ->exists()
+        ) {
+            abort(403, 'You do not have permission to view this document');
+        }
 
-        $workflows = DocumentWorkflow::with('recipient')
+        // Get workflows and organize by step order for display
+        $workflows = DocumentWorkflow::with(['sender', 'recipient', 'recipientOffice'])
             ->where('document_id', $document->id)
+            ->orderBy('step_order')
             ->get();
 
         $docRoute = [];
 
+        // Group recipients by step order
         foreach ($workflows as $workflow) {
-            $recipientName = trim(($workflow->recipient->first_name ?? '') . ' ' . ($workflow->recipient->last_name ?? ''));
-            $docRoute[$workflow->step_order][] = $recipientName;
+            // Add user recipient if available
+            if ($workflow->recipient) {
+                $recipientName = trim(($workflow->recipient->first_name ?? '') . ' ' . ($workflow->recipient->last_name ?? ''));
+                $docRoute[$workflow->step_order][] = [
+                    'name' => $recipientName,
+                    'type' => 'user',
+                    'workflow' => $workflow
+                ];
+            }
+
+            // Add office recipient if available
+            if ($workflow->recipient_office && isset($workflow->recipientOffice->name)) {
+                $docRoute[$workflow->step_order][] = [
+                    'name' => $workflow->recipientOffice->name,
+                    'type' => 'office',
+                    'workflow' => $workflow
+                ];
+            }
+
+            // If neither recipient nor office, add placeholder
+            if ((!$workflow->recipient && !$workflow->recipient_office) ||
+                ($workflow->recipient_office && !isset($workflow->recipientOffice->name))
+            ) {
+                $docRoute[$workflow->step_order][] = [
+                    'name' => 'Unassigned',
+                    'type' => 'none',
+                    'workflow' => $workflow
+                ];
+            }
+        }
+
+        // Check if we should also fetch recipients from the document_recipients table
+        if (empty($docRoute)) {
+            $documentRecipients = $document->recipients()->with('offices')->get();
+
+            if ($documentRecipients->isNotEmpty()) {
+                foreach ($documentRecipients as $index => $recipient) {
+                    $recipientName = trim(($recipient->first_name ?? '') . ' ' . ($recipient->last_name ?? ''));
+                    $docRoute[1][] = [
+                        'name' => $recipientName,
+                        'type' => 'user',
+                        'workflow' => null
+                    ];
+                }
+            }
         }
 
         $attachments = Document::with('attachments')->findOrFail($document->id)->attachments;
@@ -612,62 +712,154 @@ class DocumentController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required',
             'classification' => 'required|string',
+            'purpose' => 'nullable|string',
+            'category' => 'nullable|integer',
             'from_office' => 'required|exists:offices,id',
-            'to_office' => 'required|exists:offices,id',
-            'remarks' => 'nullable|string|max:250',
-            'upload' => 'nullable|file|mimes:jpeg,png,jpg,gif,pdf,docx|max:10240',
+            'main_document' => 'nullable|file|mimes:jpeg,png,jpg,gif,pdf,docx|max:10240',
             'attachments.*' => 'file|mimes:jpeg,png,jpg,gif,pdf,docx|max:10240',
+            'archive' => 'nullable|string',
+            'forward' => 'nullable|string',
+            'allowed_viewers' => 'array',
+            'allowed_viewers.*' => 'integer',
         ]);
 
         try {
+            \Log::info('Starting document update process', ['document_id' => $document->id]);
+            
             // Update document basic information
             $document->update([
                 'title' => $request->title,
                 'description' => $request->description,
-                'remarks' => $request->remarks ?? null,
+                'classification' => $request->classification,
+                'purpose' => $request->purpose ?? null,
+                'category' => $request->category ?? null,
             ]);
+            \Log::info('Document basic info updated', ['document_id' => $document->id]);
+
+            $document->status()->update([
+                'status' => 'forwarded',
+            ]);
+            \Log::info('Document status updated to pending', ['document_id' => $document->id]);
 
             // Handle file upload if new file is provided
-            if ($request->hasFile('upload')) {
+            if ($request->hasFile('main_document')) {
                 Storage::disk('public')->delete($document->path);
-                $file = $request->file('upload');
+                $companyId = auth()->user()->companies()->first()->id ?? 'default';
+                $companyPath = $companyId;
+                
+                $file = $request->file('main_document');
                 $fileName = time() . '_' . $file->getClientOriginalName();
-                $filePath = $file->storeAs('documents', $fileName, 'public');
+                \Log::info('Uploading new file', ['fileName' => $fileName]);
+                $filePath = $file->storeAs($companyPath . '/documents', $fileName, 'public');
+                
                 $document->update(['path' => $filePath]);
+                \Log::info('Document file updated', ['document_id' => $document->id]);
             }
 
             // Update document categories
-            $document->categories()->sync([$request->classification]);
+            if ($request->has('category')) {
+                $document->categories()->detach();
+                $document->categories()->attach([$request->category]);
+                \Log::info('Document category updated', ['document_id' => $document->id, 'category_id' => $request->category]);
+            }
 
-            // Update document transaction
-            $document->transaction()->update([
-                'from_office' => $request->from_office,
-                'to_office' => $request->to_office,
-            ]);
+            // Update allowed viewers if classification is Private
+            if ($request->classification == 'Private') {
+                // Remove old viewers
+                $document->allowedViewers()->delete();
+                
+                // Add new viewers if provided
+                if ($request->has('allowed_viewers')) {
+                    foreach ($request->allowed_viewers as $userId) {
+                        $document->allowedViewers()->create(['user_id' => $userId]);
+                    }
+                    \Log::info('Document allowed viewers updated', ['document_id' => $document->id]);
+                }
+            }
+
+            // Update document transaction if forwarding is enabled
+            if ($request->has('to_office') && $request->forward == '1') {
+                $document->transaction()->updateOrCreate(
+                    ['doc_id' => $document->id],
+                    [
+                        'from_office' => $request->from_office,
+                        'to_office' => $request->to_office,
+                    ]
+                );
+                \Log::info('Document transaction updated', ['document_id' => $document->id]);
+            }
 
             // Handle new attachments
             if ($request->hasFile('attachments')) {
+                \Log::info('Processing new attachments', ['document_id' => $document->id]);
                 foreach ($request->file('attachments') as $attachment) {
+                    $companyId = auth()->user()->companies()->first()->id ?? 'default';
+                    $companyPath = $companyId;
                     $attachmentName = time() . '_' . $attachment->getClientOriginalName();
-                    $attachmentPath = $attachment->storeAs('attachments', $attachmentName, 'public');
+                    \Log::info('Uploading attachment', ['attachmentName' => $attachmentName]);
+                    $attachmentPath = $attachment->storeAs($companyPath . '/attachments', $attachmentName, 'public');
 
                     DocumentAttachment::create([
                         'document_id' => $document->id,
                         'filename' => $attachmentName,
                         'path' => $attachmentPath,
                     ]);
+                    \Log::info('Attachment record created', ['document_id' => $document->id, 'attachmentName' => $attachmentName]);
                 }
             }
 
+            // Update document status if archive is checked
+            if ($request->archive == '1') {
+                $document->status()->update(['status' => 'archived']);
+                \Log::info('Document status updated to archived', ['document_id' => $document->id]);
+            }
+
             // Log document update
-            $this->logDocumentAction($document, 'updated');
+            $this->logDocumentAction($document, 'updated', $document->status->status, 'Document updated');
+            \Log::info('Document update action logged', ['document_id' => $document->id]);
 
-            return redirect()->route('documents.index')
-                ->with('success', 'Document updated successfully');
+            // Notify all users who have received or forwarded this document (except current user)
+            $workflowUsers = 
+                \App\Models\DocumentWorkflow::where('document_id', $document->id)
+                    ->where(function($q) {
+                        $q->whereNotNull('recipient_id')->orWhereNotNull('sender_id');
+                    })
+                    ->get(['recipient_id', 'sender_id']);
+            $userIds = collect();
+            foreach ($workflowUsers as $row) {
+                if ($row->recipient_id && $row->recipient_id != auth()->id()) {
+                    $userIds->push($row->recipient_id);
+                }
+                if ($row->sender_id && $row->sender_id != auth()->id()) {
+                    $userIds->push($row->sender_id);
+                }
+            }
+            $userIds = $userIds->unique();
+            foreach ($userIds as $uid) {
+                \App\Models\Notifications::create([
+                    'user_id' => $uid,
+                    'type' => 'document_updated',
+                    'data' => json_encode([
+                        'document_id' => $document->id,
+                        'message' => 'A document you were involved with was updated.',
+                        'title' => $document->title,
+                        'updater' => auth()->user()->first_name . ' ' . auth()->user()->last_name,
+                    ]),
+                ]);
+            }
 
+            // Handle forward if enabled
+            if ($request->forward == '1') {
+                \Log::info('Redirecting to forward route', ['document_id' => $document->id]);
+                return redirect()->route('documents.forward', $document->id)
+                    ->with('success', 'Document updated successfully');
+            } else {
+                \Log::info('Redirecting to index route', ['document_id' => $document->id]);
+                return redirect()->route('documents.index')
+                    ->with('success', 'Document updated successfully');
+            }
         } catch (Exception $e) {
             \Log::error('Document update error: ' . $e->getMessage());
-
             return redirect()->back()
                 ->with('error', 'Error updating document: ' . $e->getMessage())
                 ->withInput();
@@ -733,7 +925,6 @@ class DocumentController extends Controller
             }
 
             return response()->download($filePath);
-
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Error downloading file: ' . $e->getMessage());
         }
@@ -743,9 +934,14 @@ class DocumentController extends Controller
     {
         // Retrieve the office abbreviation and document type
         $office = Office::findOrFail($officeId);
-        $documentType = DocumentCategory::find($documentTypeId) ?? 'GEN';
-
-        $prefix = strtoupper(substr($office->name, 0, 3)) . '-' . strtoupper(substr($documentType->category, 0, 3));
+        $documentType = DocumentCategory::find($documentTypeId);
+        
+        if ($documentType) {
+            $prefix = strtoupper(substr($office->name, 0, 3)) . '-' . strtoupper(substr($documentType->category, 0, 3));
+        } else {
+            // Use 'GEN' as fallback for document type abbreviation
+            $prefix = strtoupper(substr($office->name, 0, 3)) . '-GEN';
+        }
 
         do {
             // Define the characters to use for the random part
@@ -820,10 +1016,10 @@ class DocumentController extends Controller
         DocumentWorkflow::where('document_id', $document->id)
             ->whereIn('status', ['pending', 'received'])
             ->update(['status' => 'cancelled']);
-        
+
         // Update document status
         $document->status()->update(['status' => 'cancelled']);
-        
+
         // Log action
         DocumentAudit::logDocumentAction(
             $document->id,
@@ -832,8 +1028,159 @@ class DocumentController extends Controller
             'cancelled',
             'Document workflow cancelled'
         );
-        
+
         return redirect()->route('documents.index')
             ->with('success', 'Document workflow has been cancelled.');
+    }
+
+  /**
+ * Display the document receiving index page.
+ */
+public function receiveIndex(): View
+{
+    // Get documents that can be received by the current user
+    $userOfficeIds = auth()->user()->offices->pluck('id')->toArray();
+    
+    $documents = Document::with(['user', 'status', 'transaction.fromOffice', 'transaction.toOffice'])
+        ->whereHas('transaction', function($query) use ($userOfficeIds) {
+            $query->whereIn('to_office', $userOfficeIds);
+        })
+        ->whereHas('status', function($query) {
+            $query->where('id', '!=', 3); // Not completed
+        })
+        ->latest()
+        ->paginate(10);
+        
+    return view('documents.receive', compact('documents'));
+}    /**
+     * Recall a document, pause workflow, and notify recipients.
+     */
+    public function recallDocument(Request $request, Document $document)
+    {
+        // Only the document owner can recall
+        if ($document->uploader !== auth()->id()) {
+            return redirect()->back()->with('error', 'You are not authorized to recall this document.');
+        }
+
+        // Pause workflow: set a status or flag (e.g., 'recalled')
+        $document->status()->update(['status' => 'recalled']);
+
+        // Pause all associated workflows
+        $workflows = \App\Models\DocumentWorkflow::where('document_id', $document->id)->get();
+        foreach ($workflows as $workflow) {
+            $workflow->pause();
+        }
+
+        // Notify all recipients in the workflow
+        foreach ($workflows as $workflow) {
+            if ($workflow->recipient_id) {
+                \App\Models\Notifications::create([
+                    'user_id' => $workflow->recipient_id,
+                    'type' => 'document_recall',
+                    'data' => json_encode([
+                        'message' => 'A document you are a recipient of has been recalled and the workflow is paused.',
+                        'title' => $document->title,
+                        'document_id' => $document->id,
+                        'recalled_by' => auth()->user()->first_name . ' ' . auth()->user()->last_name,
+                    ]),
+                ]);
+            }
+        }
+
+        // Log the recall action
+        \App\Models\DocumentAudit::logDocumentAction(
+            $document->id, 
+            auth()->id(),
+            'recall', 
+            'recalled', 
+            'Document recalled and workflow paused'
+        );
+
+        return redirect()->back()->with('success', 'Document has been recalled and workflow paused. Recipients have been notified.');
+    }
+
+    /**
+     * Resume a recalled document and its workflow.
+     */
+    public function resumeDocument(Request $request, Document $document)
+    {
+        // Only the document owner can resume
+        if ($document->uploader !== auth()->id()) {
+            return redirect()->back()->with('error', 'You are not authorized to resume this document.');
+        }
+
+        // Check if the document was recalled
+        if ($document->status->status !== 'recalled') {
+            return redirect()->back()->with('error', 'This document is not in a recalled state.');
+        }
+
+        // Set document status back to active
+        $document->status()->update(['status' => 'forwarded']);
+
+        // Resume all associated workflows
+        $workflows = \App\Models\DocumentWorkflow::where('document_id', $document->id)->get();
+        foreach ($workflows as $workflow) {
+            $workflow->resume();
+        }
+
+        // Notify all recipients in the workflow
+        foreach ($workflows as $workflow) {
+            if ($workflow->recipient_id) {
+                \App\Models\Notifications::create([
+                    'user_id' => $workflow->recipient_id,
+                    'type' => 'document_resumed',
+                    'data' => json_encode([
+                        'message' => 'A document that was previously recalled has been resumed. The workflow is now active again.',
+                        'title' => $document->title,
+                        'document_id' => $document->id,
+                        'resumed_by' => auth()->user()->first_name . ' ' . auth()->user()->last_name,
+                    ]),
+                ]);
+            }
+        }
+
+        // Log the resume action
+        \App\Models\DocumentAudit::logDocumentAction(
+            $document->id,
+            auth()->id(),
+            'resume', 
+            'forwarded', 
+            'Document workflow resumed'
+        );
+
+        return redirect()->back()->with('success', 'Document workflow has been resumed. Recipients have been notified.');
+    }
+
+    /**
+     * Archive a document
+     * 
+     * @param Document $document
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function archiveDocument(Document $document)
+    {
+        // Check if the user has permission to archive the document
+        if (auth()->user()->id !== $document->user_id && !auth()->user()->hasRole('company-admin')) {
+            return redirect()->route('documents.index')
+                ->with('error', 'You do not have permission to archive this document.');
+        }
+
+        // Update the document status to archived
+        $document->status()->update(['status' => 'archived']);
+
+        // Create an audit log
+        DocumentAudit::create([
+            'document_id' => $document->id,
+            'user_id' => auth()->id(),
+            'action' => 'Archived',
+            'status' => 'Archived',
+            'details' => 'Document was archived'
+        ]);
+
+        // Log the action
+        \Log::info('Document archived', ['document_id' => $document->id, 'user_id' => auth()->id()]);
+
+        return redirect()->route('documents.index')
+            ->with('success', 'Document has been archived successfully.');
     }
 }

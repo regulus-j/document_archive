@@ -6,6 +6,7 @@ use App\Mail\userInvite;
 use App\Models\Office;
 use App\Models\User;
 use App\Models\CompanyAccount;
+use App\Models\CompanySubscription;
 use App\Models\Plan;
 use App\Models\CompanyUser;
 use Illuminate\Http\RedirectResponse;
@@ -36,29 +37,43 @@ class UserController extends Controller
 
     public function index(Request $request): View
     {
-        $company = CompanyAccount::where('user_id', auth()->id())->first();
-        $users = $company ? $company->employees()->paginate(5) : collect();
+        // Only super-admins can see the super-admin role in filters
+        if (auth()->user()->hasRole('super-admin')) {
+            $roles = Role::all();
+        } elseif (auth()->user()->hasRole('company-admin')) {
+            $roles = Role::where('name', '!=', 'super-admin')->get();
+        } else {
+            $roles = Role::where('name', 'user')->get();
+        }
 
-        $roles = Role::all();
-
+        // Super-admin: see all users
         if (auth()->user()->hasRole('super-admin')) {
             return $this->showRegistered();
         }
 
+        // Company admin: see users in their company
         if (auth()->user()->isCompanyAdmin()) {
-            $companyId = auth()->user()->companies()->first()->id;
-            $users = User::whereHas('companies', function($query) use ($companyId) {
-                $query->where('company_accounts.id', $companyId);
-            })->paginate(5);
+            $company = auth()->user()->companies()->first();
+            if ($company) {
+                $users = $company->employees()->paginate(5);
+            } else {
+                $users = collect();
+            }
+        } else {
+            // Regular user: see only themselves
+            $users = User::where('id', auth()->id())->paginate(5);
         }
+
 
         return view('users.index', compact('users', 'roles'))
             ->with('i', ($request->input('page', 1) - 1) * 5);
     }
+
+
     public function showRegistered(): View
     {
         $users = User::with(['companies.subscriptions.plan'])
-            ->paginate(10); 
+            ->paginate(10);
 
         $roles = Role::all();
 
@@ -71,8 +86,40 @@ class UserController extends Controller
      */
     public function search(Request $request): View
     {
-        $query = User::query();
-        $roles = Role::all();
+        // Only super-admins can see the super-admin role in filters
+        if (auth()->user()->hasRole('super-admin')) {
+            $roles = Role::all();
+        } elseif (auth()->user()->hasRole('company-admin')) {
+            $roles = Role::where('name', '!=', 'super-admin')->get();
+        } else {
+            $roles = Role::where('name', 'user')->get();
+        }
+
+        // Fetch teams for filter
+        if (auth()->user()->hasRole('super-admin')) {
+            $teams = \App\Models\Office::all();
+        } elseif (auth()->user()->isCompanyAdmin()) {
+            $company = auth()->user()->companies()->first();
+            $teams = $company ? $company->offices()->get() : collect();
+        } else {
+            $teams = auth()->user()->offices()->get();
+        }
+
+        // Super-admin: can search all users
+        if (auth()->user()->hasRole('super-admin')) {
+            $query = User::query();
+        } elseif (auth()->user()->isCompanyAdmin()) {
+            // Company admin: can search only users in their company
+            $company = auth()->user()->companies()->first();
+            if ($company) {
+                $query = $company->employees();
+            } else {
+                $query = User::whereRaw('1 = 0'); // No company, no results
+            }
+        } else {
+            // Regular user: can search only themselves
+            $query = User::where('id', auth()->id());
+        }
 
         if ($request->filled('name')) {
             $query->where('first_name', 'like', '%' . $request->name . '%');
@@ -82,30 +129,51 @@ class UserController extends Controller
             $query->where('email', 'like', '%' . $request->email . '%');
         }
 
-        if ($request->filled('role')) {
+        if ($request->filled('role_search')) {
             $query->whereHas('roles', function ($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->role . '%');
+                $q->where('name', 'like', '%' . $request->role_search . '%');
+            });
+        }
+
+        // Filter by team name (text search)
+        if ($request->filled('team_search')) {
+            $query->whereHas('offices', function ($q) use ($request) {
+                $q->where('offices.name', 'like', '%' . $request->team_search . '%');
             });
         }
 
         $users = $query->paginate(5);
 
-        return view('users.index', compact('users', 'roles'))
+        return view('users.index', compact('users', 'roles', 'teams'))
             ->with('i', ($request->input('page', 1) - 1) * 5);
     }
 
     /**
      * Show the form for creating a new user.
      */
-    public function create(): View
+    public function create()
     {
-        $userCompany = CompanyAccount::where('user_id', auth()->id())->get();
-        $roles = Role::pluck('name', 'name')->all();
+        $userCompany = auth()->user()->companies()->first();
+
+        if (!$userCompany->canAddUser()) {
+            return redirect()->route('users.index')
+                ->with('error', 'Max users reached, upgrade your plan to add more.');
+        }
+
+        // Filter roles based on user permissions
+        if (auth()->user()->hasRole('super-admin')) {
+            // Super admins can see all roles
+            $roles = Role::pluck('name', 'name')->all();
+        } else {
+            // Others can't see the super-admin role
+            $roles = Role::where('name', '!=', 'super-admin')->pluck('name', 'name')->all();
+        }
+
         $company = auth()->user()->companies()->first();
         $offices = Office::where('company_id', $company->id)->get();
 
         // Fetch users that belong to the same company & offices
-        $users = User::whereHas('offices', function($query) use ($offices) {
+        $users = User::whereHas('offices', function ($query) use ($offices) {
             $query->whereIn('offices.id', $offices->pluck('id'));
         })->get();
 
@@ -118,13 +186,20 @@ class UserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        $userCompany = auth()->user()->companies()->first();
+
+        if (!$userCompany->canAddUser()) {
+            return redirect()->route('users.index')
+                ->with('error', 'Max users reached, upgrade your plan to add more.');
+        }
+
         $temp_pass = Str::random(12);
 
         $request->validate([
             'first_name' => 'required|string|max:255',
-            'middle_name' => 'string|max:255',
+            'middle_name' => 'nullable|string|max:255', // Changed from string to nullable|string
             'last_name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
+            'email' => 'required|email|unique:users,email,NULL,id,deleted_at,NULL',
             'offices' => 'required|array',
             'offices.*' => 'exists:offices,id',
             'roles' => 'required',
@@ -146,18 +221,36 @@ class UserController extends Controller
 
         $roleNames = $user->roles->pluck('name')->implode(', ');
 
-        Mail::to($user->email)->send(new UserInvite(
-            $user->first_name,
-            $user->email,
-            $temp_pass,
-            $roleNames,
-            route('login')
-        ));
+        // Queue the email instead of sending it synchronously
+        try {
+            Mail::to($user->email)
+                ->send(new UserInvite(
+                    $user->first_name,
+                    $user->email,
+                    $temp_pass,
+                    $roleNames,
+                    route('login')
+                ));
+        } catch (\Exception $e) {
+            \Log::error('Failed to queue invitation email: ' . $e->getMessage());
+            // Continue execution even if email queueing fails
+        }
 
         $temp_pass = null;
 
+        // Fix company association by properly handling array or single value
+        $companyId = auth()->user()->companies()->first()->id;
+
+        // If user is not a super admin, use their company
+        if (!auth()->user()->hasRole('super-admin')) {
+            $userCompany = auth()->user()->companies()->first();
+            if ($userCompany) {
+                $companyId = $userCompany->id;
+            }
+        }
+
         CompanyUser::create([
-            'company_id' => $request->companies,
+            'company_id' => $companyId,
             'user_id'     => $user->id,
         ]);
 
@@ -181,9 +274,22 @@ class UserController extends Controller
     public function edit($id): View
     {
         $user = User::find($id);
-        $roles = Role::pluck('name', 'name')->all();
+
+        // Filter roles based on user permissions
+        if (auth()->user()->hasRole('super-admin')) {
+            // Super admins can see all roles
+            $roles = Role::pluck('name', 'name')->all();
+        } else {
+            // Others can't see the super-admin role
+            $roles = Role::where('name', '!=', 'super-admin')->pluck('name', 'name')->all();
+        }
+
         $userRoles = $user->roles->pluck('name', 'name')->all();
-        $offices = Office::pluck('name', 'id')->all();
+
+        // Get offices from user's company only
+        $company = auth()->user()->companies()->first();
+        $offices = Office::where('company_id', $company->id)->pluck('name', 'id')->all();
+
         $userOffices = $user->offices->pluck('id')->all();
         $userCompany = CompanyAccount::all();
 
@@ -193,59 +299,90 @@ class UserController extends Controller
     /**
      * Update the specified user in storage.
      */
-    public function update(Request $request, $id) {
+    public function update(Request $request, $id)
+    {
         $user = User::findOrFail($id);
-    
+
         // Prepare validation rules
         $rules = [
             'first_name' => 'required|string|max:255',
             'middle_name' => 'nullable|string|max:255',
             'last_name' => 'required|string|max:255',
-            'email' => "required|email|unique:users,email,{$id}",
+            'email' => "required|email|unique:users,email,{$id},id,deleted_at,NULL",
             'roles' => 'required|array',
-            'companies' => 'required|exists:company_accounts,id'
         ];
-    
+
         // Conditionally require offices field
         if (!$user->hasRole('company-admin')) {
-            $rules['offices'] = 'required|array'; // Only require if not admin
+            $rules['offices'] = 'required|array';
         }
-    
+
         // Validate the request with the prepared rules
         $request->validate($rules);
-    
+
         // Update user details
-        $input = $request->all();
-        if (!empty($input['password'])) {
-            $input['password'] = Hash::make($input['password']);
-        }
-    
-        // Sync roles
-        $roleIds = Role::whereIn('name', $request->input('roles'))->pluck('id')->toArray();
-        $user->roles()->sync($roleIds);
-    
-        // Sync offices if not admin
-        if (!$user->hasRole('company-admin')) {
-            $user->offices()->sync($request->input('offices'));
-        }
-    
-        // Update company association
-        $companyId = $request->companies[0]; // Get the first selected company ID
-        CompanyUser::where('user_id', $user->id)->update([
-            'company_id' => $companyId // Use the single company ID
+        $user->update([
+            'first_name' => $request->first_name,
+            'middle_name' => $request->middle_name,
+            'last_name' => $request->last_name,
+            'email' => $request->email,
         ]);
-    
+
+        // Update password if provided
+        if (!empty($request->password)) {
+            $user->password = Hash::make($request->password);
+            $user->save();
+        }
+
+        // Sync roles
+        $user->syncRoles($request->input('roles'));
+
+        // Ensure company association is maintained
+        $companyId = $request->input('companies');
+        if ($companyId) {
+            // Check if user already has this company
+            $companyExists = CompanyUser::where('user_id', $user->id)
+                ->where('company_id', $companyId)
+                ->exists();
+
+            if (!$companyExists) {
+                // Remove old company associations
+                CompanyUser::where('user_id', $user->id)->delete();
+
+                // Add new company association
+                CompanyUser::create([
+                    'user_id' => $user->id,
+                    'company_id' => $companyId
+                ]);
+            }
+        }
+
+        // Sync offices if user is not company admin
+        if (!$user->hasRole('company-admin') && $request->has('offices')) {
+            $user->offices()->sync($request->input('offices'));
+        } else if ($user->hasRole('company-admin')) {
+            // For company admins, ensure they have at least one office from their company
+            $company = auth()->user()->companies()->first();
+            if ($company) {
+                $office = Office::where('company_id', $company->id)->first();
+                if ($office && $user->offices()->count() == 0) {
+                    $user->offices()->sync([$office->id]);
+                }
+            }
+        }
+
         return redirect()->route('users.index')
             ->with('success', 'User updated successfully');
     }
+
     public function getUsersByOffice(Request $request)
-{
-    $officeId = $request->query('office_id');
-    $users = User::whereHas('offices', function($query) use ($officeId) {
-        $query->where('offices.id', $officeId);
-    })->get();
-    return response()->json($users);
-}
+    {
+        $officeId = $request->query('office_id');
+        $users = User::whereHas('offices', function ($query) use ($officeId) {
+            $query->where('offices.id', $officeId);
+        })->get();
+        return response()->json($users);
+    }
 
     /**
      * Remove the specified user from storage.

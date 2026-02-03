@@ -20,15 +20,13 @@
                         </div>
                     </div>
                     <div>
-                        <!-- <a href="{{ route('documents.create') }}"
-                                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-md text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
-                                <svg class="mr-2 -ml-1 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                                </svg>
-                                {{ __('New Document') }}
-                            </a> -->
-                    </div>
+                    <a href="{{ route('documents.index') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-md text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                        <svg class="mr-2 -ml-1 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                        {{ __('Back to List') }}
+                    </a>
+                </div>
                 </div>
             </div>
 
@@ -143,17 +141,45 @@
                                                         class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                                                         Received
                                                     </span>
+                                                @elseif($workflow->status === 'approved')
+                                                    <span
+                                                        class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                                        Approved
+                                                    </span>
+                                                @elseif($workflow->status === 'rejected')
+                                                    <span
+                                                        class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                                        Rejected
+                                                    </span>
+                                                @elseif($workflow->status === 'returned')
+                                                    <span
+                                                        class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-amber-100 text-amber-800">
+                                                        Returned
+                                                    </span>
+                                                @elseif($workflow->status === 'referred')
+                                                    <span
+                                                        class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                                        Referred
+                                                    </span>
+                                                @elseif($workflow->status === 'forwarded')
+                                                    <span
+                                                        class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
+                                                        Forwarded
+                                                    </span>
                                                 @elseif($workflow->status === 'completed')
                                                     <span
                                                         class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-indigo-100 text-indigo-800">
                                                         Completed
                                                     </span>
                                                 @else
-                                                    {{ $workflow->status }}
+                                                    <span
+                                                        class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                                        {{ ucfirst($workflow->status) }}
+                                                    </span>
                                                 @endif
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                                <div class="flex space-x-2">
+                                                <div class="flex flex-wrap space-x-2">
                                                     @if($workflow->sender_id != auth()->id())
                                                         {{-- Only show receive/review options if user is not the sender --}}
                                                         @if($workflow->status === 'pending')
@@ -165,9 +191,25 @@
                                                             <a href="{{ route('documents.review', $workflow->id) }}"
                                                                 class="text-green-500 hover:underline mr-2">Review</a>
                                                         @endif
-                                                    @else
+
+                                                        {{-- @if($workflow->status === 'returned')
+                                                            <span class="text-amber-500 italic">Returned to uploader</span>
+                                                        @endif --}}
+
+                                                        {{-- @if($workflow->status === 'rejected')
+                                                            <span class="text-red-500 italic">Rejected</span>
+                                                        @endif --}}
+
+                                                        {{-- @if($workflow->status === 'referred')
+                                                            <span class="text-blue-500 italic">Referred to others</span>
+                                                        @endif --}}
+
+                                                        {{-- @if($workflow->status === 'forwarded')
+                                                            <span class="text-purple-500 italic">Forwarded</span>
+                                                        @endif --}}
+                                                    {{-- @else --}}
                                                         {{-- Sender can only view document details --}}
-                                                        <span class="text-gray-500 italic">Forwarded by you</span>
+                                                        {{-- <span class="text-gray-500 italic">Forwarded by you</span> --}}
                                                     @endif
 
                                                     {{-- Everyone can view document details --}}

@@ -33,8 +33,9 @@
         </div>
 
         <!-- Success/Error Messages -->
-        @if(session('success'))
-            <div class="mb-6 bg-white border-l-4 border-emerald-500 text-emerald-700 p-4 rounded-r-lg shadow-md" role="alert">
+        @if (session('success'))
+            <div class="mb-6 bg-white border-l-4 border-emerald-500 text-emerald-700 p-4 rounded-r-lg shadow-md"
+                role="alert">
                 <div class="flex">
                     <div class="flex-shrink-0">
                         <svg class="h-5 w-5 text-emerald-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
@@ -51,7 +52,7 @@
             </div>
         @endif
 
-        @if(session('error'))
+        @if (session('error'))
             <div class="mb-6 bg-white border-l-4 border-red-500 text-red-700 p-4 rounded-r-lg shadow-md" role="alert">
                 <div class="flex">
                     <div class="flex-shrink-0">
@@ -59,7 +60,7 @@
                             fill="currentColor">
                             <path fill-rule="evenodd"
                                 d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                                clip-rule="evenodd" />
+                                clip-rule="evenodd"/>
                         </svg>
                     </div>
                     <div class="ml-3">
@@ -70,11 +71,11 @@
         @endif
 
         <!-- Main Content -->
-        @if($users->isEmpty())
+        @if ($users->isEmpty())
             <div class="bg-white rounded-xl shadow-xl p-8 text-center border border-blue-100">
                 <div class="flex flex-col items-center justify-center py-12">
-                    <svg class="h-16 w-16 text-gray-400 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
+                    <svg class="h-16 w-16 text-gray-400 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                     </svg>
@@ -124,22 +125,21 @@
                                 <!-- Offices Selection -->
                                 <div class="bg-white p-5 rounded-lg shadow-sm border border-blue-100">
                                     <h3 class="text-md font-medium text-gray-700 mb-3 flex items-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500 mr-2" fill="none"
-                                            viewBox="0 0 24 24" stroke="currentColor">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500 mr-2"
+                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                                         </svg>
                                         Select Offices
                                     </h3>
                                     <div class="space-y-2 max-h-60 overflow-y-auto pr-2">
-                                        @foreach($offices as $office)
+                                        @foreach ($offices as $office)
                                             <div
                                                 class="form-check flex items-center p-2 hover:bg-blue-50 rounded-md transition-colors">
                                                 <input
-                                                    class="form-checkbox office-checkbox h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                                                    type="checkbox" name="recipient_office_batch[0][]"
-                                                    id="step0_office{{ $office->id }}" value="{{ $office->id }}"
-                                                    data-office-id="{{ $office->id }}">
+                                                    class="form-radio office-radio h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                                    type="radio" name="recipient_batch[0]"
+                                                    id="step0_office{{ $office->id }}" value="office_{{ $office->id }}">
                                                 <label class="ml-2 text-gray-700 flex-grow cursor-pointer"
                                                     for="step0_office{{ $office->id }}">
                                                     {{ $office->name }}
@@ -152,27 +152,90 @@
                                 <!-- Users Selection -->
                                 <div class="bg-white p-5 rounded-lg shadow-sm border border-blue-100">
                                     <h3 class="text-md font-medium text-gray-700 mb-3 flex items-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500 mr-2" fill="none"
-                                            viewBox="0 0 24 24" stroke="currentColor">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500 mr-2"
+                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                                         </svg>
                                         Select Users
                                     </h3>
-                                    <div class="space-y-2 max-h-60 overflow-y-auto pr-2">
-                                        @foreach($users as $user)
+                                    
+                                    <!-- Office Filter Dropdown -->
+                                    <div class="mb-3">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Filter by Office</label>
+                                        <select class="office-filter form-select w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                            <option value="all">All Offices</option>
+                                            @foreach ($offices as $office)
+                                                <option value="{{ $office->id }}">{{ $office->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="space-y-2 max-h-60 overflow-y-auto pr-2 user-list-container">
+                                        @foreach ($users as $user)
                                             <div class="form-check flex items-center p-2 hover:bg-blue-50 rounded-md transition-colors user-item"
                                                 data-office-ids="{{ json_encode($user->offices->pluck('id')) }}">
                                                 <input
-                                                    class="form-checkbox user-checkbox h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                                                    type="checkbox" name="recipient_batch[0][]" id="step0_user{{ $user->id }}"
-                                                    value="{{ $user->id }}">
+                                                    class="form-radio user-radio h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                                    type="radio" name="recipient_batch[0]"
+                                                    id="step0_user{{ $user->id }}" value="user_{{ $user->id }}">
                                                 <label class="ml-2 text-gray-700 flex-grow cursor-pointer"
                                                     for="step0_user{{ $user->id }}">
                                                     {{ $user->first_name . ' ' . $user->last_name }}
                                                 </label>
                                             </div>
                                         @endforeach
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Purpose and Urgency Selection -->
+                            <div class="bg-white p-5 rounded-lg shadow-sm border border-blue-100 mt-4">
+                                <h3 class="text-md font-medium text-gray-700 mb-3 flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500 mr-2"
+                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    Document Purpose and Timing
+                                </h3>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <!-- Purpose Selection -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Purpose</label>
+                                        <select name="purpose_batch[0]"
+                                            class="form-select w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                                            required>
+                                            <option value="">Select Purpose</option>
+                                            <option value="appropriate_action">Appropriate Action (Approval Required)
+                                            </option>
+                                            <option value="dissemination">Dissemination of Information</option>
+                                            <option value="for_comment">For Comment</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Urgency Selection -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Urgency Level</label>
+                                        <select name="urgency_batch[0]"
+                                            class="form-select w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                            <option value="">Select Urgency (Optional)</option>
+                                            <option value="low">Low</option>
+                                            <option value="medium">Medium</option>
+                                            <option value="high">High</option>
+                                            <option value="critical">Critical</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Due Date Selection -->
+                                    <div class="md:col-span-2">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Due Date
+                                            (Optional)</label>
+                                        <input type="date" name="due_date_batch[0]"
+                                            class="form-input w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                                            min="{{ date('Y-m-d') }}">
+                                        <p class="text-xs text-gray-500 mt-1">Due date must be today or later.</p>
                                     </div>
                                 </div>
                             </div>
@@ -193,11 +256,21 @@
                             </svg>
                             Add Batch
                         </button>
+                        <button type="button" id="remove-batch-btn"
+                            class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors hidden"
+                            onclick="removeLastBatch()">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-red-500" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            Remove Last Batch
+                        </button>
                         <button type="submit"
                             class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-md text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
                             onclick="prepareFormData()">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                             </svg>
                             Forward Document
@@ -209,10 +282,15 @@
     </div>
 
     <script>
-        let batchIndex = 1;
+        let batchIndex = 1; // This is used to give a unique starting point for cloned batch elements before updateBatchOrders standardizes them.
 
         function updateBatchOrders() {
             const batches = document.querySelectorAll('#batches-container .batch-group');
+            
+            // Show/hide the remove batch button based on number of batches
+            const removeBatchBtn = document.getElementById('remove-batch-btn');
+            removeBatchBtn.classList.toggle('hidden', batches.length <= 1);
+            
             batches.forEach((batch, index) => {
                 // Update data-index and step order label/hidden input fields
                 batch.dataset.index = index;
@@ -222,27 +300,51 @@
                 });
                 batch.querySelector('.step-order').value = index + 1;
 
-                // Update checkbox names & ids for each batch
-                const checkboxes = batch.querySelectorAll('input[type="checkbox"]');
-                checkboxes.forEach((checkbox) => {
-                    // Check if it's a user checkbox or office checkbox
-                    if (checkbox.classList.contains('user-checkbox')) {
-                        checkbox.name = "recipient_batch[" + index + "][]";
-                    } else if (checkbox.classList.contains('office-checkbox')) {
-                        checkbox.name = "recipient_office_batch[" + index + "][]";
-                    }
+                // Update radio button names & ids for each batch
+                const recipientRadios = batch.querySelectorAll('input[type="radio"].office-radio, input[type="radio"].user-radio');
+                recipientRadios.forEach((radio) => {
+                    radio.name = `recipient_batch[${index}]`; // Shared name for radio group in this batch
 
                     // Update id attribute to include the batch index
-                    const parts = checkbox.id.split('_');
-                    checkbox.id = 'step' + index + '_' + parts.slice(1).join('_');
+                    const parts = radio.id.split('_'); // e.g., step0_officeID or step0_userID
+                    radio.id = `step${index}_${parts.slice(1).join('_')}`; // e.g. step1_officeID
 
                     // Also update the corresponding label's "for" attribute
-                    const label = checkbox.nextElementSibling;
+                    const label = radio.nextElementSibling;
                     if (label && label.tagName.toLowerCase() === 'label') {
-                        label.htmlFor = checkbox.id;
+                        label.htmlFor = radio.id;
+                    }
+                });
+
+                // Update purpose_batch, urgency_batch and due_date_batch names
+                const selects = batch.querySelectorAll('select');
+                selects.forEach((select) => {
+                    if (select.name.startsWith('purpose_batch')) {
+                        select.name = "purpose_batch[" + index + "]";
+                    } else if (select.name.startsWith('urgency_batch')) {
+                        select.name = "urgency_batch[" + index + "]";
+                    }
+                });
+
+                const dateInputs = batch.querySelectorAll('input[type="date"]');
+                dateInputs.forEach((input) => {
+                    if (input.name.startsWith('due_date_batch')) {
+                        input.name = "due_date_batch[" + index + "]";
                     }
                 });
             });
+        }
+
+        function removeLastBatch() {
+            const container = document.getElementById('batches-container');
+            const batches = container.querySelectorAll('.batch-group');
+            
+            // Don't remove if there's only one batch
+            if (batches.length > 1) {
+                const lastBatch = batches[batches.length - 1];
+                container.removeChild(lastBatch);
+                updateBatchOrders();
+            }
         }
 
         function addBatch() {
@@ -251,19 +353,42 @@
             const template = container.querySelector('.batch-group');
             const newBatch = template.cloneNode(true);
 
-            // Reset checkboxes in the new batch
-            const checkboxes = newBatch.querySelectorAll('input[type="checkbox"]');
-            checkboxes.forEach(cb => {
-                cb.checked = false;
-                const formCheck = cb.closest('.form-check');
-                if (formCheck) {
-                    formCheck.style.display = '';
-                }
+            // Reset radio buttons in the new batch
+            const radios = newBatch.querySelectorAll('input[type="radio"].office-radio, input[type="radio"].user-radio');
+            radios.forEach(radio => {
+                radio.checked = false;
             });
 
+            // Reset select and input fields
+            const selects = newBatch.querySelectorAll('select');
+            selects.forEach(select => {
+                select.selectedIndex = 0;
+            });
+
+            const dateInputs = newBatch.querySelectorAll('input[type="date"]');
+            dateInputs.forEach(input => {
+                input.value = '';
+            });
+
+            // Show all users in the new batch
+            const userItems = newBatch.querySelectorAll('.user-item');
+            userItems.forEach(userItem => {
+                userItem.style.display = 'flex'; // Ensure user items are visible
+            });
+            
+            // Remove any validation errors from the cloned template
+            newBatch.querySelectorAll('.validation-error').forEach(el => el.remove());
+
             container.appendChild(newBatch);
-            batchIndex++;
             updateBatchOrders();
+            
+            // Add event listener for the office filter dropdown in the new batch
+            const officeFilter = newBatch.querySelector('.office-filter');
+            if (officeFilter) {
+                officeFilter.addEventListener('change', function() {
+                    filterUsersByOffice(this);
+                });
+            }
         }
 
         function validateForm() {
@@ -274,19 +399,19 @@
             document.querySelectorAll('.validation-error').forEach(el => el.remove());
 
             batches.forEach(batch => {
-                const batchIndex = batch.dataset.index;
-                const selectedOffices = batch.querySelectorAll('.office-checkbox:checked');
-                const selectedUsers = batch.querySelectorAll('.user-checkbox:checked');
+                const batchIdx = batch.dataset.index; // string value
+                const batchNumForDisplay = parseInt(batchIdx) + 1;
+                const recipientSelected = batch.querySelector(`input[name="recipient_batch[${batchIdx}]"]:checked`);
 
-                // Each batch must have at least one office OR one user selected
-                if (selectedOffices.length === 0 && selectedUsers.length === 0) {
+                // Each batch must have one recipient selected
+                if (!recipientSelected) {
                     isValid = false;
 
                     // Create and display error message
                     const errorMsg = document.createElement('div');
                     errorMsg.className = 'validation-error text-red-600 mt-2 mb-2';
-                    errorMsg.textContent = 'Please select at least one office or one user in this batch';
-
+                    errorMsg.textContent = `Please select one recipient (office or user) in Step ${batchNumForDisplay}.`;
+                    
                     // Insert error before the end of this batch
                     batch.appendChild(errorMsg);
                 }
@@ -295,20 +420,85 @@
             return isValid;
         }
 
+        // Filter users by selected office
+        function filterUsersByOffice(selectElement) {
+            const batch = selectElement.closest('.batch-group');
+            const selectedOfficeId = selectElement.value;
+            const userItems = batch.querySelectorAll('.user-item');
+            
+            userItems.forEach(userItem => {
+                // Check if we should show all users or filter by office
+                if (selectedOfficeId === 'all') {
+                    userItem.style.display = 'flex';
+                } else {
+                    // Get the office IDs for this user
+                    const officeIds = JSON.parse(userItem.dataset.officeIds);
+                    
+                    // Show this user if they belong to the selected office
+                    if (officeIds.includes(parseInt(selectedOfficeId))) {
+                        userItem.style.display = 'flex';
+                    } else {
+                        userItem.style.display = 'none';
+                        
+                        // If a hidden user was selected, uncheck them
+                        const userRadio = userItem.querySelector('input[type="radio"]');
+                        if (userRadio && userRadio.checked) {
+                            userRadio.checked = false;
+                        }
+                    }
+                }
+            });
+        }
+
         function prepareFormData() {
             // This function is called on form submission
-            // Keeping it for compatibility with the original code
             return validateForm();
         }
 
         // Add form validation on page load
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
+            // Update batch order to initialize the remove button visibility
+            updateBatchOrders();
+            
             // Add form validation
             const form = document.querySelector('form');
-            form.addEventListener('submit', function (event) {
+            form.addEventListener('submit', function(event) {
                 if (!validateForm()) {
                     event.preventDefault();
                 }
+            });
+
+            // Add event listeners for office filter dropdowns
+            document.querySelectorAll('.office-filter').forEach(filter => {
+                filter.addEventListener('change', function() {
+                    filterUsersByOffice(this);
+                });
+            });
+            
+            // Add event listeners for office radio buttons to uncheck user radio buttons when an office is selected
+            document.querySelectorAll('.office-radio').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    if (this.checked) {
+                        const batch = this.closest('.batch-group');
+                        const userRadios = batch.querySelectorAll('.user-radio');
+                        userRadios.forEach(userRadio => {
+                            userRadio.checked = false;
+                        });
+                    }
+                });
+            });
+            
+            // Add event listeners for user radio buttons to uncheck office radio buttons when a user is selected
+            document.querySelectorAll('.user-radio').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    if (this.checked) {
+                        const batch = this.closest('.batch-group');
+                        const officeRadios = batch.querySelectorAll('.office-radio');
+                        officeRadios.forEach(officeRadio => {
+                            officeRadio.checked = false;
+                        });
+                    }
+                });
             });
         });
     </script>

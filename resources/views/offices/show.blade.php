@@ -15,8 +15,8 @@
                             </svg>
                         </div>
                         <div>
-                            <h1 class="text-2xl font-bold text-gray-800">{{ __('Office Details') }}</h1>
-                            <p class="text-sm text-gray-500">View office information and assigned users</p>
+                            <h1 class="text-2xl font-bold text-gray-800">{{ __('Team Details') }}</h1>
+                            <p class="text-sm text-gray-500">View team information and assigned users</p>
                         </div>
                     </div>
                     <a href="{{ route('office.index') }}"
@@ -26,7 +26,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M11 17l-5-5m0 0l5-5m-5 5h12" />
                         </svg>
-                        {{ __('Back to Offices') }}
+                        {{ __('Back to Teams') }}
                     </a>
                 </div>
             </div>
@@ -50,7 +50,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
-                            {{ __('Edit Office') }}
+                            {{ __('Edit Team') }}
                         </a>
                     </div>
                 </div>
@@ -71,7 +71,7 @@
 
                         <!-- Parent Office -->
                         <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                            <p class="text-sm font-medium text-gray-500 mb-1">{{ __('Parent Office') }}</p>
+                            <p class="text-sm font-medium text-gray-500 mb-1">{{ __('Main Team') }}</p>
                             @if ($office->parentOffice)
                                 <p class="text-lg font-semibold text-gray-900">{{ $office->parentOffice->name }}</p>
                             @else
@@ -81,7 +81,7 @@
 
                         <!-- Company -->
                         <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                            <p class="text-sm font-medium text-gray-500 mb-1">{{ __('Company') }}</p>
+                            <p class="text-sm font-medium text-gray-500 mb-1">{{ __('Organization') }}</p>
                             <p class="text-lg font-semibold text-gray-900">{{ $office->company->name ?? 'N/A' }}</p>
                         </div>
 
@@ -109,6 +109,14 @@
                             {{ __('Assigned Users') }}
                         </h3>
 
+                        <a href="{{ route('office.assign.users', $office->id) }}" 
+                           class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            <svg class="mr-2 -ml-1 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                            </svg>
+                            Assign Users
+                        </a>
+
                         @if ($office->users->isEmpty())
                             <div
                                 class="bg-gray-50 border-2 border-dashed border-gray-200 rounded-lg p-8 flex items-center justify-center">
@@ -118,7 +126,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                     </svg>
-                                    <p class="mt-4 text-gray-500">{{ __('No users assigned to this office.') }}</p>
+                                    <p class="mt-4 text-gray-500">{{ __('No users assigned to this team.') }}</p>
                                 </div>
                             </div>
                         @else

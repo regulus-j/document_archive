@@ -24,23 +24,27 @@ class CreateAdminUserSeeder extends Seeder
                 'email' => 'superadmin@example.com',
                 'first_name' => 'SuperAdmin',
                 'last_name' => 'User',
-                'password' => Hash::make('password')
+                'password' => Hash::make('password'),
+                'email_verified_at' => now()
             ],
             [
                 'email' => 'admin@example.com',
                 'first_name' => 'Admin',
                 'last_name' => 'User',
-                'password' => Hash::make('password')
+                'password' => Hash::make('password'),
+                'email_verified_at' => now()
             ],
             [
                 'email' => 'user@example.com',
                 'first_name' => 'Regular',
                 'last_name' => 'User',
-                'password' => Hash::make('password')
+                'password' => Hash::make('password'),
+                'email_verified_at' => now()
             ],
         ];
 
         $adminUserId = null;
+        $regularUserId = null;
 
         foreach ($users as $userData) {
             $user = User::firstOrCreate(
@@ -59,6 +63,12 @@ class CreateAdminUserSeeder extends Seeder
                 
                 // Save admin user ID to create company later
                 $adminUserId = $user->id;
+            } else if ($userData['email'] === 'user@example.com') {
+                $role = Role::firstOrCreate(['name' => 'user']);
+                $user->assignRole('user');
+                
+                // Save regular user ID to assign to the same company as admin
+                $regularUserId = $user->id;
             } else {
                 $role = Role::firstOrCreate(['name' => 'user']);
                 $user->assignRole('user');
@@ -85,9 +95,8 @@ class CreateAdminUserSeeder extends Seeder
             $this->attachUserToCompany($adminUserId, $company->id);
             
             // Attach regular user to company if it exists
-            $regularUser = User::where('email', 'user@example.com')->first();
-            if ($regularUser) {
-                $this->attachUserToCompany($regularUser->id, $company->id);
+            if ($regularUserId) {
+                $this->attachUserToCompany($regularUserId, $company->id);
             }
         }
     }

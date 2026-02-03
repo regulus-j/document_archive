@@ -20,6 +20,7 @@ use App\Http\Controllers\TrialController;
 use App\Http\Controllers\UserManualController;
 use App\Http\Controllers\UserManagedController;
 use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\NotificationController;
 
 
 Route::get('/', function () {
@@ -43,12 +44,18 @@ Route::middleware('auth')->group(function () {
 //----------------------------------------------------------------------------------------------------------------
 
 Route::get('/plans', [PlanController::class, 'index'])->name('plans.index');
+Route::get('/plans/select', [PlanSelectionController::class, 'select'])->name('plans.select');
+Route::get('/plans/view', [PlanController::class, 'index'])->name('subscriptions.plans'); // Added missing route
 Route::get('/register/{plan}', [PlanController::class, 'register'])->name('plans.register');
 Route::post('/plans/{plan}/subscribe', [PlanController::class, 'subscribe'])->name('plans.subscribe');
 
 Route::middleware(['auth'])->group(function () {
-    Route::get('/plans/select', [PlanSelectionController::class, 'select'])->name('plans.select');
     Route::post('/plans/store', [PlanSelectionController::class, 'store'])->name('plans.store');
+
+    // Subscription management for company admins
+    Route::get('/subscriptions/status', [SubscriptionController::class, 'showStatus'])->name('subscriptions.status');
+    Route::post('/subscriptions/cancel-request', [SubscriptionController::class, 'requestCancellation'])->name('subscriptions.request-cancellation');
+    Route::post('/subscriptions/upgrade-request', [SubscriptionController::class, 'requestUpgrade'])->name('subscriptions.request-upgrade');
 
     // Payment routes
     Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
@@ -66,6 +73,7 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth'])->group(function () {
     Route::resource('addresses', AddressController::class);
     Route::get('/admin/users', [UserController::class, 'index'])->name('admin.users-index');
+    Route::get('/archived-documents', [\App\Http\Controllers\ArchivedDocumentController::class, 'index'])->middleware('role:company-admin')->name('archived-documents.index');
 });
 
 //--------------------------------------------------------------------------------------------------------------------
@@ -105,20 +113,18 @@ Route::middleware('auth')->group(function () {
      
     Route::get('/companies/manage/{id}', [UserManagedController::class, 'index'])->name('companies.userManaged');
 
-    Route::put('/companies/update-logo/{id}', [UserManagedController::class, 'updateLogo'])->name('companies.updateLogo');
-
-    Route::put('/companies/update-name/{id}', [UserManagedController::class, 'updateName'])->name('companies.updateName');
-
-    Route::put('/companies/update-theme/{id}', [UserManagedController::class, 'updateTheme'])->name('companies.updateTheme');
+    
        
     Route::prefix('companies')->group(function () {
         Route::get('/', [CompanyController::class, 'index'])->name('companies.index');
         Route::get('/create', [CompanyController::class, 'create'])->name('companies.create');
         Route::post('/', [CompanyController::class, 'store'])->name('companies.store');
-        Route::get('/{company}', [CompanyController::class, 'show'])->name('companies.show');
+        
         Route::get('/{company}/edit', [CompanyController::class, 'edit'])->name('companies.edit');
         Route::put('/{company}', [CompanyController::class, 'update'])->name('companies.update');
         Route::delete('/{company}', [CompanyController::class, 'destroy'])->name('companies.destroy');
+        Route::get('/{company}', [CompanyController::class, 'show'])->name('companies.show')->middleware('auth');
+
 
  
 
@@ -137,8 +143,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/create', [DocumentController::class, 'create'])->name('documents.create');
         Route::post('/', [DocumentController::class, 'uploadController'])->name('documents.store');
 
+        Route::get('/receive', [DocumentController::class, 'receiveIndex'])->name('documents.receive.index');
+
         // Static routes
         Route::get('/archive', [DocumentController::class, 'showArchive'])->name('documents.archive');
+        Route::post('/archive/{document}', [DocumentController::class, 'archiveDocument'])->name('documents.archive.store');
         Route::get('/released', [DocumentController::class, 'showReleased'])->name('documents.released');
         Route::get('/pending', [DocumentController::class, 'showPending'])->name('documents.pending');
         Route::get('/complete', [DocumentController::class, 'showComplete'])->name('documents.complete');
@@ -158,6 +167,15 @@ Route::middleware('auth')->group(function () {
             
             Route::post('/{workflow}/reject', [DocumentWorkflowController::class, 'rejectWorkflow'])
                 ->name('documents.rejectWorkflow');
+                
+            Route::post('/{workflow}/return', [DocumentWorkflowController::class, 'returnWorkflow'])
+                ->name('documents.returnWorkflow');
+                
+            Route::post('/{workflow}/refer', [DocumentWorkflowController::class, 'referWorkflow'])
+                ->name('documents.referWorkflow');
+                
+            Route::post('/{workflow}/forward-from', [DocumentWorkflowController::class, 'forwardFromWorkflow'])
+                ->name('documents.forwardFromWorkflow');
             
             Route::get('/{workflow}/review', [DocumentWorkflowController::class, 'reviewDocument'])
                 ->name('documents.review');
@@ -176,6 +194,8 @@ Route::middleware('auth')->group(function () {
         Route::delete('/{document}/delete', [DocumentController::class, 'destroy'])->name('documents.destroy');
         Route::delete('/{document}/delete-attachment', [DocumentController::class, 'deleteAttachment'])->name('documents.attachments.destroy');
         Route::post('/documents/{document}/cancel', [DocumentController::class, 'cancelWorkflow'])->name('documents.cancel');
+        Route::post('/documents/{document}/recall', [DocumentController::class, 'recallDocument'])->name('documents.recall');
+        Route::post('/documents/{document}/resume', [DocumentController::class, 'resumeDocument'])->name('documents.resume');
 
         // Update status route
         // Route::get('/{document}/status', [DocumentController::class, 'confirmReleased'])->name('documents.confirmrelease');
@@ -202,16 +222,26 @@ Route::middleware('auth')->group(function () {
         Route::resource('offices', OfficeController::class);
     });
 
+    // Office user assignment routes
+    Route::get('offices/{office}/assign-users', [OfficeController::class, 'assignUsers'])->name('office.assign.users');
+    Route::post('offices/{office}/update-users', [OfficeController::class, 'updateAssignedUsers'])->name('office.users.update');
+    Route::post('offices/{office}/add-user', [OfficeController::class, 'addUserToOffice'])->name('office.users.add');
+    Route::post('offices/{office}/remove-user', [OfficeController::class, 'removeUserFromOffice'])->name('office.users.remove');
+
+    Route::get('/admin/company-dashboard', [ReportController::class, 'companyDashboard'])->name('reports.company-dashboard');
+
     Route::prefix('reports')->group(function () {
         Route::get('/', [ReportController::class, 'index'])->name('reports.index');
         Route::get('/create', [ReportController::class, 'create'])->name('reports.create');
         Route::post('/', [ReportController::class, 'store'])->name('reports.store');
-        Route::get('/reports/analytics', [ReportController::class, 'analytics'])->name('reports.analytics');
+        Route::get('/analytics', [ReportController::class, 'analytics'])->name('reports.analytics');
         Route::get('/{report}', [ReportController::class, 'show'])->name('reports.show');
         Route::get('/{report}/edit', [ReportController::class, 'edit'])->name('reports.edit');
         Route::put('/{report}', [ReportController::class, 'update'])->name('reports.update');
         Route::delete('/{report}', [ReportController::class, 'destroy'])->name('reports.destroy');
         Route::post('/generate', [ReportController::class, 'generate'])->name('reports.generate');
+        Route::get('/office-dashboard', [ReportController::class, 'officeLeadDashboard'])->name('reports.office-dashboard');
+        Route::get('/reports/office-user-dashboard', [ReportController::class, 'officeUserDashboard'])->name('reports.office-user-dashboard');
     });
 
     Route::middleware(['auth'])->group(function () {
@@ -252,6 +282,32 @@ Route::middleware('auth')->group(function () {
         ->name('reports.download');
 });
 
+// Document Management for Company Admins
+Route::middleware(['auth', 'role:company-admin'])->prefix('admin/documents')->name('admin.document-management.')->group(function () {
+    Route::get('/', [App\Http\Controllers\Admin\DocumentManagementController::class, 'index'])->name('index');
+    Route::get('/list', [App\Http\Controllers\Admin\DocumentManagementController::class, 'documents'])->name('documents');
+    Route::get('/show/{id}', [App\Http\Controllers\Admin\DocumentManagementController::class, 'show'])->name('show');
+    Route::delete('/delete/{id}', [App\Http\Controllers\Admin\DocumentManagementController::class, 'destroy'])->name('delete');
+    Route::post('/toggle-archive/{id}', [App\Http\Controllers\Admin\DocumentManagementController::class, 'toggleArchive'])->name('toggle-archive');
+    Route::post('/bulk-delete', [App\Http\Controllers\Admin\DocumentManagementController::class, 'bulkDelete'])->name('bulk-delete');
+    Route::get('/deletion-schedule', [App\Http\Controllers\Admin\DocumentManagementController::class, 'showDeletionSchedule'])->name('schedule');
+    Route::post('/deletion-schedule', [App\Http\Controllers\Admin\DocumentManagementController::class, 'saveDeletionSchedule'])->name('save-schedule');
+    Route::post('/run-deletion-schedule', [App\Http\Controllers\Admin\DocumentManagementController::class, 'runDeletionSchedule'])->name('run-schedule');
+});
+
+// // Reports Routes
+// Route::middleware(['auth'])->prefix('reports')->name('reports.')->group(function () {
+//     Route::get('/', [ReportController::class, 'index'])->name('index');
+//     Route::get('/create', [ReportController::class, 'create'])->name('create');
+//     Route::post('/', [ReportController::class, 'store'])->name('store');
+//     Route::get('/analytics', [ReportController::class, 'analytics'])->name('analytics');
+//     Route::get('/{report}', [ReportController::class, 'show'])->name('show');
+//     Route::get('/{report}/edit', [ReportController::class, 'edit'])->name('edit');
+//     Route::put('/{report}', [ReportController::class, 'update'])->name('update');
+//     Route::delete('/{report}', [ReportController::class, 'destroy'])->name('destroy');
+//     Route::post('/generate', [ReportController::class, 'generate'])->name('generate');
+// });
+
 //stmp mail test
 // Route::get('/testroute', function() {
 //     $name = "Funny Coder";
@@ -261,3 +317,9 @@ Route::middleware('auth')->group(function () {
 // });
 
 require __DIR__ . '/auth.php';
+
+// Notifications
+Route::middleware('auth')->group(function () {
+    Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.read');
+});

@@ -21,13 +21,29 @@ class RoleController extends Controller
         $this->middleware('permission:role-delete', ['only' => ['destroy']]);
     }
 
-    public function index(Request $request): View
+        public function index(Request $request): View
     {
-        $roles = Role::orderBy('id', 'DESC')->paginate(5);
-        return view('roles.index', compact('roles'))
+        // If the user is a superadmin, show all roles
+        if (auth()->user()->isSuperAdmin()) {
+            $query = Role::orderBy('id', 'DESC');
+            $filterRoles = Role::all();
+        } elseif (auth()->user()->hasRole('company-admin')) {
+            $query = Role::where('name', '!=', 'super-admin')->orderBy('id', 'DESC');
+            $filterRoles = Role::where('name', '!=', 'super-admin')->get();
+        } else {
+            $query = Role::query()->whereRaw('0=1'); // No roles
+            $filterRoles = collect();
+        }
+
+        // Filtering by role name if requested
+        if ($request->filled('role_search')) {
+            $query->where('name', 'like', '%' . $request->input('role_search') . '%');
+        }
+        $roles = $query->paginate(5);
+
+        return view('roles.index', compact('roles', 'filterRoles'))
             ->with('i', ($request->input('page', 1) - 1) * 5);
     }
-
     public function create(): View
     {
         $permission = Permission::get();

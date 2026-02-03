@@ -23,15 +23,14 @@
                         </div>
                         <p class="mt-1 text-sm text-gray-600">Search archived documents</p>
                     </div>
-                    
+
                     <div class="p-6">
-                        <!-- Full Text Search -->
-                        <form action="{{ route('documents.search') }}" method="POST" class="space-y-5 mb-6">
-                            @csrf
+                        <!-- Archive Search Form -->
+                        <form action="{{ route('documents.archive') }}" method="GET" class="space-y-5 mb-6">
                             <div>
-                                <label for="text-search" class="block text-sm font-medium text-gray-700 mb-1">Text search</label>
+                                <label for="text-search" class="block text-sm font-medium text-gray-700 mb-1">Search archives</label>
                                 <div class="relative">
-                                    <input type="text" id="text-search" name="text" class="w-full pl-10 pr-4 py-2.5 rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50" placeholder="Search by text...">
+                                    <input type="text" id="text-search" name="search" value="{{ $search ?? '' }}" class="w-full pl-10 pr-4 py-2.5 rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50" placeholder="Search archived documents...">
                                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                         <svg class="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                             <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
@@ -39,9 +38,8 @@
                                     </div>
                                 </div>
                             </div>
-                            <input type="hidden" name="archived" value="1">
                             <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg shadow-sm">
-                                Search
+                                Search Archives
                             </button>
                         </form>
 
@@ -125,8 +123,20 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $document->uploader->name ?? 'Unknown' }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $document->archived_at ? $document->archived_at->format('M d, Y') : 'N/A' }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        @if($document->user)
+                                            {{ $document->user->first_name }} {{ $document->user->last_name }}
+                                        @else
+                                            Unknown
+                                        @endif
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        @if($document->status && $document->status->updated_at)
+                                            {{ $document->status->updated_at->format('M d, Y') }}
+                                        @else
+                                            N/A
+                                        @endif
+                                    </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                         <div class="flex space-x-2">
                                             <a href="{{ route('documents.show', $document->id) }}" class="text-blue-600 hover:text-blue-900">View</a>
@@ -149,13 +159,14 @@
                             </tbody>
                         </table>
                     </div>
-                    
+
                     <div class="p-6 border-t border-gray-200">
                         {{ $documents->links() }}
                     </div>
                 </div>
             </div>
         </div>
+        @include('documents.partials.archive')
     </div>
 </div>
 
@@ -175,7 +186,7 @@
             }
 
             startScannerButton.textContent = 'Stop Scanner';
-            
+
             html5QrCode = new Html5Qrcode("qr-reader");
             html5QrCode.start(
                 { facingMode: "environment" },
@@ -187,11 +198,11 @@
                     // QR code detected - submit tracking number search form
                     const trackingInput = document.getElementById('tracking-number');
                     trackingInput.value = decodedText;
-                    
+
                     // Stop scanning
                     html5QrCode.stop().then(() => {
                         startScannerButton.textContent = 'Start Scanner';
-                        
+
                         // Submit the form
                         document.querySelector('form[action*="trackingNumber-search"]').submit();
                     });

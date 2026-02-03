@@ -15,8 +15,8 @@
                             </svg>
                         </div>
                         <div>
-                            <h1 class="text-2xl font-bold text-gray-800">{{ __('Create New Office') }}</h1>
-                            <p class="text-sm text-gray-500">Add a new office to your organization</p>
+                            <h1 class="text-2xl font-bold text-gray-800">{{ __('Create New Team') }}</h1>
+                            <p class="text-sm text-gray-500">Add a new team to your organization</p>
                         </div>
                     </div>
                     <a href="{{ route('office.index') }}"
@@ -26,7 +26,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M11 17l-5-5m0 0l5-5m-5 5h12" />
                         </svg>
-                        {{ __('Back to Offices') }}
+                        {{ __('Back to Teams') }}
                     </a>
                 </div>
             </div>
@@ -40,7 +40,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
                         </svg>
-                        {{ __('Office Information') }}
+                        {{ __('Team Information') }}
                     </h2>
                 </div>
 
@@ -52,11 +52,11 @@
                             <!-- Office Name -->
                             <div>
                                 <label for="name" class="block text-sm font-medium text-gray-700 mb-1">
-                                    {{ __('Office Name') }} <span class="text-red-500">*</span>
+                                    {{ __('Team Name') }} <span class="text-red-500">*</span>
                                 </label>
                                 <input type="text" id="name" name="name" value="{{ old('name') }}" required
                                     class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50 @error('name') border-red-500 @enderror"
-                                    placeholder="{{ __('Enter office name') }}">
+                                    placeholder="{{ __('Enter team name') }}">
                                 @error('name')
                                     <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
@@ -65,12 +65,12 @@
                             <!-- Parent Office -->
                             <div>
                                 <label for="parent_office_id" class="block text-sm font-medium text-gray-700 mb-1">
-                                    {{ __('Parent Office') }}
+                                    {{ __('Main Team') }}
                                 </label>
                                 <div class="relative">
                                     <select id="parent_office_id" name="parent_office_id"
                                         class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50 @error('parent_office_id') border-red-500 @enderror">
-                                        <option value="">{{ __('None (Top-level Office)') }}</option>
+                                        <option value="">{{ __('None (Top-level Team)') }}</option>
                                         @foreach($offices as $id => $name)
                                             <option value="{{ $id }}" {{ old('parent_office_id') == $id ? 'selected' : '' }}>
                                                 {{ $name }}
@@ -86,24 +86,24 @@
                                         </svg>
                                     </div>
                                 </div>
-                                <p class="mt-1 text-xs text-gray-500">Select a parent office if this is a sub-office</p>
+                                <p class="mt-1 text-xs text-gray-500">Select a main team if this is a sub-team</p>
                                 @error('parent_office_id')
                                     <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
 
-                            <!-- Company -->
+                            <!-- Office Lead -->
                             <div>
-                                <label for="company_id" class="block text-sm font-medium text-gray-700 mb-1">
-                                    {{ __('Company') }} <span class="text-red-500">*</span>
+                                <label for="office_lead" class="block text-sm font-medium text-gray-700 mb-1">
+                                    {{ __('Team Leader') }}
                                 </label>
                                 <div class="relative">
-                                    <select id="company_id" name="company_id"
-                                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50 @error('company_id') border-red-500 @enderror">
-                                        <option value="">{{ __('Select Company') }}</option>
-                                        @foreach($companies as $id => $name)
-                                            <option value="{{ $id }}" {{ old('company_id') == $id ? 'selected' : '' }}>
-                                                {{ $name }}
+                                    <select id="office_lead" name="office_lead"
+                                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50 @error('office_lead') border-red-500 @enderror">
+                                        <option value="">{{ __('Select Team Leader (Optional)') }}</option>
+                                        @foreach($users as $user)
+                                            <option value="{{ $user->id }}" {{ old('office_lead') == $user->id ? 'selected' : '' }}>
+                                                {{ $user->first_name }} {{ $user->last_name }}
                                             </option>
                                         @endforeach
                                     </select>
@@ -116,8 +116,8 @@
                                         </svg>
                                     </div>
                                 </div>
-                                <p class="mt-1 text-xs text-gray-500">Select the company this office belongs to</p>
-                                @error('company_id')
+                                <p class="mt-1 text-xs text-gray-500">The selected user will be added to this team automatically</p>
+                                @error('office_lead')
                                     <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
@@ -131,7 +131,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                                     </svg>
-                                    {{ __('Create Office') }}
+                                    {{ __('Create Team') }}
                                 </button>
                             </div>
                         </div>
