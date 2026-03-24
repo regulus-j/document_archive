@@ -16,6 +16,9 @@
 
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    <!-- Alpine.js -->
+    <script src="//unpkg.com/alpinejs" defer></script>
 </head>
 
 <body class="font-sans text-gray-900 antialiased">
@@ -41,8 +44,8 @@
                     <p class="text-sm uppercase tracking-wider mb-2">DOCTRACK</p>
                 </div>
 
-                <p class="text-lg mb-2">Nice to see you again</p>
-                <h1 class="text-5xl font-bold mb-6">WELCOME BACK</h1>
+                <p class="text-lg mb-2">Nice to see you</p>
+                <h1 class="text-5xl font-bold mb-6">Welcome to     Document Tracking</h1>
                 <div class="w-16 h-1 bg-white mx-auto mb-6"></div>
                 <p class="text-sm opacity-80 mb-8">
                     Access your secure document repository with ease. DocTrack provides efficient storage,
@@ -55,6 +58,7 @@
         <!-- Right side - Login form -->
         <div class="w-full md:w-1/2 flex items-center justify-center p-8">
             <div class="w-full max-w-md">
+                <x-success-message/>
                 {{ $slot }}
             </div>
         </div>

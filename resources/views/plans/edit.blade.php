@@ -67,17 +67,25 @@
                             <label for="is_active" class="ml-2 block text-sm text-gray-700">Active Plan</label>
                         </div>
 
-                        @foreach(['feature_1', 'feature_2', 'feature_3'] as $feature)
-                            <div class="flex items-center">
-                                <input type="checkbox" name="{{ $feature }}" id="{{ $feature }}"
-                                        value="1"
-                                       class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                       {{ old($feature, $plan->$feature) ? 'checked' : '' }}>
-                                <label for="{{ $feature }}" class="ml-2 block text-sm text-gray-700">
-                                    {{ ucfirst(str_replace('_', ' ', $feature)) }}
-                                </label>
-                            </div>
-                        @endforeach
+                        <div class="mt-6 border-t border-gray-200 pt-6">
+                            <h3 class="text-lg font-medium text-gray-900">Plan Features</h3>
+                            <p class="mt-1 text-sm text-gray-500">Select the features included in this plan</p>
+                            
+                            @foreach($features as $feature)
+                                <div class="flex items-center mt-4">
+                                    <input type="checkbox" name="features[]" id="feature_{{ $feature->id }}" 
+                                           value="{{ $feature->id }}"
+                                           class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                           {{ in_array($feature->id, $planFeatures) ? 'checked' : '' }}>
+                                    <label for="feature_{{ $feature->id }}" class="ml-2 block text-sm text-gray-700">
+                                        {{ $feature->name }}
+                                    </label>
+                                    @if($feature->description)
+                                        <span class="ml-2 text-xs text-gray-500">{{ $feature->description }}</span>
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
                     </div>
                 </div>
 

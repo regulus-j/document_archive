@@ -17,18 +17,77 @@ class DashboardController extends Controller
     public function index()
     {
         $user = auth()->user();
-        
-        // Properly check roles and redirect to appropriate dashboard
+
+        // First check if user is a super-admin and redirect accordingly
         if ($user->hasRole('super-admin')) {
             return redirect()->route('admin.dashboard');
         }
-        
+
         $userCompany = $user->companies()->first();
-        
-        // Check if user is a super admin
-        if (auth()->user()->isSuperAdmin()) {
-            return redirect()->route('admin.dashboard');
+
+        // If user is a company-admin and has an active subscription, redirect to company dashboard
+        if ($user->hasRole('company-admin')) {
+            $hasActiveSubscription = false;
+
+            // Check for active subscription or trial
+            $trialEndDate = DB::table('company_users')
+                ->where('user_id', $user->id)
+                ->value('trial_ends_at');
+
+            if (($trialEndDate && now()->lessThan($trialEndDate)) ||
+                ($userCompany && CompanySubscription::active()->where('company_id', $userCompany->id)->exists())) {
+                return redirect()->route('reports.company-dashboard');
+            }
         }
+
+        // Check if user is an office lead
+        $isOfficeLead = Office::where('office_lead', $user->id)->exists();
+        $ledOffice = null;
+        $officeMembers = collect();
+        $officeDocuments = collect();
+        $officeDocumentCount = 0;
+        $officeDocumentsTodayCount = 0;
+        $officePendingWorkflowsCount = 0;
+
+        if ($isOfficeLead) {
+            $ledOffice = Office::where('office_lead', $user->id)->first();
+            if ($ledOffice) {
+                // Get office members
+                $officeMembers = $ledOffice->users()->get();
+
+                // Get office document statistics - Using the correct column (from_office) instead of office_id
+                $officeDocuments = Document::whereIn('uploader', $officeMembers->pluck('id'))
+                    ->orWhereHas('transaction', function($query) use ($ledOffice) {
+                        $query->where('from_office', $ledOffice->id);
+                    })
+                    ->with('user', 'categories')
+                    ->latest()
+                    ->take(10)
+                    ->get();
+
+                $officeDocumentCount = Document::whereIn('uploader', $officeMembers->pluck('id'))
+                    ->orWhereHas('transaction', function($query) use ($ledOffice) {
+                        $query->where('from_office', $ledOffice->id);
+                    })
+                    ->count();
+
+                $officeDocumentsTodayCount = Document::whereIn('uploader', $officeMembers->pluck('id'))
+                    ->orWhereHas('transaction', function($query) use ($ledOffice) {
+                        $query->where('from_office', $ledOffice->id);
+                    })
+                    ->whereDate('created_at', today())
+                    ->count();
+
+                $officePendingWorkflowsCount = DocumentWorkflow::whereIn('sender_id', $officeMembers->pluck('id'))
+                    ->orWhereIn('recipient_id', $officeMembers->pluck('id'))
+                    ->where('status', 'pending')
+                    ->count();
+            }
+        }
+
+        // Set up subscription information for view
+        $activeSubscription = null;
+        $needsSubscription = false;
 
         // ** Free Trial Check **
         $trialEndDate = DB::table('company_users')
@@ -37,42 +96,44 @@ class DashboardController extends Controller
 
         if ($trialEndDate && now()->lessThan($trialEndDate)) {
             $activeSubscription = (object) ['status' => 'trial', 'ends_at' => $trialEndDate];
-        } else {
-            if (!$userCompany) {
-                // Initialize all variables needed by dashboard-office-user.blade.php
-                $totalDocuments = 0;
-                $recentDocuments = collect();
-                $pendingDocuments = 0;
-                $todayDocuments = 0;
-                $activeSubscription = null;
-                $countPendingDocs = 0;
-                $countRecentDocs = 0;
-                $countCompanyUsers = 0;
-                $incomingDocuments = 0; 
-                $countOffices = "No Offices Found";
-                
-                return view('dashboard-office-user', compact(
-                    'totalDocuments',
-                    'recentDocuments',
-                    'pendingDocuments',
-                    'todayDocuments',
-                    'activeSubscription',
-                    'countPendingDocs',
-                    'countRecentDocs',
-                    'countCompanyUsers',
-                    'incomingDocuments',
-                    'countOffices'
-                ))->with('info', 'Please set up your company profile first.');
-            }
-
-            $activeSubscription = CompanySubscription::where('company_id', $userCompany->id)
-                ->where('status', 'active')
+        } else if ($userCompany) {
+            $activeSubscription = CompanySubscription::active()
+                ->where('company_id', $userCompany->id)
                 ->first();
 
-            if (!$activeSubscription) {
-                return redirect()->route('plans.select')
-                    ->with('info', 'Please select a plan and complete the payment to continue.');
+            // Set flag for showing subscription banner to company admins
+            if (!$activeSubscription && $user->hasRole('company-admin')) {
+                $needsSubscription = true;
             }
+        }
+
+        // Initialize variables for dashboard views instead of redirecting
+        if (!$userCompany) {
+            // Initialize all variables needed by dashboard-office-user.blade.php
+            $totalDocuments = 0;
+            $recentDocuments = collect();
+            $pendingDocuments = 0;
+            $todayDocuments = 0;
+            $countPendingDocs = 0;
+            $countRecentDocs = 0;
+            $countCompanyUsers = 0;
+            $incomingDocuments = 0;
+            $countOffices = "No Offices Found";
+
+            return view('dashboard-office-user', compact(
+                'totalDocuments',
+                'recentDocuments',
+                'pendingDocuments',
+                'todayDocuments',
+                'activeSubscription',
+                'countPendingDocs',
+                'countRecentDocs',
+                'countCompanyUsers',
+                'incomingDocuments',
+                'countOffices',
+                'isOfficeLead',
+                'needsSubscription'
+            ))->with('info', 'Please set up your company profile first.');
         }
 
         // Fetch dashboard data
@@ -86,24 +147,55 @@ class DashboardController extends Controller
         $document = new Document;
         $recentTransactions = $document->transactions()->latest()->paginate(5);
 
-        $totalDocuments = Document::whereIn(
-            'uploader',
-            $userCompany ? $userCompany->employees->pluck('id')->push($user->id)->unique() : collect()
-        )->count();
+        // Get total documents for company if admin, otherwise just user's documents
+        if ($user->hasRole('company-admin') && $userCompany) {
+            $companyUserIds = $userCompany->employees()->pluck('id');
+            $totalDocuments = Document::whereIn('uploader', $companyUserIds)
+                ->orWhereHas('workflow', function($query) use ($companyUserIds) {
+                    $query->whereIn('recipient_id', $companyUserIds);
+                })
+                ->count();
+        } else {
+            $totalDocuments = Document::where('uploader', $user->id)
+                ->orWhereHas('workflow', function($query) use ($user) {
+                    $query->where('recipient_id', $user->id);
+                })
+                ->count();
+        }
 
-        $recentDocuments = Document::with('user', 'office', 'categories')->latest()->take(5)->get();
+        $recentDocuments = Document::where('uploader', $user->id)
+            ->orWhereHas('workflow', function($query) use ($user) {
+                $query->where('recipient_id', $user->id);
+            })
+            ->with('user', 'office', 'categories')
+            ->latest()
+            ->take(5)
+            ->get();
 
+        // Get pending documents for current user
         $pendingDocuments = DocumentWorkflow::where('status', 'pending')
-            ->whereIn('document_id', function ($query) use ($userCompany, $user) {
-                $query->select('id')
-                    ->from('documents')
-                    ->whereIn('uploader', $userCompany ? $userCompany->employees->pluck('id')->push($user->id)->unique() : collect());
+            ->where(function($query) use ($user) {
+                $query->where('sender_id', $user->id)
+                    ->orWhere('recipient_id', $user->id);
             })
             ->count();
 
-        $todayDocuments = Document::whereDate('created_at', today())->count();
+        // Get today's documents for current user
+        $todayDocuments = Document::where(function($query) use ($user) {
+                $query->where('uploader', $user->id)
+                    ->orWhereHas('workflow', function($q) use ($user) {
+                        $q->where('recipient_id', $user->id);
+                    });
+            })
+            ->whereDate('created_at', today())
+            ->count();
         $countPendingDocs = $pendingDocuments;
-        $countRecentDocs = $recentDocuments->count();
+        $countRecentDocs = Document::where('uploader', $user->id)
+            ->orWhereHas('workflow', function($query) use ($user) {
+                $query->where('recipient_id', $user->id)
+                    ->whereIn('status', ['approved', 'rejected']);
+            })
+            ->count();
         $countOffices = $userCompany ? Office::where('company_id', $userCompany->id)->count() : "No Offices Found";
 
         $processedDocuments = DocumentWorkflow::where('recipient_id', $user->id)
@@ -115,8 +207,8 @@ class DashboardController extends Controller
             })
             ->count();
 
-        // **🚀 Correct Role Check for Admin**
-        if ($user->hasRole('company-admin') && $userCompany) {
+        // For company admins show the admin dashboard
+        if ($user->hasRole('company-admin')) {
             return view('dashboard', compact(
                 'recentTransactions',
                 'totalDocuments',
@@ -130,20 +222,37 @@ class DashboardController extends Controller
                 'incomingDocuments',
                 'countOffices',
                 'totalDocuments',
-            ));
-        } else {
-            return view('dashboard-office-user', compact(
-                'totalDocuments',
-                'recentDocuments',
-                'pendingDocuments',
-                'todayDocuments',
-                'activeSubscription',
-                'countPendingDocs',
-                'countRecentDocs',
-                'countCompanyUsers',
-                'incomingDocuments',
-                'countOffices',
+                'isOfficeLead',
+                'ledOffice',
+                'officeMembers',
+                'officeDocuments',
+                'officeDocumentCount',
+                'officeDocumentsTodayCount',
+                'officePendingWorkflowsCount',
+                'needsSubscription'
             ));
         }
+
+        // For regular company users, use the office user dashboard
+        return view('dashboard-office-user', compact(
+            'totalDocuments',
+            'recentDocuments',
+            'pendingDocuments',
+            'todayDocuments',
+            'activeSubscription',
+            'countPendingDocs',
+            'countRecentDocs',
+            'countCompanyUsers',
+            'incomingDocuments',
+            'countOffices',
+            'isOfficeLead',
+            'ledOffice',
+            'officeMembers',
+            'officeDocuments',
+            'officeDocumentCount',
+            'officeDocumentsTodayCount',
+            'officePendingWorkflowsCount',
+            'needsSubscription'
+        ));
     }
 }

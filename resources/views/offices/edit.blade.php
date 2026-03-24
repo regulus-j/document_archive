@@ -1,26 +1,29 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="bg-gray-100 min-h-screen py-12">
+    <div class="min-h-screen bg-gray-50/50 py-12">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <!-- Page Header -->
-            <div class="bg-white shadow-md rounded-lg overflow-hidden mb-8">
-                <div class="p-6 sm:flex sm:items-center sm:justify-between">
-                    <h2 class="text-3xl font-extrabold text-gray-900 flex items-center">
-                        <svg class="h-8 w-8 text-blue-500 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                        {{ __('Edit Office') }}
-                    </h2>
-                    <div class="mt-4 sm:mt-0">
-                        <a href="{{ route('office.index') }}"
-                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+            <div class="bg-white rounded-lg border border-gray-200 overflow-hidden mb-6">
+                <div class="bg-white p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="p-3 bg-blue-600 rounded-lg">
+                            <svg class="w-6 h-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h1 class="text-lg font-semibold text-gray-900">{{ __('Edit Team') }}</h1>
+                            <p class="text-sm text-gray-600">Update team information and settings</p>
+                        </div>
+                    </div>
+                    <a href="{{ route('office.index') }}"
+                        class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
                             <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                             </svg>
-                            {{ __('Back to Offices') }}
+                            {{ __('Back to Teams') }}
                         </a>
                     </div>
                 </div>
@@ -54,7 +57,7 @@
             @endif
 
             <!-- Form Card -->
-            <div class="bg-white shadow-md rounded-lg overflow-hidden">
+            <div class="max-w-6xl mx-auto px-4 sm:px-3 lg:px-8 bg-white shadow-md rounded-lg overflow-hidden">
                 <div class="p-6">
                     <form action="{{ route('office.update', $office->id) }}" method="POST">
                         @csrf
@@ -63,7 +66,7 @@
                         <!-- Office Name -->
                         <div class="mb-6">
                             <label for="name" class="block text-sm font-medium text-gray-700 mb-1">
-                                {{ __('Office Name') }}
+                                {{ __('Team Name') }}
                             </label>
                             <div class="relative rounded-md shadow-sm">
                                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -75,7 +78,7 @@
                                 </div>
                                 <input type="text" id="name" name="name" value="{{ old('name', $office->name) }}" required
                                     class="pl-10 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm @error('name') border-red-300 text-red-900 placeholder-red-300 focus:outline-none focus:ring-red-500 focus:border-red-500 @enderror"
-                                    placeholder="{{ __('Enter office name') }}">
+                                    placeholder="{{ __('Enter Team name') }}">
                             </div>
                             @error('name')
                                 <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -85,7 +88,7 @@
                         <!-- Parent Office -->
                         <div class="mb-6">
                             <label for="parent_office_id" class="block text-sm font-medium text-gray-700 mb-1">
-                                {{ __('Parent Office') }}
+                                {{ __('Main Team') }}
                             </label>
                             <div class="relative rounded-md shadow-sm">
                                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -112,6 +115,34 @@
                             @enderror
                         </div>
 
+                        <!-- Office Leader -->
+                        <div class="mb-6">
+                            <label for="office_lead" class="block text-sm font-medium text-gray-700 mb-1">
+                                {{ __('Team Leader') }}
+                            </label>
+                            <div class="relative rounded-md shadow-sm">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                    </svg>
+                                </div>
+                                <select id="office_lead" name="office_lead"
+                                    class="pl-10 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm @error('office_lead') border-red-300 text-red-900 focus:outline-none focus:ring-red-500 focus:border-red-500 @enderror">
+                                    <option value="">{{ __('No Team Leader') }}</option>
+                                    @foreach($users as $user)
+                                        <option value="{{ $user->id }}" {{ old('office_lead', $office->office_lead) == $user->id ? 'selected' : '' }}>
+                                            {{ $user->first_name }} {{ $user->last_name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <p class="mt-1 text-xs text-gray-500">The selected user will be added to this team automatically</p>
+                            @error('office_lead')
+                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
                         <!-- Action Buttons -->
                         <div class="border-t pt-6 flex justify-end space-x-3">
                             <a href="{{ route('office.index') }}"
@@ -124,7 +155,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M5 13l4 4L19 7" />
                                 </svg>
-                                {{ __('Update Office') }}
+                                {{ __('Update Team') }}
                             </button>
                         </div>
                     </form>

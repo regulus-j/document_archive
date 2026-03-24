@@ -14,9 +14,15 @@ class DocumentWorkflow extends Model
         'document_id',
         'sender_id',
         'recipient_id',
+        'recipient_office',
         'step_order',
+        'workflow_type',
         'status',
+        'purpose',
+        'urgency',
+        'due_date',
         'remarks',
+        'is_paused',
     ];
 
     public function document()
@@ -34,22 +40,130 @@ class DocumentWorkflow extends Model
         return $this->belongsTo(User::class, 'recipient_id');
     }
 
+    public function recipientOffice()
+    {
+        return $this->belongsTo(Office::class, 'recipient_office');
+    }
+
     public function receive()
     {
         $this->status = 'received';
+        $this->received_at = now();
         $this->save();
+        
+        // Sync document status
+        $this->syncDocumentStatus();
     }
 
     public function approve()
     {
         $this->status = 'approved';
         $this->save();
+        
+        // Sync document status
+        $this->syncDocumentStatus();
     }
 
     public function reject()
     {
         $this->status = 'rejected';
         $this->save();
+        
+        // Sync document status
+        $this->syncDocumentStatus();
+    }
+    
+    public function return()
+    {
+        $this->status = 'returned';
+        $this->save();
+        
+        // Sync document status
+        $this->syncDocumentStatus();
+    }
+    
+    public function refer()
+    {
+        $this->status = 'referred';
+        $this->save();
+        
+        // Sync document status
+        $this->syncDocumentStatus();
+    }
+    
+    public function forward()
+    {
+        $this->status = 'forwarded';
+        $this->save();
+        
+        // Sync document status
+        $this->syncDocumentStatus();
+    }
+
+    /**
+     * Synchronize document status based on workflow states
+     */
+    private function syncDocumentStatus()
+    {
+        $document = $this->document;
+        if (!$document || !$document->status) {
+            return;
+        }
+
+        $allWorkflows = $document->documentWorkflow;
+        
+        // If no workflows exist, keep current status
+        if ($allWorkflows->isEmpty()) {
+            return;
+        }
+
+        // Check if this is a sequential workflow
+        $isSequential = $allWorkflows->where('workflow_type', 'sequential')->isNotEmpty();
+        
+        // Determine overall document status based on workflow states
+        $statuses = $allWorkflows->pluck('status')->unique();
+        
+        if ($statuses->contains('rejected')) {
+            $document->status()->update(['status' => 'rejected']);
+        } elseif ($statuses->contains('returned')) {
+            $document->status()->update(['status' => 'returned']);
+        } elseif ($isSequential) {
+            // For sequential workflows, be more nuanced about status
+            $completedStatuses = ['approved', 'commented', 'acknowledged'];
+            $allComplete = $allWorkflows->every(fn($w) => in_array($w->status, $completedStatuses));
+            $hasWaiting = $allWorkflows->where('status', 'waiting')->isNotEmpty();
+            $hasPending = $allWorkflows->where('status', 'pending')->isNotEmpty();
+            $hasReceived = $allWorkflows->where('status', 'received')->isNotEmpty();
+            
+            if ($allComplete && !$hasWaiting && !$hasPending && !$hasReceived) {
+                // All steps completed
+                $document->status()->update(['status' => 'complete']);
+            } elseif ($hasPending) {
+                // There's an active step
+                $document->status()->update(['status' => 'received']);
+            } elseif ($hasReceived) {
+                // Someone has received but not yet processed
+                $document->status()->update(['status' => 'received']);
+            } elseif ($hasWaiting) {
+                // Still in progress, waiting for next step
+                $document->status()->update(['status' => 'forwarded']);
+            } elseif ($statuses->contains('commented')) {
+                $document->status()->update(['status' => 'commented']);
+            } elseif ($statuses->contains('acknowledged')) {
+                $document->status()->update(['status' => 'acknowledged']);
+            }
+        } elseif ($allWorkflows->every(fn($w) => $w->status === 'received')) {
+            $document->status()->update(['status' => 'received']);
+        } elseif ($allWorkflows->every(fn($w) => in_array($w->status, ['approved', 'received', 'commented', 'acknowledged']))) {
+            // For parallel workflows, mark complete when all are processed
+            $document->status()->update(['status' => 'complete']);
+        } elseif ($statuses->contains('commented')) {
+            $document->status()->update(['status' => 'commented']);
+        } elseif ($statuses->contains('acknowledged')) {
+            $document->status()->update(['status' => 'acknowledged']);
+        } elseif ($statuses->contains('pending')) {
+            $document->status()->update(['status' => 'forwarded']);
+        }
     }
 
     public function changeStatus($action)
@@ -61,5 +175,259 @@ class DocumentWorkflow extends Model
     public function isPending()
     {
         return $this->status === 'pending';
+    }
+
+    public function isReceived() 
+    {
+        return $this->status === 'received';
+    }
+    
+    public function isApproved()
+    {
+        return $this->status === 'approved';
+    }
+    
+    public function isRejected()
+    {
+        return $this->status === 'rejected';
+    }
+    
+    public function isReturned()
+    {
+        return $this->status === 'returned';
+    }
+    
+    public function isReferred()
+    {
+        return $this->status === 'referred';
+    }
+    
+    public function isForwarded()
+    {
+        return $this->status === 'forwarded';
+    }
+    
+    public function isCommented()
+    {
+        return $this->status === 'commented';
+    }
+    
+    public function isAcknowledged()
+    {
+        return $this->status === 'acknowledged';
+    }
+    
+    public function canProcess()
+    {
+        return $this->status === 'received';
+    }
+    
+    public function canReceive()
+    {
+        return $this->status === 'pending';
+    }
+    
+    public function workflowActive()
+    {
+        return !in_array($this->status, ['rejected', 'returned', 'approved', 'commented', 'acknowledged']);
+    }
+    public function isOverdue()
+    {
+        if (!$this->due_date) {
+            return false;
+        }
+        
+        return now()->startOfDay()->gt($this->due_date);
+    }
+    
+    public function getDaysRemainingAttribute()
+    {
+        if (!$this->due_date) {
+            return null;
+        }
+        
+        return now()->startOfDay()->diffInDays($this->due_date, false);
+    }
+    
+    public function pause()
+    {
+        $this->is_paused = true;
+        $this->save();
+    }
+
+    public function resume()
+    {
+        $this->is_paused = false;
+        $this->save();
+    }
+
+    public function isPaused()
+    {
+        return $this->is_paused === true;
+    }
+
+    /**
+     * Check if this workflow is sequential
+     */
+    public function isSequential()
+    {
+        return $this->workflow_type === 'sequential';
+    }
+
+    /**
+     * Check if this workflow is parallel
+     */
+    public function isParallel()
+    {
+        return $this->workflow_type === 'parallel';
+    }
+
+    /**
+     * Get the next step in sequential workflow
+     */
+    public function getNextStep()
+    {
+        if (!$this->isSequential()) {
+            return null;
+        }
+
+        return static::where('document_id', $this->document_id)
+            ->where('workflow_type', 'sequential')
+            ->where('step_order', $this->step_order + 1)
+            ->first();
+    }
+
+    /**
+     * Get the previous step in sequential workflow
+     */
+    public function getPreviousStep()
+    {
+        if (!$this->isSequential()) {
+            return null;
+        }
+
+        return static::where('document_id', $this->document_id)
+            ->where('workflow_type', 'sequential')
+            ->where('step_order', $this->step_order - 1)
+            ->first();
+    }
+
+    /**
+     * Check if this is the first step in sequential workflow
+     */
+    public function isFirstStep()
+    {
+        return $this->isSequential() && $this->step_order === 1;
+    }
+
+    /**
+     * Check if this is the last step in sequential workflow
+     */
+    public function isLastStep()
+    {
+        if (!$this->isSequential()) {
+            return false;
+        }
+
+        $maxStep = static::where('document_id', $this->document_id)
+            ->where('workflow_type', 'sequential')
+            ->max('step_order');
+
+        return $this->step_order === $maxStep;
+    }
+
+    /**
+     * Activate the next step in sequential workflow
+     */
+    public function activateNextStep()
+    {
+        if (!$this->isSequential()) {
+            return false;
+        }
+
+        $nextStep = $this->getNextStep();
+        if ($nextStep && $nextStep->status === 'waiting') {
+            $nextStep->status = 'pending';
+            $nextStep->save();
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Scope to get only sequential workflows
+     */
+    public function scopeSequential($query)
+    {
+        return $query->where('workflow_type', 'sequential');
+    }
+
+    /**
+     * Scope to get only parallel workflows
+     */
+    public function scopeParallel($query)
+    {
+        return $query->where('workflow_type', 'parallel');
+    }
+
+    /**
+     * Check if this workflow should be visible to the user based on sequential rules
+     */
+    public function isVisibleToUser($userId = null)
+    {
+        $userId = $userId ?: auth()->id();
+        
+        // If user is not the recipient, they can't see it
+        if ($this->recipient_id !== $userId) {
+            return false;
+        }
+        
+        // If it's parallel workflow, user can see it if status is pending
+        if (!$this->isSequential()) {
+            return $this->status === 'pending';
+        }
+        
+        // For sequential workflows, user can only see if:
+        // 1. Status is pending (their turn), OR
+        // 2. They have already processed it (received, approved, etc.)
+        return $this->status === 'pending' || !in_array($this->status, ['waiting']);
+    }
+
+    /**
+     * Check if workflow can be processed by user
+     */
+    public function canBeProcessedBy($userId = null)
+    {
+        $userId = $userId ?: auth()->id();
+        
+        // Must be the recipient
+        if ($this->recipient_id !== $userId) {
+            return false;
+        }
+        
+        // For parallel workflows, can process if pending or received
+        if (!$this->isSequential()) {
+            return in_array($this->status, ['pending', 'received']);
+        }
+        
+        // For sequential workflows, can only process if status is pending or received
+        return in_array($this->status, ['pending', 'received']);
+    }
+
+    /**
+     * Scope to get active steps (pending status)
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('status', 'pending');
+    }
+
+    /**
+     * Scope to get waiting steps (waiting status)
+     */
+    public function scopeWaiting($query)
+    {
+        return $query->where('status', 'waiting');
     }
 }

@@ -39,7 +39,7 @@
                     </p>
                     <a href="{{ route('dashboard') }}"
                         class="inline-block bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg font-medium">
-                        Get Started Now
+                        Get Started For Free
                     </a>
                 </div>
                 <div class="w-full md:w-1/2">
@@ -351,7 +351,7 @@
             <h2 class="text-3xl font-bold mb-4">Ready to streamline your document management?</h2>
             <p class="text-blue-100 mb-8 max-w-2xl mx-auto">Join thousands of organizations that trust DocTrack for their document tracking and archiving needs.</p>
             <a href="{{ route('register') }}" class="inline-block bg-white text-blue-800 px-8 py-3 rounded-md font-medium hover:bg-blue-50 transition-colors shadow-lg">
-                Get Started Today
+                Get Started For Free
             </a>
         </div>
     </section>
